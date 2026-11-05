@@ -1,4 +1,4 @@
-"""Archive #176/#177: describe original and repair rejections separately.
+"""Archive #176/#177: separate proxy, repair and native train/validation evidence.
 
 Standard-library-only reader of saved diagnostic JSON. This is descriptive
 evidence, not checkpoint authentication, candidate selection or certification.
@@ -10,6 +10,9 @@ import hashlib
 import json
 import math
 from pathlib import Path
+
+
+NATIVE_STRATEGY = "recipe3_native_residual_train_then_validation_v1"
 
 
 def _best(rows):
@@ -48,6 +51,15 @@ def summarize_search(rows):
 def summarize_layer(layer):
     """Preserve legacy compact fields; expose repair evidence independently."""
     rows = layer["candidates"]
+    if layer.get("strategy") == NATIVE_STRATEGY:
+        validation = layer["validation_candidates"]
+        return {"layer": layer["layer"], "strategy": NATIVE_STRATEGY,
+                "candidates": len(rows), "train_candidates": len(rows),
+                "validation_candidates": len(validation),
+                "candidate_count_scope": "unique_train_candidates_validation_rechecks_counted_separately",
+                "reason": "all_validation_finalists_rejected" if validation else "no_train_candidate_passed",
+                "train_search": {**summarize_search(rows), "accepted_count": sum(row["accepted"] for row in rows)},
+                "validation_search": {**summarize_search(validation), "accepted_count": 0}}
     best = _best(rows)
     original = [row for row in rows if row["phase"] != "repair"]
     repair = [row for row in rows if row["phase"] == "repair"]
@@ -61,25 +73,20 @@ def summarize_layer(layer):
             "repair_search": summarize_search(repair)}
 
 
-def _validate_layer(layer):
-    """Check summary structure/consistency, without claiming authentication."""
-    if not isinstance(layer, dict) or not isinstance(layer.get("layer"), str):
-        raise ValueError("saved OptR report has an invalid layer")
-    rows = layer.get("candidates")
-    if not isinstance(rows, list) or not rows or layer.get("candidate_count") != len(rows):
-        raise ValueError("saved OptR report has incomplete candidate coverage")
+def _validate_rows(rows, *, phases, allow_accepted=False):
+    """Validate one search's metrics; train and validation have separate baselines."""
     ids = set()
     baselines = {}
     for row in rows:
         if not isinstance(row, dict) or not isinstance(row.get("candidate"), str) or row["candidate"] in ids:
             raise ValueError("saved OptR report has an invalid/duplicate candidate")
         ids.add(row["candidate"])
-        if row.get("phase") not in ("primary", "k", "v", "repair"):
+        if row.get("phase") not in phases:
             raise ValueError("saved OptR report has an invalid candidate phase")
         for key in ("unchanged_baseline", "strict_total_improvement", "bf16_only_regression", "nonworse", "accepted"):
             if type(row.get(key)) is not bool:
                 raise ValueError("saved OptR report has a missing/invalid decision")
-        if row["accepted"] or (row["nonworse"] and row["strict_total_improvement"]):
+        if not allow_accepted and (row["accepted"] or (row["nonworse"] and row["strict_total_improvement"])):
             raise ValueError("saved no-improvement report contains an accepted candidate")
         counts = row.get("regressed_checks", {})
         if set(counts) != {"total", "request", "frame", "query", "terminal"} or any(
@@ -112,18 +119,60 @@ def _validate_layer(layer):
         nonworse = all(view["nonworse"] for view in views.values())
         reason = ("aggregate_error_regression" if total["candidate"] > total["baseline"] else
                   "no_strict_total_improvement" if not strict else
-                  "projection_total_regression" if counts["total"] else "fine_grained_regression")
+                  "projection_total_regression" if counts["total"] else
+                  "fine_grained_regression" if not nonworse else "passed")
         if (row["strict_total_improvement"] is not strict or row["nonworse"] is not nonworse or
+                row["accepted"] is not (strict and nonworse) or
                 row["reason"] != reason or
                 row["bf16_only_regression"] is not (views["fp32"]["nonworse"] and not nonworse)):
             raise ValueError("saved OptR report has inconsistent rejection decisions")
-        if row["phase"] == "repair":
+        if row["phase"] in ("repair", "native_train", "native_validation"):
             if (type(row.get("same_bf16_operand_as_seed")) is not bool or
                     type(row.get("head")) is not int or row["head"] < 0 or
                     row.get("side") not in ("Rk", "Rv") or
                     type(row.get("radius")) not in (int, float) or
                     not math.isfinite(row["radius"]) or row["radius"] <= 0):
                 raise ValueError("saved OptR report has invalid repair coordinates")
+
+
+def _validate_native_layer(layer, rows):
+    validation = layer.get("validation_candidates")
+    if (not isinstance(validation, list) or layer.get("train_candidate_count") != len(rows) or
+            layer.get("validation_candidate_count") != len(validation) or
+            layer.get("candidate_count_scope") != "unique_train_candidates_validation_rechecks_counted_separately"):
+        raise ValueError("saved native-residual report has inconsistent train/validation counts")
+    _validate_rows(rows, phases=("native_train",), allow_accepted=True)
+    _validate_rows(validation, phases=("native_validation",))
+    by_id = {row["candidate"]: row for row in rows}
+    # A trained finalist can pass train and fail validation. It must still be
+    # the same matrix, and at most one radius per head/side reaches validation.
+    directions = set()
+    for row in validation:
+        training = by_id.get(row["candidate"])
+        if (training is None or not training["accepted"] or any(row.get(key) != training.get(key)
+                for key in ("head", "side", "radius", "radius_index", "constants_sha256",
+                            "unchanged_baseline", "same_bf16_operand_as_seed"))):
+            raise ValueError("saved native-residual validation candidate differs from its training source")
+        direction = (row["head"], row["side"])
+        if direction in directions:
+            raise ValueError("saved native-residual report repeats a validation direction")
+        directions.add(direction)
+    passing_directions = {(row["head"], row["side"]) for row in rows if row["accepted"]}
+    if directions != passing_directions:
+        raise ValueError("saved native-residual report lacks a training finalist's validation evidence")
+
+
+def _validate_layer(layer):
+    """Check summary structure/consistency, without claiming authentication."""
+    if not isinstance(layer, dict) or not isinstance(layer.get("layer"), str):
+        raise ValueError("saved OptR report has an invalid layer")
+    rows = layer.get("candidates")
+    if not isinstance(rows, list) or not rows or layer.get("candidate_count") != len(rows):
+        raise ValueError("saved OptR report has incomplete candidate coverage")
+    if layer.get("strategy") == NATIVE_STRATEGY:
+        _validate_native_layer(layer, rows)
+        return
+    _validate_rows(rows, phases=("primary", "k", "v", "repair"))
     original = sum(row["phase"] != "repair" for row in rows)
     # v10 diagnostics predating v11 did not include these additive fields.
     if (layer.get("original_candidate_count", original) != original or
@@ -150,7 +199,10 @@ def summarize_saved_report(path):
         compact = [summarize_layer(layer) for layer in report["layers"]]
     except (KeyError, TypeError, AttributeError, OverflowError) as error:
         raise ValueError("saved OptR report has incomplete/invalid diagnostic fields") from error
-    return {"status": report["status"], "report": str(path),
+    native_counts = ({"validation_candidate_count": sum(layer.get("validation_candidate_count", 0)
+                                                       for layer in report["layers"])}
+                     if any(layer.get("strategy") == NATIVE_STRATEGY for layer in report["layers"]) else {})
+    return {"status": report["status"], "report": str(path), **native_counts,
             "report_sha256": hashlib.sha256(data).hexdigest(),
             "evidence_scope": "saved_json_only_checkpoints_not_reauthenticated",
             "test_only": report["identity"]["test_only"],

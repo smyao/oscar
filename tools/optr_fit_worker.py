@@ -1,4 +1,4 @@
-"""Archive #123/#166/#172/#174: one persistent offline worker per selected NPU."""
+"""Archive #123/#166/#172/#174/#177: persistent bounded offline layer workers."""
 from __future__ import annotations
 
 import os
@@ -43,7 +43,8 @@ def fit_worker(spec, index, cpu_threads, pipe):
         checkpoints = FitCheckpoints(spec["checkpoint_directory"], spec["checkpoint_identity"])
         policy = optr_policy(config)
         # Archive #176: authenticated old proposals need CPU replay only.
-        device = ("cpu" if spec.get("source_checkpoint") is not None else
+        device = ("cpu" if (spec.get("source_checkpoint") is not None or
+                           policy.get("execution") == "cpu_native_residual_constrained_selection") else
                   fitting_device(config, testing=testing, logical_index=index))
         emit(phase="fit_worker_ready", fitting_device=device, cpu_threads=cpu_threads)
         pipe.send({"kind": "ready"})

@@ -1,0 +1,731 @@
+running build
+running build_py
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_aligned_clusters.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_recipe3_sampling.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/request_window_reader_gate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/phase.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_mixed_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_history_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_bf16_clusters.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/package_request_window_kernels.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/calibrate_optr_traces.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_decode_hotpath.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/prepare_optr_rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/package_c4_member_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/official_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/clean_rotation_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/whole_run_model.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/summarize_timer.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/observe_serve.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_native_current_fia.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_parallel.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/analyze_long_context_work.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/service_probe.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/deploy.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_c4_member_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/model_config.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/c16_breakdown.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/analyze_64k_evidence.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/package_hybrid_l1_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/run_cpu_debug.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_aligned_codec.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_progress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/analyze_service_log.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_c16_l1_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/aligned_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/package_c16_l1_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/calibrate_model_rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/rotation_preparation_limits.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_current_only.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/plog.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/install_serve.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_decode_bundle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_first_mtp_current.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/bf16_runtime_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/target_cli.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/build_ops.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/npu_resources.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/bf16_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/summarize_profile.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/c16_probe_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/c16_softmax_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/summarize_timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/package_mdl_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_mixed_prepare_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/export_fast_unpack_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/forecast_64k_memory.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/run_mixed_cv_cpu_debug.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_mdl_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/build_c16_timer.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_vector_init_rotation.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_c16_tuned.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/analyze_64k_latency_budget.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_bf16_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/aligned_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_rotation_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/striped_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/audit_precision_identity.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/vm_validate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/official_softmax_visibility_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/inspect_run.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/rotation_recipe_diagnostic.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/paired_concurrency_probe.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_official_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_fast_unpack.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_request_windows.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/official_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/analyze_memory_64k.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_aligned_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/serving_variants.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/environment.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/prepare_optr_recipe3_base.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/calibration_data.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/summarize_progress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_mixed_optimization.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/c16_cast_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_fit_worker.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_rejection_report.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/prepare_optr_native_residual.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/prepare_optr_seed.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_mixed_decode_split.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/readiness.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_hybrid_l1_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_bf16_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/export_striped_prefill_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/package_quantization_bundle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/official_decode_cast_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/export_mixed_cv_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/http_request.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_c16_member_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_striped_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/official_finite_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/analyse_timer_profiles.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/summarize_c16_breakdown.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/prepare_optr_recipe3.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/performance_summary.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_cv_hotshape.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/summarize_device_events.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/aligned_runtime_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/prepare_rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_prefix_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/export_q1_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/timer32k.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_rejection_summary.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/compile_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/generate_official_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/official_runtime_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/optr_recipe3_source.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+copying tools/probe_ops.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/diagnostic_timer.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_shared_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_recipe3_certificate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_policy.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/passive_timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_checkpoint.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/request_windows.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/dual_region_layout.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_recipe3_fit.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/layout.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/telemetry.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/runtime.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_oscar_seed.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/clip_calibration.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/lifecycle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_native_residual_certificate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_sequential.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_traces.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/plugin.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/c16_timer_schema.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/request_window_storage.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_selection.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_artifacts.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/device_timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_candidates.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_shared.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/official_window.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_calibration.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_trust_region.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/optr_native_residual.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+copying oscar_ascend/rotation_calibration.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks
+copying benchmarks/measure.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks
+copying benchmarks/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks
+copying benchmarks/passive.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks
+copying benchmarks/mixed.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks
+copying benchmarks/compare.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/prefill_tile_stress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/affine_bf16_residual_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/wide_fp32_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/fp32_block_attention_stress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/replay_shared_fp32.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/admission_replay.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/export_shared_fp32.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/shared_history_work.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/affine_cube_counterexample.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/package_decode_bundle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/int8_planes_counterexample.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/active_identity_store_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/prefill_phase_ledger.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/affine_cube_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/prefill_tile_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/run_camodel_arm.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/request_window_prefix_protocol.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/summarize_decode_critical_chain.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/analyze_decode_completion.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/dequant_bf16_product_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/prefix_checkpoint_audit.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/make_decode_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/stream_camodel_markers.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/bf16_final_rv_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/decode_completion_probe.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/shared_fp32_tile_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/striped_direct_nz_address_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+copying tools/experiments/striped_metadata_bits.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/bounded_whole_prefill.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/first_draft_current_only.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/specs.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/current_only_plan.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/backend.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/runtime_api.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/metadata.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/greedy_sampling.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/c16_breakdown.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/native_token_budget.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/model_identity.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/guard_diag.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/prefix_checkpoint.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/dummy_context.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/compact_later_mtp.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/current_only_dispatch.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/rotation_capture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/optr_capture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/prefill_state_contract.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/official_math.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/aligned_math.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/whole_prefill_scheduler.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/impl.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/current_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/draft_discard.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/cache_storage_ops.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/mixed_decode_split.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/prepare_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+copying oscar_ascend/integration/compile_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/cv_dispatch.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/loader.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/contracts.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/hybrid_layout.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+copying oscar_ascend/ops/meta.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops
+running egg_info
+writing oscar_ascend_external.egg-info/PKG-INFO
+writing dependency_links to oscar_ascend_external.egg-info/dependency_links.txt
+writing entry points to oscar_ascend_external.egg-info/entry_points.txt
+writing requirements to oscar_ascend_external.egg-info/requires.txt
+writing top-level names to oscar_ascend_external.egg-info/top_level.txt
+reading manifest file 'oscar_ascend_external.egg-info/SOURCES.txt'
+writing manifest file 'oscar_ascend_external.egg-info/SOURCES.txt'
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/data
+copying tools/data/gpqa_diamond.csv.gz -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/data
+copying tools/data/README.md -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/data
+running bdist_wheel
+/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/lib/python3.14/site-packages/setuptools/_distutils/cmd.py:90: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+!!
+
+        ********************************************************************************
+        Please avoid running ``setup.py`` directly.
+        Instead, use pypa/build, pypa/installer or other
+        standards-based tools.
+
+        This deprecation is overdue, please update your project and remove deprecated
+        calls to avoid build errors in the future.
+
+        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+        ********************************************************************************
+
+!!
+  self.initialize_options()
+installing to /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel
+running install
+running install_lib
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_aligned_clusters.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_recipe3_sampling.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/request_window_reader_gate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/phase.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_mixed_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_history_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_bf16_clusters.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/package_request_window_kernels.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/calibrate_optr_traces.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_decode_hotpath.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/prepare_optr_rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/package_c4_member_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/official_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/clean_rotation_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/whole_run_model.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/summarize_timer.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/observe_serve.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_native_current_fia.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_parallel.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/analyze_long_context_work.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/service_probe.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/deploy.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_c4_member_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/model_config.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/c16_breakdown.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/analyze_64k_evidence.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/package_hybrid_l1_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/run_cpu_debug.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_aligned_codec.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_progress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/analyze_service_log.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_c16_l1_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/aligned_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/package_c16_l1_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/calibrate_model_rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/rotation_preparation_limits.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/prefill_tile_stress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/affine_bf16_residual_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/wide_fp32_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/fp32_block_attention_stress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/replay_shared_fp32.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/admission_replay.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/export_shared_fp32.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/shared_history_work.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/affine_cube_counterexample.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/package_decode_bundle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/int8_planes_counterexample.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/active_identity_store_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/prefill_phase_ledger.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/affine_cube_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/prefill_tile_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/run_camodel_arm.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/request_window_prefix_protocol.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/summarize_decode_critical_chain.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/analyze_decode_completion.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/dequant_bf16_product_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/prefix_checkpoint_audit.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/make_decode_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/stream_camodel_markers.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/bf16_final_rv_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/decode_completion_probe.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/shared_fp32_tile_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/striped_direct_nz_address_screen.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/experiments/striped_metadata_bits.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_current_only.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/plog.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/install_serve.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_decode_bundle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_first_mtp_current.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/bf16_runtime_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/target_cli.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/build_ops.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/npu_resources.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/bf16_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/summarize_profile.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/c16_probe_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/c16_softmax_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/summarize_timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/package_mdl_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_mixed_prepare_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/export_fast_unpack_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/forecast_64k_memory.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/run_mixed_cv_cpu_debug.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_mdl_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/build_c16_timer.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_vector_init_rotation.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_c16_tuned.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/analyze_64k_latency_budget.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_bf16_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/aligned_reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_rotation_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/striped_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/audit_precision_identity.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/vm_validate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/official_softmax_visibility_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/inspect_run.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/rotation_recipe_diagnostic.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/paired_concurrency_probe.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_official_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_fast_unpack.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_request_windows.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/official_fixture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/analyze_memory_64k.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_aligned_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/serving_variants.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/environment.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/prepare_optr_recipe3_base.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/calibration_data.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/summarize_progress.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_mixed_optimization.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/c16_cast_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_fit_worker.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_rejection_report.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/prepare_optr_native_residual.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/prepare_optr_seed.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_mixed_decode_split.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/readiness.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_hybrid_l1_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_bf16_decode.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/export_striped_prefill_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/package_quantization_bundle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/official_decode_cast_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/export_mixed_cv_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/http_request.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_c16_member_pipeline.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_striped_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/official_finite_transform.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/analyse_timer_profiles.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/tools/data
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/data/gpqa_diamond.csv.gz -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/data
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/data/README.md -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools/data
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/summarize_c16_breakdown.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/prepare_optr_recipe3.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/performance_summary.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_cv_hotshape.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/summarize_device_events.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/aligned_runtime_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/prepare_rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_prefix_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/export_q1_cpu_cases.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/timer32k.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_rejection_summary.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/compile_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/generate_official_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/official_runtime_oracle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/optr_recipe3_source.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/tools/probe_ops.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./tools
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/diagnostic_timer.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_shared_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_recipe3_certificate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_policy.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/passive_timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_checkpoint.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/request_windows.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/dual_region_layout.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_recipe3_fit.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/layout.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/bounded_whole_prefill.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/first_draft_current_only.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/specs.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/current_only_plan.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/backend.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/runtime_api.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/metadata.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/greedy_sampling.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/c16_breakdown.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/native_token_budget.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/model_identity.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/guard_diag.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/prefix_checkpoint.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/dummy_context.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/compact_later_mtp.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/current_only_dispatch.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/rotation_capture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/optr_capture.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/prefill_state_contract.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/official_math.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/aligned_math.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/whole_prefill_scheduler.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/impl.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/current_attention.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/draft_discard.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/cache_storage_ops.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/mixed_decode_split.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/prepare_reuse.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/integration/compile_cache.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/telemetry.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/runtime.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/rotations.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_oscar_seed.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/clip_calibration.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/lifecycle.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_native_residual_certificate.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_sequential.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_traces.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/plugin.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/c16_timer_schema.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/cv_dispatch.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/loader.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/contracts.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/reference.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/hybrid_layout.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/ops/meta.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/request_window_storage.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_selection.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_artifacts.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/device_timing.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_candidates.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_shared.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/official_window.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_calibration.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_trust_region.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/optr_native_residual.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/oscar_ascend/rotation_calibration.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/benchmarks
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks/measure.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks/__init__.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks/passive.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks/mixed.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/lib/benchmarks/compare.py -> /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./benchmarks
+running install_egg_info
+Copying oscar_ascend_external.egg-info to /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/./oscar_ascend_external-0.1.0-py3.14.egg-info
+running install_scripts
+creating /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel/oscar_ascend_external-0.1.0.dist-info/WHEEL
+creating '/tmp/optr-native-v12-wheel/oscar_ascend_external-0.1.0-py3-none-any.whl' and adding '/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel' to it
+adding 'benchmarks/__init__.py'
+adding 'benchmarks/compare.py'
+adding 'benchmarks/measure.py'
+adding 'benchmarks/mixed.py'
+adding 'benchmarks/passive.py'
+adding 'oscar_ascend/__init__.py'
+adding 'oscar_ascend/c16_timer_schema.py'
+adding 'oscar_ascend/clip_calibration.py'
+adding 'oscar_ascend/device_timing.py'
+adding 'oscar_ascend/diagnostic_timer.py'
+adding 'oscar_ascend/dual_region_layout.py'
+adding 'oscar_ascend/layout.py'
+adding 'oscar_ascend/lifecycle.py'
+adding 'oscar_ascend/official_window.py'
+adding 'oscar_ascend/optr_artifacts.py'
+adding 'oscar_ascend/optr_calibration.py'
+adding 'oscar_ascend/optr_candidates.py'
+adding 'oscar_ascend/optr_checkpoint.py'
+adding 'oscar_ascend/optr_native_residual.py'
+adding 'oscar_ascend/optr_native_residual_certificate.py'
+adding 'oscar_ascend/optr_oscar_seed.py'
+adding 'oscar_ascend/optr_policy.py'
+adding 'oscar_ascend/optr_recipe3_certificate.py'
+adding 'oscar_ascend/optr_recipe3_fit.py'
+adding 'oscar_ascend/optr_selection.py'
+adding 'oscar_ascend/optr_sequential.py'
+adding 'oscar_ascend/optr_shared.py'
+adding 'oscar_ascend/optr_shared_cache.py'
+adding 'oscar_ascend/optr_traces.py'
+adding 'oscar_ascend/optr_trust_region.py'
+adding 'oscar_ascend/passive_timing.py'
+adding 'oscar_ascend/plugin.py'
+adding 'oscar_ascend/request_window_storage.py'
+adding 'oscar_ascend/request_windows.py'
+adding 'oscar_ascend/rotation_calibration.py'
+adding 'oscar_ascend/rotations.py'
+adding 'oscar_ascend/runtime.py'
+adding 'oscar_ascend/telemetry.py'
+adding 'oscar_ascend/timing.py'
+adding 'oscar_ascend/integration/__init__.py'
+adding 'oscar_ascend/integration/aligned_math.py'
+adding 'oscar_ascend/integration/backend.py'
+adding 'oscar_ascend/integration/bounded_whole_prefill.py'
+adding 'oscar_ascend/integration/c16_breakdown.py'
+adding 'oscar_ascend/integration/cache_storage_ops.py'
+adding 'oscar_ascend/integration/compact_later_mtp.py'
+adding 'oscar_ascend/integration/compile_cache.py'
+adding 'oscar_ascend/integration/current_attention.py'
+adding 'oscar_ascend/integration/current_only_dispatch.py'
+adding 'oscar_ascend/integration/current_only_plan.py'
+adding 'oscar_ascend/integration/draft_discard.py'
+adding 'oscar_ascend/integration/dummy_context.py'
+adding 'oscar_ascend/integration/first_draft_current_only.py'
+adding 'oscar_ascend/integration/greedy_sampling.py'
+adding 'oscar_ascend/integration/guard_diag.py'
+adding 'oscar_ascend/integration/impl.py'
+adding 'oscar_ascend/integration/metadata.py'
+adding 'oscar_ascend/integration/mixed_decode_split.py'
+adding 'oscar_ascend/integration/model_identity.py'
+adding 'oscar_ascend/integration/native_token_budget.py'
+adding 'oscar_ascend/integration/official_math.py'
+adding 'oscar_ascend/integration/optr_capture.py'
+adding 'oscar_ascend/integration/prefill_state_contract.py'
+adding 'oscar_ascend/integration/prefix_checkpoint.py'
+adding 'oscar_ascend/integration/prepare_reuse.py'
+adding 'oscar_ascend/integration/rotation_capture.py'
+adding 'oscar_ascend/integration/runtime_api.py'
+adding 'oscar_ascend/integration/specs.py'
+adding 'oscar_ascend/integration/whole_prefill_scheduler.py'
+adding 'oscar_ascend/ops/__init__.py'
+adding 'oscar_ascend/ops/contracts.py'
+adding 'oscar_ascend/ops/cv_dispatch.py'
+adding 'oscar_ascend/ops/hybrid_layout.py'
+adding 'oscar_ascend/ops/loader.py'
+adding 'oscar_ascend/ops/meta.py'
+adding 'oscar_ascend/ops/reference.py'
+adding 'tools/__init__.py'
+adding 'tools/aligned_fixture.py'
+adding 'tools/aligned_reference.py'
+adding 'tools/aligned_runtime_oracle.py'
+adding 'tools/analyse_timer_profiles.py'
+adding 'tools/analyze_64k_evidence.py'
+adding 'tools/analyze_64k_latency_budget.py'
+adding 'tools/analyze_long_context_work.py'
+adding 'tools/analyze_memory_64k.py'
+adding 'tools/analyze_service_log.py'
+adding 'tools/audit_precision_identity.py'
+adding 'tools/bf16_reference.py'
+adding 'tools/bf16_runtime_oracle.py'
+adding 'tools/build_c16_timer.py'
+adding 'tools/build_ops.py'
+adding 'tools/c16_breakdown.py'
+adding 'tools/c16_cast_transform.py'
+adding 'tools/c16_probe_oracle.py'
+adding 'tools/c16_softmax_transform.py'
+adding 'tools/calibrate_model_rotations.py'
+adding 'tools/calibrate_optr_traces.py'
+adding 'tools/calibration_data.py'
+adding 'tools/clean_rotation_cache.py'
+adding 'tools/compile_cache.py'
+adding 'tools/deploy.py'
+adding 'tools/environment.py'
+adding 'tools/export_fast_unpack_cpu_cases.py'
+adding 'tools/export_mixed_cv_cpu_cases.py'
+adding 'tools/export_q1_cpu_cases.py'
+adding 'tools/export_striped_prefill_cpu_cases.py'
+adding 'tools/forecast_64k_memory.py'
+adding 'tools/generate_aligned_clusters.py'
+adding 'tools/generate_aligned_codec.py'
+adding 'tools/generate_bf16_clusters.py'
+adding 'tools/generate_bf16_decode.py'
+adding 'tools/generate_c16_tuned.py'
+adding 'tools/generate_cpu_cases.py'
+adding 'tools/generate_official_attention.py'
+adding 'tools/generate_rotation_cpu_cases.py'
+adding 'tools/http_request.py'
+adding 'tools/inspect_run.py'
+adding 'tools/install_serve.py'
+adding 'tools/model_config.py'
+adding 'tools/npu_resources.py'
+adding 'tools/observe_serve.py'
+adding 'tools/official_decode_cast_transform.py'
+adding 'tools/official_finite_transform.py'
+adding 'tools/official_fixture.py'
+adding 'tools/official_reference.py'
+adding 'tools/official_runtime_oracle.py'
+adding 'tools/official_softmax_visibility_transform.py'
+adding 'tools/optr_fit_worker.py'
+adding 'tools/optr_parallel.py'
+adding 'tools/optr_progress.py'
+adding 'tools/optr_recipe3_sampling.py'
+adding 'tools/optr_recipe3_source.py'
+adding 'tools/optr_rejection_report.py'
+adding 'tools/optr_rejection_summary.py'
+adding 'tools/package_c16_l1_reuse.py'
+adding 'tools/package_c4_member_pipeline.py'
+adding 'tools/package_hybrid_l1_decode.py'
+adding 'tools/package_mdl_decode.py'
+adding 'tools/package_quantization_bundle.py'
+adding 'tools/package_request_window_kernels.py'
+adding 'tools/paired_concurrency_probe.py'
+adding 'tools/performance_summary.py'
+adding 'tools/phase.py'
+adding 'tools/plog.py'
+adding 'tools/prepare_optr_native_residual.py'
+adding 'tools/prepare_optr_recipe3.py'
+adding 'tools/prepare_optr_recipe3_base.py'
+adding 'tools/prepare_optr_rotations.py'
+adding 'tools/prepare_optr_seed.py'
+adding 'tools/prepare_rotations.py'
+adding 'tools/probe_aligned_attention.py'
+adding 'tools/probe_bf16_attention.py'
+adding 'tools/probe_c16_l1_reuse.py'
+adding 'tools/probe_c16_member_pipeline.py'
+adding 'tools/probe_c4_member_pipeline.py'
+adding 'tools/probe_current_only.py'
+adding 'tools/probe_cv_hotshape.py'
+adding 'tools/probe_decode_bundle.py'
+adding 'tools/probe_decode_hotpath.py'
+adding 'tools/probe_fast_unpack.py'
+adding 'tools/probe_first_mtp_current.py'
+adding 'tools/probe_history_reuse.py'
+adding 'tools/probe_hybrid_l1_decode.py'
+adding 'tools/probe_mdl_decode.py'
+adding 'tools/probe_mixed_attention.py'
+adding 'tools/probe_mixed_decode_split.py'
+adding 'tools/probe_mixed_optimization.py'
+adding 'tools/probe_mixed_prepare_reuse.py'
+adding 'tools/probe_native_current_fia.py'
+adding 'tools/probe_official_attention.py'
+adding 'tools/probe_ops.py'
+adding 'tools/probe_prefix_cache.py'
+adding 'tools/probe_request_windows.py'
+adding 'tools/probe_striped_cache.py'
+adding 'tools/probe_vector_init_rotation.py'
+adding 'tools/readiness.py'
+adding 'tools/request_window_reader_gate.py'
+adding 'tools/rotation_preparation_limits.py'
+adding 'tools/rotation_recipe_diagnostic.py'
+adding 'tools/run_cpu_debug.py'
+adding 'tools/run_mixed_cv_cpu_debug.py'
+adding 'tools/service_probe.py'
+adding 'tools/serving_variants.py'
+adding 'tools/striped_fixture.py'
+adding 'tools/summarize_c16_breakdown.py'
+adding 'tools/summarize_device_events.py'
+adding 'tools/summarize_profile.py'
+adding 'tools/summarize_progress.py'
+adding 'tools/summarize_timer.py'
+adding 'tools/summarize_timing.py'
+adding 'tools/target_cli.py'
+adding 'tools/timer32k.py'
+adding 'tools/vm_validate.py'
+adding 'tools/whole_run_model.py'
+adding 'tools/data/README.md'
+adding 'tools/data/gpqa_diamond.csv.gz'
+adding 'tools/experiments/__init__.py'
+adding 'tools/experiments/active_identity_store_fixture.py'
+adding 'tools/experiments/admission_replay.py'
+adding 'tools/experiments/affine_bf16_residual_screen.py'
+adding 'tools/experiments/affine_cube_counterexample.py'
+adding 'tools/experiments/affine_cube_reference.py'
+adding 'tools/experiments/analyze_decode_completion.py'
+adding 'tools/experiments/bf16_final_rv_screen.py'
+adding 'tools/experiments/decode_completion_probe.py'
+adding 'tools/experiments/dequant_bf16_product_screen.py'
+adding 'tools/experiments/export_shared_fp32.py'
+adding 'tools/experiments/fp32_block_attention_stress.py'
+adding 'tools/experiments/int8_planes_counterexample.py'
+adding 'tools/experiments/make_decode_pipeline.py'
+adding 'tools/experiments/package_decode_bundle.py'
+adding 'tools/experiments/prefill_phase_ledger.py'
+adding 'tools/experiments/prefill_tile_reference.py'
+adding 'tools/experiments/prefill_tile_stress.py'
+adding 'tools/experiments/prefix_checkpoint_audit.py'
+adding 'tools/experiments/replay_shared_fp32.py'
+adding 'tools/experiments/request_window_prefix_protocol.py'
+adding 'tools/experiments/run_camodel_arm.py'
+adding 'tools/experiments/shared_fp32_tile_reference.py'
+adding 'tools/experiments/shared_history_work.py'
+adding 'tools/experiments/stream_camodel_markers.py'
+adding 'tools/experiments/striped_direct_nz_address_screen.py'
+adding 'tools/experiments/striped_metadata_bits.py'
+adding 'tools/experiments/summarize_decode_critical_chain.py'
+adding 'tools/experiments/wide_fp32_fixture.py'
+adding 'oscar_ascend_external-0.1.0.dist-info/METADATA'
+adding 'oscar_ascend_external-0.1.0.dist-info/WHEEL'
+adding 'oscar_ascend_external-0.1.0.dist-info/entry_points.txt'
+adding 'oscar_ascend_external-0.1.0.dist-info/top_level.txt'
+adding 'oscar_ascend_external-0.1.0.dist-info/RECORD'
+removing /var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr-native-v12-build-k4wnm9z9/bdist.macosx-10.15-universal2/wheel

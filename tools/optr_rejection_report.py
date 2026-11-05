@@ -180,6 +180,11 @@ def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None
     proposal_path = directory / (proposal_key + ".json")
     proposal = FitCheckpoints._load_from(proposal_path, proposal_key, identity)
     policy = profile["refinement_policy"]
+    if policy.get("policy_version") == "optr_recipe3_native_residual_ascend_v12":
+        if source_checkpoint is not None:
+            raise ValueError("native-residual diagnostic cannot consume old fitted proposals")
+        return _native_layer(name, seed, record, constants, proposal, policy, identity,
+                             manifest_path, proposal_path)
     source_policy = policy
     source_record = None
     provenance = None
@@ -272,6 +277,61 @@ def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None
     return detail, summarize_layer(detail)
 
 
+def _native_layer(name, seed, record, constants, saved, policy, identity, completed_path, lock_path):
+    """Authenticate the locked v12 evidence, keeping train and validation apart.
+
+    Small matrix reconstruction authenticates saved tangents and their hashes;
+    no captured tensor, gradient, candidate search or attention replay is used.
+    Passing train candidates are expected here when validation rejected them.
+    """
+    import torch
+    from oscar_ascend.optr_artifacts import matrix_digest
+    from oscar_ascend.optr_native_residual import validate_selection
+    from tools.optr_rejection_summary import summarize_layer
+    baseline_hash = matrix_digest({name: seed})
+    binding = {"strategy": policy["deployment_candidate_selection"], "policy": policy,
+               "base_constants_sha256": baseline_hash,
+               "fitting_implementation_sha256": identity["fitting_implementation_sha256"]}
+    if saved.get("native_residual_binding") != binding:
+        raise ValueError("native-residual diagnostic lock binding differs")
+    selected, before, after, decision, proposal = (saved.get(key) for key in
+        ("selected", "before", "after", "decision", "proposal"))
+    validate_selection(name, seed, selected, before, after, decision, proposal, policy)
+    if (record.get("native_residual_selection") != decision or
+            record["validation"] != {"baseline": before, "selected": after} or
+            selected.get("layer_id") != constants.get("layer_id") or
+            any(not torch.equal(selected[key], constants[key]) for key in ("Rk", "Rv", "k_mean"))):
+        raise ValueError("native-residual diagnostic completed layer differs from its selection lock")
+
+    def describe(row, phase, previous, measured):
+        detail = metric_rejections(previous, measured)
+        if row.get("accepted") is not detail["accepted"]:
+            raise ValueError("native-residual diagnostic candidate conflicts with its strict gate")
+        return {**{key: row[key] for key in ("candidate", "head", "side", "radius", "radius_index",
+                    "constants_sha256", "same_bf16_operand_as_seed")},
+                "phase": phase, "unchanged_baseline": row["constants_sha256"] == baseline_hash, **detail}
+
+    train = [describe(row, "native_train", decision["train_baseline"], row["train"])
+             for row in decision["evaluated_train_candidates"]]
+    validation = [describe(row, "native_validation", before, row["validation"])
+                  for row in decision["evaluated_validation_candidates"]]
+    if decision["accepted"] or any(row["accepted"] for row in validation):
+        raise ValueError("native-residual diagnostic expects no validation winner")
+    detail = {"layer": name, "layer_id": seed["layer_id"], "strategy": binding["strategy"],
+        "base_constants_sha256": baseline_hash,
+        "candidate_count": len(train), "train_candidate_count": len(train),
+        "validation_candidate_count": len(validation),
+        "candidate_count_scope": "unique_train_candidates_validation_rechecks_counted_separately",
+        "independent_test": "baseline_compared_with_itself_no_proposal_tested",
+        "candidate_checkpoint": str(lock_path), "completed_checkpoint": str(completed_path),
+        "checkpoint_manifest_sha256": {
+            "completed": hashlib.sha256(completed_path.read_bytes()).hexdigest(),
+            "proposal": hashlib.sha256(lock_path.read_bytes()).hexdigest()},
+        "candidates": train, "validation_candidates": validation,
+        "gradient_evaluations": decision["gradient_evaluations"]}
+    return detail, summarize_layer(detail)
+
+
 def report_no_improvement(config, *, output=None, testing=False):
     """Save a report from current completed work; return compact layer summaries.
 
@@ -281,7 +341,8 @@ def report_no_improvement(config, *, output=None, testing=False):
     """
     from oscar_ascend.optr_artifacts import file_sha256
     from oscar_ascend.optr_checkpoint import fitting_implementation_digest
-    from oscar_ascend.optr_policy import RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION, compatible_capture_profiles
+    from oscar_ascend.optr_policy import (RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION,
+                                        RECIPE3_NATIVE_POLICY_VERSION, compatible_capture_profiles)
     from oscar_ascend.rotations import calibration_cache_identity, checkpoint_identity, rotation_artifact_path
     from tools.prepare_optr_recipe3_base import base_config, load_base
     from tools.phase import atomic_json
@@ -291,7 +352,7 @@ def report_no_improvement(config, *, output=None, testing=False):
     profile = calibration_cache_identity(config, fingerprint)
     if (config.get("optr_baseline") != "recipe3" or
             profile.get("refinement_policy", {}).get("policy_version") not in
-            (RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION)):
+            (RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION, RECIPE3_NATIVE_POLICY_VERSION)):
         raise ValueError("OptR diagnostic requires the current recipe3 refinement policy")
     destination = Path(output).expanduser().resolve() if output else rotation_artifact_path(config, fingerprint)
     selected = base_config(config, fingerprint)
@@ -337,11 +398,15 @@ def report_no_improvement(config, *, output=None, testing=False):
                   "Candidate ordering in this report is descriptive only; no selection or publication changed.",
                   "Rejected proposals were not tested independently; test passed compares recipe3 with itself.",
                   "Repair rows bind saved checkpoint evidence; this report does not reconstruct microstep matrices.",
+                  "Native-residual rows separate train checks from validation rechecks; a train pass is not a validation pass.",
+                  "Native-residual locks authenticate saved small-matrix directions without attention replay or training.",
                   "Frame context zero identifies first prefill; positive context identifies cached-context frames.",
                   "Query counts include projections and partitions; terminal checks duplicate their final query.",
                   "This report does not establish LongBench accuracy, NPU equivalence, or serving performance."]}
     atomic_json(report_path, result)
-    return {"status": result["status"], "report": str(report_path),
+    native_counts = ({"validation_candidate_count": sum(row.get("validation_candidate_count", 0) for row in layers)}
+                     if any("validation_candidates" in row for row in layers) else {})
+    return {"status": result["status"], "report": str(report_path), **native_counts,
             "checkpoint_generation": str(generation), "layer_count": len(layers),
             "candidate_count": sum(row["candidate_count"] for row in layers),
             "layers": compact, "recomputed_fit_or_replay": False,

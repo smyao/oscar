@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148/#170/#173: authenticated OptR constants/certificates.
+"""Archive #86/#97/#148/#170/#173/#175-177: authenticated OptR constants/certificates.
 
 Used during preparation/loading only. No optimizer, traces or extra matrix
 operations are installed in the serving forward path. The old qqt/sst pair
@@ -298,11 +298,15 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     if recipe3:
         from .optr_policy import RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION
         from .optr_recipe3_certificate import REPAIR_POLICY_VERSION
+        from .optr_native_residual_certificate import POLICY_VERSION as NATIVE_POLICY_VERSION, validate_policy
+        native_residual = policy.get("policy_version") == NATIVE_POLICY_VERSION
+        if native_residual:
+            validate_policy(policy)
         if policy.get("policy_version") == REPAIR_POLICY_VERSION:
             from .optr_trust_region import REPAIR_POLICY
             if policy.get("recipe3_repair") != REPAIR_POLICY:
                 raise ValueError("recipe3 OptR repair policy differs")
-        if (policy.get("fitted_grouping") != "layer_kv_head" or
+        if not native_residual and (policy.get("fitted_grouping") != "layer_kv_head" or
                 policy.get("selection") != "recipe3_layer_each_query_and_projection_nonworse" or
                 policy.get("deployment_candidate_selection") != RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION or
                 type(policy.get("max_deployment_candidates")) is not int or
@@ -393,6 +397,9 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         if recipe3:
             from .optr_recipe3_certificate import validate_repair_record
             validate_repair_record(record, policy, artifact.get("global_kv_heads"))
+            if native_residual:
+                from .optr_native_residual_certificate import validate_native_record
+                validate_native_record(name, record, policy, artifact.get("global_kv_heads"))
         val_ids = {r["request_id"] for r in record["validation"]["baseline"]["requests"]}
         test_ids = {r["request_id"] for r in record["test"]["baseline"]["requests"]}
         val_hashes = {r["sample_sha256"] for r in record["validation"]["baseline"]["requests"]}

@@ -1,4 +1,4 @@
-"""Archive #148/#163/#170/#172/#174: isolate the requested OptR migration.
+"""Archive #148/#163/#170/#172/#174/#177: isolate the requested OptR migration.
 
 The independently committed oscar-new-6 base is the performance/source oracle.
 OptR changes offline constants and preparation only. These CPU/source checks
@@ -97,7 +97,7 @@ def test_all_existing_flags_and_native_arguments_match_base(previous_variants, p
     actual = serving_variants.variant_config(original, variant)
     enabled = variant == "candidate" and mode == "default"
     assert actual == {**expected, **({"rotation_refinement": "optr", "optr_baseline": "recipe3",
-                                    "optr_recipe3_repair": "single_head_trust_region_v1"} if enabled else {})}
+                                    "optr_recipe3_optimizer": "joint_native_residual_v1"} if enabled else {})}
     assert serving_variants.variant_features(actual) == previous_variants.variant_features(expected)
     assert serve_argv(actual) == serve_argv(expected)
     assert "oscar_current_only_policy" not in actual

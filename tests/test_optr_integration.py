@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148/#170/#173: artifacts and candidate quality boundaries."""
+"""Archive #86/#97/#148/#170/#173/#177: artifacts and candidate boundaries."""
 import copy
 import hashlib
 import json
@@ -31,7 +31,7 @@ def configuration(tmp_path):
     # These certificate/compatibility fixtures exercise the frozen v9 format.
     # New recipe3 policy and schema3 evidence have independent regression tests.
     selected.pop("optr_baseline")
-    selected.pop("optr_recipe3_repair")
+    selected.pop("optr_recipe3_optimizer")
     return selected
 
 
@@ -73,7 +73,8 @@ def artifact(config):
 def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     config = json.loads(Path("configs/target.json").read_text())
     selected = variant_config(config, "candidate")
-    seed = {k: v for k, v in selected.items() if k not in ("rotation_refinement", "optr_baseline")}
+    seed = {k: v for k, v in selected.items() if k not in (
+        "rotation_refinement", "optr_baseline", "optr_recipe3_optimizer")}
     assert serve_argv(selected) == serve_argv(seed)
     assert "rotation_refinement" not in config
     assert selected["rotation_refinement"] == "optr"
@@ -82,19 +83,23 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer_kv_head"
-    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_trust_region_ascend_v11"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_native_residual_ascend_v12"
     assert runtime_feature_summary(selected, "candidate")["key_centering"] is True
     assert runtime_feature_summary(selected, "candidate")["independent_test_blocks_publication"] is True
     assert runtime_feature_summary(selected, "candidate")["optr_validation_projection_views"] == [
         "fp32", "bf16_output", "bf16_rank_output"]
     assert runtime_feature_summary(selected, "candidate")["optr_seed_partition"] == "original_recipe3_calibration"
     assert runtime_feature_summary(selected, "candidate")["optr_deployment_candidate_selection"] == (
-        "perhead_existing_kv_checkpoints_best_nonworse")
-    assert runtime_feature_summary(selected, "candidate")["optr_max_deployment_candidates"] == 12
+        "recipe3_native_residual_train_then_validation_v1")
+    assert runtime_feature_summary(selected, "candidate")["optr_max_deployment_candidates"] == 8
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
-    calibrated = {**selected, "optr_calibration": {"steps": 8}}
-    assert variant_config(calibrated, "candidate") == calibrated
+    legacy = {k: v for k, v in selected.items() if k != "optr_recipe3_optimizer"}
+    calibrated = {**legacy, "optr_recipe3_repair": "single_head_trust_region_v1",
+                  "optr_calibration": {"steps": 8}}
+    assert variant_config(calibrated, None) == calibrated
+    with pytest.raises(ValueError, match="frozen"):
+        variant_config(calibrated, "candidate")
     assert variant_config({**config, "rotation_refinement": None}, "candidate") == selected
     assert variant_config(selected, "candidate") == selected
     for override in ({"rotation_method": "hadamard"}, {"quantization": "ascend"},

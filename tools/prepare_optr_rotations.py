@@ -1,9 +1,10 @@
-"""Archive #86/#97/#148/#170/#172/#173: offline output-aware refinement.
+"""Archive #86/#97/#148/#170/#172/#173/#175-177: offline output-aware refinement.
 
 The fixed candidate calls this module. User 2026-10-28 authorizes experimental
 constants after validation, with independent test recorded, never reselected.
 Native sampling runs in an isolated
-child and releases its model before NPU proxy fitting and CPU verification. No runtime/kernel/
+child and releases its model before fitting (v12 CPU native residual; legacy NPU proxy)
+and CPU verification. No runtime/kernel/
 scheduler implementation is changed; candidate defaults remain separate.
 """
 from __future__ import annotations
@@ -284,6 +285,11 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None,
                  fit_device="cpu", source_checkpoint=None):
     """Search one shared pair, accept it as a whole layer, then record test."""
+    from oscar_ascend.optr_native_residual_certificate import POLICY_VERSION as NATIVE_POLICY_VERSION
+    if policy.get("policy_version") == NATIVE_POLICY_VERSION:
+        from tools.prepare_optr_native_residual import refine_layer as refine_native
+        return refine_native(name, baseline, samples, policy, fitter=fitter,
+            checkpoints=checkpoints, progress=progress, fit_device=fit_device, source_checkpoint=source_checkpoint)
     from oscar_ascend.optr_recipe3_certificate import is_recipe3
     if is_recipe3(policy):
         from tools.prepare_optr_recipe3 import refine_layer as refine_recipe3
@@ -486,6 +492,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     if parallel_testing and (not testing or fitter is not None):
         raise ValueError("parallel CPU preparation is test-only and requires the real fitter")
     policy = optr_policy(config)
+    native_residual = policy.get("execution") == "cpu_native_residual_constrained_selection"
     names, dim, fingerprint = checkpoint_identity(config["model"])
     destination = Path(output).expanduser().resolve() if output else rotation_artifact_path(config, fingerprint)
     profile = calibration_cache_identity(config, fingerprint)
@@ -511,7 +518,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         raise ValueError("injected OptR preparation hooks are test-only")
     destination.parent.mkdir(parents=True, exist_ok=True)
     _progress(phase="preparing_seed", artifact=str(destination), recipe_version=5,
-              online_operations="unchanged", first_preparation="native_capture_and_npu_sequential_optimization")
+              online_operations="unchanged", first_preparation=("native_capture_and_cpu_residual_selection"
+                  if native_residual else "native_capture_and_npu_sequential_optimization"))
     base_config = _base_config(config, fingerprint)
     if Path(base_config["rotation_artifact"]).resolve() == destination:
         raise ValueError("refined destination must not overwrite the source OSCAR seed")
@@ -579,7 +587,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     _progress(phase="fit_plan", layers=len(names), heads_per_layer=baseline["global_kv_heads"],
               steps_per_phase=policy["steps"], progress_timeout_seconds=preparation_progress_timeout(config),
               checkpoints=str(checkpoints.root), fitting_objective=policy["fitting_objective"],
-              fitting_device=("not_run_authenticated_v10_source" if source_checkpoint is not None else
+              fitting_device=("cpu_native_residual" if native_residual else
+                              "not_run_authenticated_v10_source" if source_checkpoint is not None else
                               "cpu_test" if testing else "selected_npus_per_layer"), matrix_exp_device="cpu",
               deployment_validation_device="cpu", fitted_grouping=policy["fitted_grouping"])
     fit_device = None
@@ -596,7 +605,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             if saved is None:
                 samples = load_layer_samples(manifest, seed["layer_id"])
                 watchdog.progress(layer=name, phase="layer_traces_verified")
-                if fit_device is None and source_checkpoint is None:
+                if fit_device is None and source_checkpoint is None and not native_residual:
                     from oscar_ascend.optr_sequential import fitting_device
                     fit_device = fitting_device(config, testing=testing)
                 selected, record = refine_layer(name, seed, samples, policy, fitter=fitter,
@@ -628,6 +637,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             "quality_acceptance": "not_run", "performance": "not_measured",
             "model_forward_device": ("not_run_authenticated_capture" if source_checkpoint is not None else
                                      "cpu_test" if testing else "npu"),
-            "optimization_device": ("cpu_trust_region_from_authenticated_v10" if source_checkpoint is not None else
+            "optimization_device": ("cpu_native_residual" if native_residual else
+                                    "cpu_trust_region_from_authenticated_v10" if source_checkpoint is not None else
                                     "cpu_test" if testing else "parallel_npu_fp32_cpu_matrix_exp"),
             "deployment_validation_device": "cpu", "online_operations": "unchanged"}

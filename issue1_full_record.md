@@ -28913,3 +28913,9 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地定位与处置**：摘要合并原候选和小步后只显示总SSE最低者，遮住新搜索结果。增加独立repair_search摘要及纯标准库--saved-report读取已生成JSON，原--config仍保留checkpoint认证。固定candidate的错误报告自动接入新摘要；不修改任何拟合摘要输入、严格门、PT发布、在线算子/runtime/PC/GDN/MTP/clip/窗口/argv/timer，不删除PT或checkpoint，不因诊断失效重跑113分钟工作。不以缩半径能成功为保证，也不无证据扩大搜索。
 
 **验收边界**：本轮只修诊断，不称算法已解决；没有新模型分数，OPTR超过迁移前recipe3 OSCAR目标未完成。既有v11/本轮源码与CPU测试不能否定这次现场失败。无agent真机连接或NPU/性能/AISBench测试；详细证据、只读命令与验证见 `docs/optr_v11_failure_20261104.md`。
+
+**2026-11-04后续小步详情**：附件 `7a36165d` 原字节保存于 `reports/optr_native_residual_20261104/user_log.txt`，SHA256 `f7ce8779157c4342ff75190727183ee0bf86a5113dc95559bf624bc069e608ed`。完整显示layer59/63：各64个小步中26个总SSE下降，但改善者至少180个query检查退化；最佳小步总SSE分别降1.139%/1.549%，其最差项分别升8.050%/6.737%，均非全BF16操作数不变。汇总仍16层1216候选无改善；本片段没有RESULT或耗时，不宣称又重跑113分钟。开头残行不赋予层身份，两层分布不推广到其余层。
+
+**后续本地目标修正，非新真机通过记录**：源码确认旧proxy重建FP32 teacher且忽略捕获gate/teacher，分头平方遗漏联合输出交叉项；v11单侧V方向丢失训练时所用K条件。固定CPU反例中proxy下降而部署SSE上升。candidate v12改为从完整原recipe3计算原生teacher/gate/全头三视图联合残差方向，每层8方向、16个train候选、最多8个validation候选；全部原逐query/双partition/三视图门保持，选择在test前锁定且失败不重选。旧raw capture认证复用，旧fit不作新证据，线上CANN/runtime/argv/timer不动。
+
+**理论与验收边界**：联合残差目标消除已复现的代理错位，但STE和有限旋转自由度不保证严格可行改善点存在；仅实际前向门证明有限样本非劣/改善，不保证LongBench超过45+。真实recipe3基线的合成例train/validation改善而test退化已保留并拒绝发布。CPU/源码/打包验证见 `docs/optr_native_residual_20261104.md` 与本轮validation，不把本地结果记成设备或模型验收。

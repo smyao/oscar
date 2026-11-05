@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148/#170/#173: offline refinement policy and identity.
+"""Archive #86/#97/#148/#170/#173/#175/#176/#177: offline policy and identity.
 
 OptR adds no serving operations. The policy identifies calibration and the
 existing v4/group-D/FP32-metadata reader; it never changes that reader.
@@ -15,6 +15,10 @@ POLICY_VERSION = "optr_oscar_shared_candidates_ascend_v9"
 RECIPE3_POLICY_VERSION = "optr_recipe3_centered_candidates_ascend_v10"
 RECIPE3_REPAIR_POLICY_VERSION = "optr_recipe3_trust_region_ascend_v11"
 RECIPE3_REPAIR = "single_head_trust_region_v1"
+RECIPE3_NATIVE_POLICY_VERSION = "optr_recipe3_native_residual_ascend_v12"
+RECIPE3_NATIVE_OPTIMIZER = "joint_native_residual_v1"
+RECIPE3_NATIVE_CANDIDATE_SELECTION = "recipe3_native_residual_train_then_validation_v1"
+RECIPE3_NATIVE_MAX_CANDIDATES = 8
 PROJECTION_VIEWS = ("fp32", "bf16_output", "bf16_rank_output")
 DEPLOYMENT_CANDIDATE_SELECTION = "fixed_k_existing_v_checkpoints_first_nonworse"
 MAX_DEPLOYMENT_CANDIDATES = 6
@@ -34,6 +38,12 @@ def optr_policy(config):
     repair = config.get("optr_recipe3_repair")
     if repair not in (None, RECIPE3_REPAIR) or (repair is not None and config.get("optr_baseline") != "recipe3"):
         raise ValueError("optr_recipe3_repair requires recipe3 and its fixed single-head trust-region strategy")
+    optimizer = config.get("optr_recipe3_optimizer")
+    if optimizer not in (None, RECIPE3_NATIVE_OPTIMIZER) or (
+            optimizer is not None and config.get("optr_baseline") != "recipe3"):
+        raise ValueError("optr_recipe3_optimizer requires recipe3 and its fixed native-residual strategy")
+    if optimizer is not None and repair is not None:
+        raise ValueError("optr_recipe3_optimizer and optr_recipe3_repair are mutually exclusive")
     policy = {
         "policy_version": POLICY_VERSION,
         "capture_lengths": {"train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
@@ -80,6 +90,15 @@ def optr_policy(config):
         from .optr_trust_region import REPAIR_POLICY
         policy.update(policy_version=RECIPE3_REPAIR_POLICY_VERSION,
                       recipe3_repair=copy.deepcopy(REPAIR_POLICY))
+    if optimizer is not None:
+        from .optr_native_residual import NATIVE_RESIDUAL_POLICY
+        policy.update(policy_version=RECIPE3_NATIVE_POLICY_VERSION,
+                      native_residual=copy.deepcopy(NATIVE_RESIDUAL_POLICY),
+                      fitting_objective="joint_native_bf16_postgate_query_residual",
+                      execution="cpu_native_residual_constrained_selection",
+                      deployment_candidate_selection=RECIPE3_NATIVE_CANDIDATE_SELECTION,
+                      max_deployment_candidates=RECIPE3_NATIVE_MAX_CANDIDATES,
+                      steps=1, eval_every=1)
     overrides = config.get("optr_calibration", {})
     if not isinstance(overrides, dict):
         raise ValueError("optr_calibration must be an object")
@@ -87,6 +106,10 @@ def optr_policy(config):
                "steps", "lr", "eval_every", "query_batch_size"}
     if set(overrides) - allowed:
         raise ValueError("unknown or frozen OptR policy field")
+    if optimizer is not None and ("lr" in overrides or any(
+            key in overrides and (type(overrides[key]) is not int or overrides[key] != 1)
+            for key in ("steps", "eval_every"))):
+        raise ValueError("native-residual OptR has a frozen direction/radius budget, not optimizer-step overrides")
     policy.update(copy.deepcopy(overrides))
     for key, upper in (("decode_tokens", 64), ("query_samples_per_frame", 64),
                        ("steps", 160), ("eval_every", 160), ("query_batch_size", 64)):
@@ -127,7 +150,7 @@ def legacy_capture_policy(config, version="v1"):
     # Historical identities always describe their original shared seed. A
     # recipe3 caller may inspect them, but cannot relabel them as new captures.
     historical_config = {key: value for key, value in config.items()
-                         if key not in ("optr_baseline", "optr_recipe3_repair")}
+                         if key not in ("optr_baseline", "optr_recipe3_repair", "optr_recipe3_optimizer")}
     policy = optr_policy(historical_config)
     overrides = config.get("optr_calibration", {})
     policy.pop("deployment_candidate_selection")
@@ -195,6 +218,14 @@ def compatible_capture_profiles(profile, config):
     if config.get("optr_baseline") == "recipe3":
         # Recipe3 calibration records must be excluded before fresh independent
         # length buckets are captured. Old v9 traces lack that evidence.
+        if config.get("optr_recipe3_optimizer") == RECIPE3_NATIVE_OPTIMIZER:
+            # Only sampling is reused. Reconstruct both historical policies
+            # exactly; their default optimizer budget stays 80, not v12's one direction.
+            old_config = {key: value for key, value in config.items()
+                          if key not in ("optr_recipe3_optimizer", "optr_recipe3_repair")}
+            historical = (old_config, {**old_config, "optr_recipe3_repair": RECIPE3_REPAIR})
+            return [{**copy.deepcopy(profile), "refinement_policy": optr_policy(previous)}
+                    for previous in historical]
         if config.get("optr_recipe3_repair") is None:
             return []
         old_config = {key: value for key, value in config.items() if key != "optr_recipe3_repair"}
@@ -216,6 +247,8 @@ def validate_refinement_config(config):
         raise ValueError("optr_baseline requires OptR refinement")
     if config.get("optr_recipe3_repair") is not None and refinement != "optr":
         raise ValueError("optr_recipe3_repair requires OptR refinement")
+    if config.get("optr_recipe3_optimizer") is not None and refinement != "optr":
+        raise ValueError("optr_recipe3_optimizer requires OptR refinement")
     if refinement == "optr":
         if (config.get("use_native_token_budget", False) or
                 type(config.get("max_num_batched_tokens")) is not int or

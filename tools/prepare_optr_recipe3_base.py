@@ -1,4 +1,4 @@
-"""Archive #86/#97/#165/#166/#170/#172/#174: refine the actual recipe3 base.
+"""Archive #86/#97/#165/#166/#170/#172/#174/#177: refine the actual recipe3 base.
 
 This offline adapter preserves the original per-head FP64 fitting, key means,
 pair manifest and cache identity. It never substitutes the shared zero-mean
@@ -16,7 +16,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 _REFINEMENT_FIELDS = ("rotation_refinement", "optr_baseline", "optr_calibration", "optr_seed_capture",
-                      "rotation_seed", "optr_recipe3_repair", "rotation_artifact")
+                      "rotation_seed", "optr_recipe3_repair", "optr_recipe3_optimizer", "rotation_artifact")
 
 
 def base_config(config, fingerprint):

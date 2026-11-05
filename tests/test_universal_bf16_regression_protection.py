@@ -1,4 +1,4 @@
-"""Archive #126/#145/#148/#172/#174: source and route protection.
+"""Archive #126/#145/#148/#172/#174/#177: source and route protection.
 
 The fixed hashes were read from git show 232b563b:<path> and 34bc2b75:<path>.
 They protect the complete decoder and unchanged current-only/C4/routing path,
@@ -99,7 +99,7 @@ def test_variant_source_only_adds_pinned_optr_and_retired_policy_cleanup():
     anchor = '    selected = dict(config)\n'
     assert source.count(anchor) == 1
     expected = source.replace(anchor, anchor + "    selected.pop('oscar_current_only_policy', None)\n")
-    # 2026-11-03: only the offline baseline/repair markers and control cleanup
+    # 2026-11-04: only the offline baseline/optimizer markers and control cleanup
     # are additionally authorized. Compare the remaining executable source
     # to the independently pinned migration, keeping runtime flags exact.
     class RemoveRecipe3Marker(ast.NodeTransformer):
@@ -113,13 +113,19 @@ if selected.get("optr_recipe3_repair") not in (None, "single_head_trust_region_v
     raise ValueError("optr_recipe3_repair must use its fixed single-head trust-region strategy")
 if selected.get("optr_recipe3_repair") is not None and selected.get("optr_baseline") != "recipe3":
     raise ValueError("optr_recipe3_repair requires recipe3")
+if selected.get("optr_recipe3_optimizer") not in (None, "joint_native_residual_v1"):
+    raise ValueError("optr_recipe3_optimizer must use its fixed native-residual strategy")
+if selected.get("optr_recipe3_optimizer") is not None and selected.get("optr_baseline") != "recipe3":
+    raise ValueError("optr_recipe3_optimizer requires recipe3")
+if selected.get("optr_recipe3_optimizer") is not None and selected.get("optr_recipe3_repair") is not None:
+    raise ValueError("optr_recipe3_optimizer and optr_recipe3_repair are mutually exclusive")
 ''').body
             if any(ast.dump(node) == ast.dump(check) for check in repair_checks):
                 return None
             return self.generic_visit(node)
 
         def visit_Expr(self, node):
-            for key in ("optr_baseline", "optr_seed_capture", "optr_recipe3_repair"):
+            for key in ("optr_baseline", "optr_seed_capture", "optr_recipe3_repair", "optr_recipe3_optimizer"):
                 allowed = ast.parse(f'selected.pop("{key}", None)').body[0]
                 if ast.dump(node) == ast.dump(allowed):
                     return None
@@ -132,10 +138,21 @@ if selected.get("optr_recipe3_repair") is not None and selected.get("optr_baseli
             repair = ast.parse('selected["optr_recipe3_repair"] = "single_head_trust_region_v1"').body[0]
             if ast.dump(node) == ast.dump(repair):
                 return None
+            optimizer = ast.parse('selected["optr_recipe3_optimizer"] = "joint_native_residual_v1"').body[0]
+            if ast.dump(node) == ast.dump(optimizer):
+                return None
             return self.generic_visit(node)
 
     current_tree = RemoveRecipe3Marker().visit(ast.parse(text))
     expected_tree = ast.parse(expected)
+    # Normalize only the disclosed archive-header edit, retaining all remaining
+    # docstring content and executable AST in the independent source comparison.
+    old_header = "Archive #148-151/#170/#173: one candidate preset for probes and direct serving."
+    new_header = "Archive #148-151/#170/#173/#177: one candidate for probes and direct serving."
+    assert ast.get_docstring(expected_tree).splitlines()[0] == old_header
+    assert ast.get_docstring(current_tree).splitlines()[0] == new_header
+    assert ast.get_docstring(current_tree).splitlines()[1:] == ast.get_docstring(expected_tree).splitlines()[1:]
+    current_tree.body[0].value.value = expected_tree.body[0].value.value
     # Human-readable offline receipt fields are verified by policy tests.
     for tree in (current_tree, expected_tree):
         tree.body = [node for node in tree.body if not (
@@ -150,7 +167,7 @@ def test_candidate_configuration_matches_accepted_performance_base(prefix):
     expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
     expected['enable_prefix_caching'] = prefix
     expected.update(port=7878, rotation_refinement='optr', optr_baseline='recipe3',
-                    optr_recipe3_repair='single_head_trust_region_v1')
+                    optr_recipe3_optimizer='joint_native_residual_v1')
     assert candidate_config(prefix) == expected
 
 

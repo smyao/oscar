@@ -1,4 +1,4 @@
-"""Archive #170/#172/#174: strict, recipe3-anchored offline publication.
+"""Archive #170/#172/#174-177: strict, recipe3-anchored offline publication.
 
 These checks certify local replay only; no claim of model-quality acceptance
 is inferred from a certificate. They run during preparation/loading only.
@@ -15,7 +15,8 @@ class RefitRequired(ValueError):
 
 
 def is_recipe3(policy):
-    return policy.get("policy_version") in (POLICY_VERSION, REPAIR_POLICY_VERSION)
+    from .optr_native_residual_certificate import POLICY_VERSION as NATIVE_POLICY_VERSION
+    return policy.get("policy_version") in (POLICY_VERSION, REPAIR_POLICY_VERSION, NATIVE_POLICY_VERSION)
 
 
 def validate_repair_record(record, policy, heads):

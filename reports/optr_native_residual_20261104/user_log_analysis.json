@@ -1,0 +1,195 @@
+{
+  "attachment_sha256": "f7ce8779157c4342ff75190727183ee0bf86a5113dc95559bf624bc069e608ed",
+  "attachment_bytes": 6316,
+  "complete_layer_rows": [
+    {
+      "layer": "model.layers.59.self_attn.attn",
+      "candidates": 76,
+      "best_total_candidate": "primary",
+      "ranking_scope": "changed",
+      "total_relative_delta": -0.04885139246609673,
+      "reason": "fine_grained_regression",
+      "regressed_queries": 224,
+      "worst_gate": [
+        {
+          "projection_view": "bf16_rank_output",
+          "scope": "query",
+          "request_id": "validation_32768_1:single_split",
+          "partition": "single_split",
+          "frame_id": 2,
+          "context": 32768,
+          "current_end": 32769,
+          "position": 32768,
+          "regressed_metrics": [
+            "squared_error",
+            "normalized_error"
+          ],
+          "squared_error": {
+            "baseline": 57.16739260907343,
+            "candidate": 138.43753543654748,
+            "delta": 81.27014282747405,
+            "relative_delta": 1.4216170988105394,
+            "positive_from_zero": false
+          },
+          "normalized_error": {
+            "baseline": 0.0552752897776298,
+            "candidate": 0.13385558686721574,
+            "delta": 0.07858029708958594,
+            "relative_delta": 1.4216170988105394,
+            "positive_from_zero": false
+          }
+        }
+      ],
+      "original_candidates": 12,
+      "repair_candidates": 64,
+      "repair_search": {
+        "candidate_count": 64,
+        "unchanged_constants_count": 0,
+        "same_bf16_operand_count": 0,
+        "strict_total_improvement_count": 26,
+        "bf16_only_regression_count": 0,
+        "reason_counts": {
+          "aggregate_error_regression": 38,
+          "fine_grained_regression": 21,
+          "projection_total_regression": 5
+        },
+        "fewest_regressed_query_checks_among_improving": 180,
+        "best_total": {
+          "candidate": "repair_h2_Rk_r1",
+          "head": 2,
+          "side": "Rk",
+          "radius": 0.01,
+          "total_relative_delta": -0.011390238493955108,
+          "reason": "fine_grained_regression",
+          "regressed_checks": {
+            "total": 0,
+            "request": 0,
+            "frame": 78,
+            "query": 202,
+            "terminal": 78
+          },
+          "worst_gate": [
+            {
+              "projection_view": "fp32",
+              "scope": "query",
+              "request_id": "validation_65536_2:captured_runtime_frames",
+              "partition": "captured_runtime_frames",
+              "frame_id": 3,
+              "context": 49152,
+              "current_end": 65536,
+              "position": 58513,
+              "normalized_error_relative_delta": 0.08049553878633198,
+              "positive_from_zero": false
+            }
+          ]
+        }
+      },
+      "rotation_prepare": "optr",
+      "phase": "no_improvement_layer"
+    },
+    {
+      "layer": "model.layers.63.self_attn.attn",
+      "candidates": 76,
+      "best_total_candidate": "primary",
+      "ranking_scope": "changed",
+      "total_relative_delta": -0.04854288323112126,
+      "reason": "fine_grained_regression",
+      "regressed_queries": 236,
+      "worst_gate": [
+        {
+          "projection_view": "bf16_output",
+          "scope": "query",
+          "request_id": "validation_32768_1:single_split",
+          "partition": "single_split",
+          "frame_id": 4,
+          "context": 32770,
+          "current_end": 32771,
+          "position": 32770,
+          "regressed_metrics": [
+            "squared_error",
+            "normalized_error"
+          ],
+          "squared_error": {
+            "baseline": 335.5566354614003,
+            "candidate": 549.2280082208799,
+            "delta": 213.67137275947965,
+            "relative_delta": 0.6367669423841826,
+            "positive_from_zero": false
+          },
+          "normalized_error": {
+            "baseline": 0.02067519542397903,
+            "candidate": 0.0338404763973016,
+            "delta": 0.013165280973322573,
+            "relative_delta": 0.6367669423841827,
+            "positive_from_zero": false
+          }
+        }
+      ],
+      "original_candidates": 12,
+      "repair_candidates": 64,
+      "repair_search": {
+        "candidate_count": 64,
+        "unchanged_constants_count": 0,
+        "same_bf16_operand_count": 0,
+        "strict_total_improvement_count": 26,
+        "bf16_only_regression_count": 0,
+        "reason_counts": {
+          "aggregate_error_regression": 38,
+          "fine_grained_regression": 26
+        },
+        "fewest_regressed_query_checks_among_improving": 180,
+        "best_total": {
+          "candidate": "repair_h2_Rk_r0",
+          "head": 2,
+          "side": "Rk",
+          "radius": 0.02,
+          "total_relative_delta": -0.015485993780297169,
+          "reason": "fine_grained_regression",
+          "regressed_checks": {
+            "total": 0,
+            "request": 0,
+            "frame": 68,
+            "query": 180,
+            "terminal": 82
+          },
+          "worst_gate": [
+            {
+              "projection_view": "bf16_rank_output",
+              "scope": "query",
+              "request_id": "validation_65536_2:captured_runtime_frames",
+              "partition": "captured_runtime_frames",
+              "frame_id": 2,
+              "context": 32768,
+              "current_end": 49152,
+              "position": 37448,
+              "normalized_error_relative_delta": 0.06737163339533658,
+              "positive_from_zero": false
+            }
+          ]
+        }
+      },
+      "rotation_prepare": "optr",
+      "phase": "no_improvement_layer"
+    }
+  ],
+  "report_summary": {
+    "status": "no_strict_validation_improvement",
+    "report": "/workspace/oscar/oscar-new/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/optr_1f7c086deaddaed2efdd/no-improvement-report.json",
+    "checkpoint_generation": "/workspace/oscar/oscar-new/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/optr_1f7c086deaddaed2efdd/fit-checkpoints/2d3695a9953e941879af44340ea43e94e8a4d3495143825c3e8410826df62ade",
+    "layer_count": 16,
+    "candidate_count": 1216,
+    "recomputed_fit_or_replay": false,
+    "artifact_published": false,
+    "model_quality": "not_measured",
+    "performance": "not_measured",
+    "rotation_prepare": "optr",
+    "phase": "no_improvement_report"
+  },
+  "incomplete_first_line_not_assigned_to_layer": true,
+  "elapsed_seconds": null,
+  "deployed_git_sha": null,
+  "full_checkpoint_available_locally": false,
+  "same_failure_family": "archive_177_no_strict_validation_improvement",
+  "model_quality": "not_measured",
+  "performance": "not_measured"
+}

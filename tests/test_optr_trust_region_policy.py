@@ -1,4 +1,4 @@
-"""Archive #176: new offline selection must preserve the working online bundle."""
+"""Archive #176/#177: explicit v11 retains its policy and online bundle."""
 import ast
 import copy
 import hashlib
@@ -37,13 +37,20 @@ def _target():
     return json.loads(_historical("configs/target.json"))
 
 
-def test_fixed_candidate_changes_only_the_offline_marker_and_policy_receipt():
+def _legacy_candidate():
+    selected = variant_config(_target(), "candidate")
+    selected.pop("optr_recipe3_optimizer")
+    selected["optr_recipe3_repair"] = REPAIR
+    return variant_config(selected, None)
+
+
+def test_explicit_v11_changes_only_the_offline_marker_and_policy_receipt():
     old = types.ModuleType("historical_serving_variants")
     exec(compile(_historical("tools/serving_variants.py"), "historical_serving_variants.py", "exec"),
          old.__dict__)
     config = _target()
     previous = old.variant_config(config, "candidate")
-    selected = variant_config(config, "candidate")
+    selected = _legacy_candidate()
     assert selected == {**previous, "optr_recipe3_repair": REPAIR}
     assert variant_features(selected) == old.variant_features(previous)
     assert serve_argv(selected) == serve_argv(previous)
@@ -59,7 +66,7 @@ def test_fixed_candidate_changes_only_the_offline_marker_and_policy_receipt():
 
 
 def test_only_exact_v10_sampling_is_compatible_and_all_artifact_profiles_are_isolated(tmp_path):
-    selected = variant_config(_target(), "candidate")
+    selected = _legacy_candidate()
     old = {key: value for key, value in selected.items() if key != "optr_recipe3_repair"}
     shared = {key: value for key, value in old.items() if key != "optr_baseline"}
     fingerprint = "policy-test-model"
@@ -83,7 +90,7 @@ def test_only_exact_v10_sampling_is_compatible_and_all_artifact_profiles_are_iso
 
 @pytest.mark.parametrize("variant", ["native", "baseline"])
 def test_other_serving_variants_clear_repair_marker(variant):
-    selected = variant_config(_target(), "candidate")
+    selected = _legacy_candidate()
     actual = variant_config(selected, variant)
     assert "optr_recipe3_repair" not in actual
     assert actual.get("rotation_refinement") is None
@@ -98,7 +105,7 @@ def test_other_serving_variants_clear_repair_marker(variant):
     {"rotation_refinement": None},
 ])
 def test_invalid_explicit_repair_configuration_is_rejected(changes):
-    config = {**variant_config(_target(), "candidate"), **changes}
+    config = {**_legacy_candidate(), **changes}
     with pytest.raises(ValueError):
         validate_refinement_config(config)
     if changes.get("rotation_refinement", "optr") == "optr":

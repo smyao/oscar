@@ -1,0 +1,62 @@
+{
+  "base_commit": "a599e8a7489dac78edc1b22cd31e338fe1f2d09f",
+  "branch": "oscar-new-6",
+  "policy": "optr_recipe3_native_residual_ascend_v12",
+  "fitting_implementation_sha256": "2e26a537009327f10e466d21ee8631016ef17661b8f80e183fb2686d53ca90a2",
+  "host_regression": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr*.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_universal_bf16_regression_protection.py",
+    "passed": 971,
+    "skipped": 1,
+    "failed": 0,
+    "seconds": 44.16,
+    "log": "host_regression.txt",
+    "skip_reason": "existing optional local source audit; pinned AST is tested"
+  },
+  "added_spawn_regression": {
+    "test": "tests/test_optr_native_residual_pipeline.py::test_real_spawn_worker_performs_first_native_fit_on_cpu_and_matches_serial_metrics",
+    "passed": 1,
+    "seconds": 2.64,
+    "evidence": "subagent execution receipt; actual spawn, no mocked fitter or metrics",
+    "source_sha256": "f5c695e1bce8c2ddeb69ca1d5bd21eb8de4287bf61fd336d772fb4954bc908aa"
+  },
+  "unique_relevant_tests_passed": 972,
+  "preexisting_outside_change_failures": {
+    "file": "tests/test_request_window_serving_config.py",
+    "count": 4,
+    "reproduced_using": "a599e8a serving_variants module, otherwise same tests",
+    "reason": "BF16 attention requires physical-page storage; legacy research-window fixtures",
+    "log": "preexisting_request_window_baseline.txt",
+    "production_modified_to_bypass": false
+  },
+  "production_scope": {
+    "protected_files_unchanged": 887,
+    "existing_offline_seams_changed": 10,
+    "new_offline_modules": 3,
+    "manifest": "protected_source_sha256.json",
+    "unexpected_changed": []
+  },
+  "package": {
+    "receipt": "wheel_receipt.json",
+    "clean_build_modules_matched": 223,
+    "installed_policy_and_fitting_digest_match": true,
+    "initial_attempts": [
+      "python -m build unavailable in local environment",
+      "default local build/lib contained historical tools/formal_service.py; verification rejected it, fresh temporary build contains only current source"
+    ],
+    "local_existing_build_directory_deleted": false
+  },
+  "candidate_entry": "candidate_receipt.json",
+  "diff_check": "passed",
+  "precision_evidence": {
+    "kind": "local synthetic CPU deployment-reference functional tests",
+    "theoretical_scope": "matched joint residual objective plus unchanged finite-trace acceptance gates",
+    "universal_strict_gain_guaranteed": false,
+    "multi_layer_or_model_accuracy_guaranteed": false
+  },
+  "target_npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "aisbench": "not_run",
+  "delivery": "local_worktree_not_committed_or_pushed"
+}

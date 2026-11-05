@@ -1,0 +1,222 @@
+{
+  "evidence_kind": "fixed_synthetic_cpu_functional_examples",
+  "archives_read": [
+    170,
+    172,
+    174,
+    175,
+    176,
+    177
+  ],
+  "device": "cpu",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "native_npu_equivalence": "not_measured",
+  "field_failure_contribution": "not_established",
+  "proxy_counterexample": {
+    "synthetic": true,
+    "seed": 11,
+    "step": 0.0001,
+    "positions": [
+      2,
+      5,
+      8,
+      12
+    ],
+    "contexts": [
+      0,
+      0,
+      6,
+      12
+    ],
+    "proxy_before": 0.02650032937526703,
+    "proxy_after": 0.02648964896798134,
+    "deployed_query_sse_before": [
+      2.763994962151628e-05,
+      7.996503700269386e-05,
+      0.19481998682022095,
+      0.18649199604988098
+    ],
+    "deployed_query_sse_after": [
+      2.763994962151628e-05,
+      7.357160211540759e-05,
+      0.19481998682022095,
+      0.18654100596904755
+    ],
+    "deployed_total_before": 0.3814195990562439,
+    "deployed_total_after": 0.3814622163772583,
+    "proxy_native_gradient_dot": -0.0028207527939230204,
+    "all_gates_nonzero": true
+  },
+  "gate_counterfactual": {
+    "synthetic": true,
+    "seed": 11,
+    "counterfactual": "gate_replaced_with_one_minus_gate",
+    "qkv_unchanged": true,
+    "teacher_unchanged": true,
+    "gate_range_valid": true,
+    "proxy_loss_identical": true,
+    "proxy_gradient_identical": true,
+    "deployed_sse_before": 0.3814195990562439,
+    "deployed_sse_after": 0.3962779641151428,
+    "deployed_gradient_change_l2": 1.423797845840454
+  },
+  "real_recipe3_direct_residual": {
+    "synthetic": true,
+    "seed": 3,
+    "step": 0.01,
+    "training_updates": 1,
+    "baseline": "actual_perhead_center_recipe3_fitter",
+    "test_used_for_selection": false,
+    "all_gates_nonzero": true,
+    "all_means_nonzero": true,
+    "baseline_unchanged": true,
+    "train": {
+      "before": [
+        [
+          0.00041169048458655766,
+          0.1009844147513812
+        ],
+        [
+          0.00054931640625,
+          0.10202407836914062
+        ],
+        [
+          0.0003662109375,
+          0.10004043579101562
+        ]
+      ],
+      "after": [
+        [
+          0.00021362659105861326,
+          0.08670697583536313
+        ],
+        [
+          0.000244140625,
+          0.08731937408447266
+        ],
+        [
+          0.000244140625,
+          0.085662841796875
+        ]
+      ],
+      "each_query_three_view_nonworse": true,
+      "fp32_total_before": 0.10139610523596776,
+      "fp32_total_after": 0.08692060242642174
+    },
+    "validation": {
+      "before": [
+        [
+          0.00025453935822383755,
+          0.25755253709683856
+        ],
+        [
+          0.00018310546875,
+          0.2632647156715393
+        ],
+        [
+          0.001132965087890625,
+          0.2526588439941406
+        ]
+      ],
+      "after": [
+        [
+          6.270473694058865e-05,
+          0.1378519866443746
+        ],
+        [
+          7.62939453125e-05,
+          0.13828665018081665
+        ],
+        [
+          0.000278472900390625,
+          0.1373443603515625
+        ]
+      ],
+      "each_query_three_view_nonworse": true,
+      "fp32_total_before": 0.2578070764550624,
+      "fp32_total_after": 0.13791469138131518
+    },
+    "test": {
+      "before": [
+        [
+          0.0010088902617617634,
+          0.6957410922304703
+        ],
+        [
+          0.00079345703125,
+          0.68902587890625
+        ],
+        [
+          0.00128173828125,
+          0.7063140869140625
+        ]
+      ],
+      "after": [
+        [
+          0.0005864427683555107,
+          0.7238358223142747
+        ],
+        [
+          0.000396728515625,
+          0.7138824462890625
+        ],
+        [
+          0.0006103515625,
+          0.736541748046875
+        ]
+      ],
+      "each_query_three_view_nonworse": false,
+      "fp32_total_before": 0.6967499824922321,
+      "fp32_total_after": 0.7244222650826302
+    }
+  },
+  "interpretation": {
+    "positive_claim": "Native joint residuals can supply a different useful training direction around actual recipe3.",
+    "limit": "STE is not an exact derivative of discrete BF16/INT2; finite deployment and independent-test gates remain necessary.",
+    "failed_test_retained": true,
+    "no_guarantee": "No unconditional strict-improvement existence or model-accuracy theorem follows from these examples."
+  },
+  "source_revision": "a599e8a7489dac78edc1b22cd31e338fe1f2d09f",
+  "reproduction_test": "tests/test_optr_native_objective_alignment.py",
+  "reproduction_test_sha256": "0d7f08991e7223efa2942c493279a56d837964da68a87d3621d001ef50833b22",
+  "findings": [
+    {
+      "id": "training_teacher_gate_mismatch",
+      "source": "oscar_ascend/optr_sequential.py",
+      "lines": [
+        82,
+        128
+      ],
+      "evidence": "prepare_samples reconstructs FP32 probabilities from q/k and phase_loss omits captured gate/teacher; deployment uses captured teacher and BF16 gate."
+    },
+    {
+      "id": "head_cross_terms_missing_from_proxy",
+      "source": "oscar_ascend/optr_sequential.py",
+      "lines": [
+        75,
+        79
+      ],
+      "deployment_source": "oscar_ascend/optr_traces.py",
+      "deployment_lines": [
+        394,
+        479
+      ],
+      "evidence": "Old proxy squares independent GQA contributions; deployment sums projected contributions across GQA and all KV heads before squared error."
+    },
+    {
+      "id": "v_repair_loses_conditioning_key",
+      "source": "oscar_ascend/optr_sequential.py",
+      "lines": [
+        173,
+        179
+      ],
+      "repair_source": "oscar_ascend/optr_trust_region.py",
+      "repair_lines": [
+        79,
+        106
+      ],
+      "evidence": "V checkpoint direction was optimized under selected K; single-side V repair applies it with original recipe3 K."
+    }
+  ]
+}

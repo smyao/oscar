@@ -1,4 +1,4 @@
-"""Recipe3 is the comparison baseline; all online launch behavior stays fixed."""
+"""Archive #175/#177: explicit v10 recipe3 policy retains its frozen contract."""
 import copy
 import json
 from pathlib import Path
@@ -23,9 +23,10 @@ PRE_RECIPE3 = "7c4a621"
 
 @pytest.fixture
 def candidate():
-    # Keep v10 independently covered; v11 has its own integration tests.
+    # Keep v10 independently covered; newer defaults have separate tests.
     config = variant_config(json.loads((ROOT / "configs/target.json").read_text()), "candidate")
-    config.pop("optr_recipe3_repair")
+    config.pop("optr_recipe3_optimizer")
+    assert variant_config(config, None) == config
     return config
 
 
@@ -133,5 +134,7 @@ def test_summary_reports_real_baseline_and_strict_publication_without_online_cha
     assert serve_argv(candidate) == serve_argv(legacy)
     assert variant_features(candidate) == variant_features(legacy)
     assert variant_config(legacy, None) == legacy
+    # Fixed candidate upgrades legacy configuration; variant=None above is
+    # the explicit historical path, whose policy assertions stay unchanged.
     assert variant_config(legacy, "candidate") == {**candidate,
-        "optr_recipe3_repair": "single_head_trust_region_v1"}
+        "optr_recipe3_optimizer": "joint_native_residual_v1"}

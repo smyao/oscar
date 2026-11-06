@@ -91,7 +91,7 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert selected['token_budget_source']=='explicit'
     assert direct['vllm_argv'][direct['vllm_argv'].index('--max-num-batched-tokens')+1]=='16384'
     assert selected['scheduler_cls'] is None
-    assert selected['devices']==[4,5,6,7] and selected['port']==7878
+    assert selected['devices']==[0,1,2,3] and selected['port']==7878
     assert selected['rotation_refinement']=='optr' and selected['calibration_recipe_version']==5
     assert selected['optr_publication_policy']=='recipe3_validation_and_independent_test_required_v1'
     assert selected['independent_test_blocks_publication'] is True

@@ -79,7 +79,7 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert "rotation_refinement" not in config
     assert selected["rotation_refinement"] == "optr"
     assert selected["optr_baseline"] == "recipe3"
-    assert config["devices"] == selected["devices"] == [4, 5, 6, 7]
+    assert config["devices"] == selected["devices"] == [0, 1, 2, 3]
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer_kv_head"

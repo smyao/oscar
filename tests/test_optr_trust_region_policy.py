@@ -17,7 +17,7 @@ from tools.serving_variants import runtime_feature_summary, variant_config, vari
 from tools.target_cli import serve_argv, target_env
 
 
-from test_optr_cpu_scope_20261105 import OFFLINE, _without_profile
+from test_optr_cpu_scope_20261105 import OFFLINE, _without_profile, _front_card_target
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,9 +155,9 @@ def test_every_existing_production_file_outside_named_offline_seams_is_byte_iden
             continue
         data = path.read_bytes()
         if name in ("configs/target.json", "tools/probe_history_reuse.py"):
-            # User-authorized rear-card placement is the sole newer online
-            # exception; every byte is pinned to the committed revision.
-            assert data == subprocess.check_output(["git", "show", f"7720e3d:{name}"], cwd=ROOT)
+            # User 2026-11-06 authorized only the new target placement.
+            previous = subprocess.check_output(["git", "show", f"7720e3d:{name}"], cwd=ROOT)
+            assert data == (_front_card_target(previous) if name == "configs/target.json" else previous)
             checked += 1
             continue
         if name == "oscar_ascend/rotations.py":

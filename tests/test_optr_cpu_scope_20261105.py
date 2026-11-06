@@ -25,6 +25,15 @@ def _without_profile(source):
     return b"".join(lines[:node.lineno - 1] + lines[node.end_lineno:])
 
 
+def _front_card_target(source):
+    # User 2026-11-06: permit exactly the placement update; freeze other bytes.
+    devices = b'"devices": [\n    4,\n    5,\n    6,\n    7\n  ]'
+    policy = b'User 2026-11-05: physical NPU 4-7;'
+    assert source.count(devices) == source.count(policy) == 1
+    return source.replace(devices, b'"devices": [\n    0,\n    1,\n    2,\n    3\n  ]').replace(
+        policy, b'User 2026-11-06: physical NPU 0-3;')
+
+
 def test_online_sources_launch_timer_and_base_fitter_are_unchanged():
     records = subprocess.check_output(["git", "ls-tree", "-r", "-z", BASE,
         "csrc", "cmake", "oscar_ascend", "configs", "scripts", "tools"], cwd=ROOT).split(b"\0")
@@ -40,6 +49,10 @@ def test_online_sources_launch_timer_and_base_fitter_are_unchanged():
             changed.append(name)
             continue
         data = path.read_bytes()
+        if name == "configs/target.json":
+            previous = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
+            assert data == _front_card_target(previous)
+            continue
         if name == "oscar_ascend/rotations.py":
             previous = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
             assert _without_profile(data) == _without_profile(previous)

@@ -1,6 +1,6 @@
 # 当前工程约束
 
-> 2026-11-05 最新设备要求：用户要求本地代码默认使用后四卡，`configs/target.json` 的物理设备改为 `4,5,6,7`；端口 `7878`、TP4 及其余启动参数保持。此要求覆盖下文历史默认前四卡的设备约束，`--rear-cards` 显式选项仍可使用。
+> 2026-11-06 最新设备要求：用户要求本地代码默认使用前四卡，`configs/target.json` 的物理设备改为 `0,1,2,3`；端口 `7878`、TP4 及其余启动参数保持。此要求覆盖此前默认后四卡的设备约束。正常启动不传 `--rear-cards`；该显式选项仍用于选择后四卡。
 
 > 2026-10-28 PC精度续修：已复现align模式仍可形成真正warm spec-width prefill（如5000→2304/1536/1156/4）。原GDN fold把accepted1改4，读未提交SSM第3列/conv偏移3；此前#163仅修none的范围不足。外部插件统一保留none/align MTP的真实prefill mask/count，并阻止该步骤误入decode图；正常decode/dummy/capture不变，不按输入总长度分界。全部OSCAR CANN源、PT/clip、16K、PC hash/lookup/页引用/MTP/timer保持，207项主机回归通过；见docs/gdn_prefill_state_20261028.md。该步骤使用原生prefill已有gather/chunk/store，不声称该步零开销或四项LongBench已达标；旧native_exact与APC cohort实验继续退役/不启用。
 

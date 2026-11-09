@@ -6,7 +6,7 @@
 
 本次增加外部 `OscarAscendStoreConnector`，复用 AscendStore 的 MemCache backend 初始化及 V1 KV connector 调用链。代码覆盖当前 TP4 / DP1 / PP1 / CP1 混合模型的主动抢占恢复、原生 prefix cache、chunked prefill、none/align、MTP3、请求取消、streaming session 代际、缓存重置和资源释放。实际安装在固定 candidate 入口，默认 APC 仍关闭；启用 APC 时使用原生 align 策略。
 
-当前 MemCache 尚未部署，用户尚未提供 meta/config-store 地址与每卡 DRAM 容量。本地没有 NPU，且本轮明确禁止 agent 连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
+初始开发时 MemCache 部署地址与容量未提供；用户随后提供了 node93 的现场配置，并选择 DRAM＋SSD benchmark，具体见下方 node93 配置节。本地没有 NPU，本轮也没有连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
 
 ## 为什么不能直接把 AscendStoreConnector 接到 OSCAR
 
@@ -85,6 +85,49 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 必须单独说明容量边界：纯 DRAM MemCache 有高低水位驱逐，官方配置没有文档化的“关闭驱逐”选项。这里没有把原生 layerwise 读路径的 5 分钟 lease 假定为长期 swap 保活或自动续租。已卸载活动快照若被存储驱逐，恢复会明确报错，不能保证任意等待时长和任意存储压力下必然恢复。部署容量需覆盖活动快照与共享 prefix 的实际占用。公开的 SSD/UBS_IO 扩展有额外库和部署要求，未偷偷加入本次 DRAM 方案。依据：[MemCache 配置](https://github.com/Ascend/memcache/blob/master/doc/memcache_config.md)、[SSD 支持说明](https://github.com/Ascend/memcache/blob/master/doc/memcache_ssd_usage.md)。SIGKILL 或 SDK 硬超时也可能留下未回收 generation，不能声称异常退出后零遗留。
 
 ## 部署
+
+### node93 本轮 benchmark 配置（用户已确认）
+
+`configs/benchmark_node93.json` 绑定物理卡 **0,1,2,3** 和模型 HTTP 端口 **7878**。相对 `configs/target.json` 仅改变端口与配置说明；模型、TP4/MTP3、16384 token budget、图模式和默认 APC 策略保持。**不要追加 `--rear-cards`**，该选项会切到 4–7 卡。通用 `target.json` 默认端口仍为 8989。
+
+| 现场配置项 | 用户提供的值 |
+| --- | --- |
+| LocalService 文件 | `/usr/local/memcache_hybrid/latest/config/mmc-local.conf` |
+| MetaService 文件 | `/usr/local/memcache_hybrid/latest/config/mmc-meta.conf` |
+| MetaService / Config Store | `tcp://127.0.0.1:5000` / `tcp://127.0.0.1:6000` |
+| MetaService metrics | `http://127.0.0.1:8000` |
+| 用户报告安装版本 | MemCache `1.2_260917`，MemFabric `1.2_260917`；UBS IO 版本未提供 |
+| 通讯协议 / 最大 rank 数 | `device_rdma` / `256` |
+| DRAM | 每个 LocalService `32GB`；四个贡献内存的 TP worker 配置合计 `128GB`，不含其他进程和 SDK 开销 |
+| 驱逐高/低水位 | `90` / `80` |
+| rewarm / prefetch | `ock.mmc.rewarm.dram_watermark=95` / `ock.mmc.storage.prefetch.enabled=true` |
+| SSD 意图 | `ock.mmc.local_service.storage.enabled=true`；用户选择包含 SSD |
+
+这些 loopback 地址要求相应客户端与服务位于同一网络命名空间；它们不提供跨机器 MetaService 访问。`world_size=256` 是上限，不是本次会创建 256 个 32GB 池。只凭两个配置文件不能证明端口监听、SDK 初始化或 SSD 读写已成功。
+
+用户粘贴的 `ubsio.disk.path`、`ubsio.mem.size_in_gb`、`ubsio.standalone.device_count` 均被注释，实际生效配置及 UBS IO 版本仍待提供；MemCache/MemFabric 版本已报告如上。不能把 `dir_store.base_path=/home/kvcache` 当作 UBS IO 设备路径，也不能把注释示例的 `device_count=8` 直接启用。该值应按实际贡献 DRAM 的 LocalService 数核对，包括本节点其他服务；不能仅从本次 TP4 推断全机只有四个进程。
+
+公开 SSD 文档使用旧 `ock.mmc.ubs_io.enable` 键，而现场文件使用 `ock.mmc.local_service.storage.enabled`。保留现场键，不自动按不同版本的在线文档改写；需用安装版本的有效配置及初始化日志确认后端。SSD benchmark 还需要证明实际发生 SSD 写入/读取或驱逐后的 SSD 回读，单纯 `enabled=true`、DRAM 命中或普通 HTTP 完成均不是 SSD 性能证据。
+
+在 node93 的 **OSCAR 工程目录**，以下环境脚本仅导出既有配置路径和卡组，不改 SDK 文件、不启动 MetaService，也不自动安装或启用磁盘：
+
+```bash
+source scripts/env_node93_memcache.sh
+bash scripts/install_serve.sh --config configs/benchmark_node93.json --variant candidate --plan
+```
+
+待实际 SDK/UBS 配置、MetaService 健康和测试资源确认后，设备/服务正确性入口为：
+
+```bash
+source scripts/env_node93_memcache.sh
+bash scripts/install_probe_serve.sh --config configs/benchmark_node93.json
+```
+
+需要 APC 的实际服务测试显式选择原生 prefix caching；既有 offload 服务探针会独立覆盖 none/align，不改变正式配置的默认值。性能比较至少区分同参 OSCAR 无卸载、有卸载的冷请求、本地暖 prefix、远端暖 prefix 和实际抢占场景；SSD 测量单列后端 I/O 证据。现有 `benchmarks.measure` 使用唯一 cache salt 的冷请求，不直接冒充暖 prefix 或 SSD 专项 benchmark。
+
+本轮本地只检查配置差异、两个入口的 `--plan` 输出与环境脚本语法，均通过。没有连接 node93、启动服务、操作磁盘或产出 benchmark 数字。初始 659 项结果仍是代码主机回归，不转写为这套现场配置的设备通过。
+
+### 通用部署配置生成
 
 安装使用当前 Python 环境，依赖 `memfabric-hybrid`、`memcache-hybrid`、`pyzmq`。无需复制或覆盖 native 源码。以下变量必须用用户实际提供的地址、容量填写；配置生成命令不会连接网络或启动服务：
 

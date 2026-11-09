@@ -1,6 +1,6 @@
 # 完成状态与证据
 
-2026-11-09 KV 卸载：新增 AscendStore/MemCache 外部适配、完整物理状态保存/恢复、prefix/chunked prefill 与原生抢占生命周期回归、真实 SDK/NPU 和短服务探针入口。详见 [实现、部署与证据边界](kv_offload_20261109.md)。用户尚未部署 MemCache，地址和容量待提供；本轮没有真机连接或测速，以下 42 项设备、图、质量与性能状态不据主机测试升级。
+2026-11-09 KV 卸载：新增 AscendStore/MemCache 外部适配、完整物理状态保存/恢复、prefix/chunked prefill 与原生抢占生命周期回归、真实 SDK/NPU 和短服务探针入口。详见 [实现、部署与证据边界](kv_offload_20261109.md)。用户已补充 node93 的本机 5000/6000、每 LocalService 32GB 配置，并选择前四卡 0–3 / HTTP 7878 / DRAM＋SSD；独立 benchmark 配置和启动计划检查通过，实际 UBS IO 生效配置、安装版本及设备证据仍待补齐。本轮没有真机连接或测速，以下 42 项设备、图、质量与性能状态不据主机测试升级。
 
 2026-10-28 当前修复：PC align的warm spec-width prefill也会被错误fold为decode，读写错误GDN checkpoint。已扩展#163的原生prefill分类与图接缝修复，207项相关主机回归通过，全部生产CANN与614c相同。固定candidate自动启用；四项模型验收状态不据本地反例升级。见[状态修复与范围](gdn_prefill_state_20261028.md)。
 

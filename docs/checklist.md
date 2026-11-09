@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-09现场#176：控制服务连接已恢复；三个worker实际完成40GB分配、DirStore启动和KV_OFFLOAD_READY。TP3/device3的HCCL建域ret19导致MemCache init失败，同次plog进一步明确物理3卡RoCE link down。外部适配补充空断言上下文，45项transport主机回归通过；链路恢复及TP4/SSD I/O/图/质量/性能仍未通过。
+
 2026-11-09新增现场故障 #175：用户日志确认 DirStore 被选择，但 Config Store `127.0.0.1:6000` 连接拒绝导致四worker初始化超时退出；当前生效DRAM仍32GB。已补齐 MetaService 先启动、同命名空间确认5000/6000后启动OSCAR的步骤；仅完成日志定位和部署说明修正，控制服务恢复及SSD/NPU/性能均未复验。
 
 2026-11-09 KV 卸载：新增 AscendStore/MemCache 外部适配、完整物理状态保存/恢复、prefix/chunked prefill 与原生抢占生命周期回归、真实 SDK/NPU 和短服务探针入口。详见 [实现、部署与证据边界](kv_offload_20261109.md)。node93 最新设置为本机 5000/6000、每 LocalService 40GB、device_rdma、70/60 水位、前四卡 0–3 / HTTP 7878 / DRAM＋SSD，MemCache/MemFabric 均为用户报告的 1.2_260917。环境脚本、配置准备及前台 MetaService 入口已接入；不会补造缺失的 DirStore 文件，最新日志已确认 DirStore 选择，初始化完成及 SSD I/O 仍待验证。正式直启与完整探针入口使用随库配置时默认开启卸载。本轮没有真机连接或测速，以下 42 项设备、图、质量与性能状态不据主机测试升级。

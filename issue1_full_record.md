@@ -1,5 +1,7 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
+> 2026-11-09 最新追加 #176：控制服务已连接；device 3 的HCCL建域返回19导致MemCache初始化失败，三个worker已40GB/DirStore/卸载就绪，尚未TP4通过。
+
 > 2026-11-09 最新追加 #175：MemCache Config Store 6000 连接拒绝，四 worker 初始化超时；现场已选择 DirStore、实际 DRAM 仍为 32GB，部署恢复与验收边界见文末。
 
 > 2026-09-22 本项目续录：实际共 **164 条（G1–G34、#1–#130）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#126 来自用户回传的 node93 日志；早先75项store/merge原语NPU探针通过；最新日志已完成编译/初次profiling与KV预算，止于 #128 的MTP元数据虚拟块复制。完整服务、图与性能尚未验收。
@@ -28890,3 +28892,18 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **处置与同族**：沿用 #29（实际加载环境）、#94/#125（可见失败与真实退出）、#27（接缝完成不等于服务验收）。恢复部署顺序：在推理所在容器/网络命名空间先运行已有 `scripts/start_node93_memcache.sh`，用用户确认的配置准备并前台调用官方 `MetaService.main()`；从同一推理命名空间核对 5000/6000 监听，成功后再运行默认开启卸载的 node93 candidate。脚本不自动管理已有服务，不删除 `/home/kvcache`。若 6000 未监听，先检查该 MetaService 的前台失败输出，不能不断重启 vLLM。旧代码环境也可在设置既有 SDK 环境和 `MMC_META_CONFIG_PATH` 后直接调用同一官方 Python 入口。
 
 **边界**：本条为用户真实日志归档及启动说明修正，没有 agent 连接真机、修改 SDK/磁盘、改变 OSCAR 执行逻辑、延长 watchdog 或新增启动审计。`dir_store` 选择从未知更新为该次日志已确认；控制服务恢复、40GB 生效、SSD 初始化/读写、NPU 图回放、质量和 benchmark 仍待现场复验，不记录为已修复通过。
+
+
+## [176] 真机条目（2026-11-09 用户回传）· device 3 的 MemFabric HCCL 网络初始化失败，外层异常消息为空
+
+**证据**：两份附件及随后补充的初始化原文。脱敏诊断摘要为 [`reports/memcache_hccl_20261109/target_excerpt.txt`](reports/memcache_hccl_20261109/target_excerpt.txt)，附件原文只保留本地被忽略的 `raw/`，不推送。片段无部署 SHA，不用本地身份替代现场证据。
+
+**前项进展**：中央服务已监听5000/6000/8000并接受四客户端，#175的6000连接拒绝已越过。三个成功worker已各分配42949672960字节DRAM、完成DirStore启动、注册物理缓存并打印KV_OFFLOAD_READY，40GB已在这些worker实际分配；不是仅配置文件存在。尚无TP4联合就绪、SSD落盘/回读、服务请求、图/质量/性能通过证据。
+
+**首个致命错误**：Worker_TP3/deviceId 3 对应 MemCache 内部分配的rank 2，其 `HcclCommInitClusterInfoMemConfig` 返回19，继而PrepareOpenDeviceV2、InitTransManager、smem_bm_create2、LocalService启动失败，SDK init非零触发原生 `MemcacheBackend._setup_store` 的 `assert res == 0`。原生异常无消息，RPC仅转发异常字符串，因此EngineCore显示 `Worker failed with error ''`。四进程都有较早的RaInit328002警告，但三进程随后成功，不能据共同警告判定唯一首因。清理中的HalHostUnregisterEx ret8及resource_tracker提示不倒置为启动首因。本次未触发60秒watchdog期限，不通过延长该期限修复。
+
+**编号与根因边界**：TP0/device0→SDK rank3，TP1/device1→SDK rank1，TP2/device2→SDK rank0，TP3/device3→SDK rank2。不能把Meta日志中的rank2断开错认为TP2失败。官方 [HcclResult](https://www.hiascend.com/doc_center/source/en/canncommercial/800/apiref/hcclapiref/hcclcpp_07_0038.html) 定义19为HCCL_E_NETWORK（网络API调用失败）；该类别不能区分具体端口、设备网络资源或通信参数问题。仅凭该初始化片段不能推定通信域重名或硬件损坏，也不凭该码改协议/卡号/world_size/通信域参数。后续定向读取已确认RoCE link down，见下文。允许参考源码核实当前worker同线程复用原生SDK初始化；device_rdma下没有额外初始化次数或新增HCCL通信域。
+
+**底层定位及处置**：已有plog按该故障进程查询返回no_matching_evidence，但entries_scanned=2048且truncated=true；这不是不存在底层错误的证据。随后按已知日志目录和PID定向读取同次日志，找到HCCP RaHdcRdevInit在phyId3返回-67，HCCL明确报 `rdma init failed because RoCE link status is down`，随后RDMA init返回19、设备侧16666监听失败、HCCL建域失败。RoCE链路down已确认；16666报错发生在RDMA初始化失败之后，未证明独立端口冲突。仍未定位是线缆/光模块、对端端口状态或其他链路配置原因，需恢复物理3卡RoCE链路后按原0–3/device_rdma配置复验。没有要求重跑模型来获取已有证据。外部适配器仅给初始化阶段的AssertionError补充角色、请求local_rank、PID和原异常repr，raise-from保留原始异常链；SDK成功路径、失败停止、原生初始化参数、watchdog期限、OSCAR数学/CANN/图/调度保持。该错误呈现修正不等于底层网络修复。
+
+**验证边界**：transport主机回归45项通过，验证空AssertionError的上下文、原cause、原调用线程与单次初始化，以及既有transport/timeout行为；见本轮验证记录。没有agent连接真机或运行性能测试；网络故障已定位至物理3卡RoCE link down，但链路恢复和TP4服务复验仍未完成。

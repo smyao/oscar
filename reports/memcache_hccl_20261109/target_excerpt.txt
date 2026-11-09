@@ -1,0 +1,32 @@
+用户回传故障的脱敏摘要；原始附件仅保留本地 raw/，不纳入版本库。
+补充初始化片段来自本轮用户文字答复，本摘要不冒称完整原文。
+
+控制服务已启动：5000/6000/8000 监听；Config Store 接受四个客户端连接。
+共同警告：Hccp Init RA not successful : 328002；之后三 worker 能继续成功。
+首个致命错误（TP3/device 3，SDK 内部 rank 2）：
+  HcclCommInitClusterInfoMemConfig failed! ret:19
+  PrepareOpenDeviceV2 failed.
+  Failed to init trans manager.
+  Failed to create smem bm
+  failed to create or start local service
+  native MemcacheBackend._setup_store: assert res == 0
+  AssertionError（空消息）
+外层：Worker failed with error ''，随后全组清理。
+
+其余三个 worker：各已分配42949672960字节DRAM，DirStore started，KV_OFFLOAD_READY。
+对应关系：TP0/device0->SDK rank3；TP1/device1->SDK rank1；
+TP2/device2->SDK rank0；TP3/device3->SDK rank2（失败）。
+
+该初始化片段尚未证明：ret19对应的具体底层网络调用失败原因；TP4联合就绪；SSD读写；模型质量/性能。底层原因见下方后续证据。
+后续既有plog采集无匹配，扫描达到2048条且truncated=true，不能据此判定不存在CANN错误。
+
+后续定向读取同次故障的CANN plog，已确认：
+  phyId(3): RaHdcRdevInit ret(-67)
+  rdma init failed because RoCE link status is down, please check the network adapter configuration.
+  RDMA init failed, devid[3], return[19]
+  device NIC specific port[16666] listen failed
+  HcclCommInitClusterInfoMemConfig InitCommClusterInfo failed
+
+RoCE link down 已由底层日志明确报告，尚未查明链路down的物理/网络配置原因。
+16666监听失败出现在RDMA初始化失败之后，未证明另有端口占用，不能据此杀进程或改端口。
+三个日志环境变量在用户查询shell均未设置；定向查询找到了1个该故障进程的文件。

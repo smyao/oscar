@@ -1,0 +1,13 @@
+{
+  "scope": "host transport error-context regression; no NPU connection or benchmark",
+  "tests": {
+    "command": "python -m pytest -q tests/test_offload_transport.py",
+    "passed": 45,
+    "failed": 0
+  },
+  "confirmed_target_failure": "physical device 3 RoCE link down during MemFabric HCCL communicator initialization",
+  "target_network_repaired": false,
+  "target_tp4_service_passed": false,
+  "ssd_io_verified": false,
+  "raw_logs_published": false
+}

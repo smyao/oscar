@@ -2,6 +2,7 @@
 
 Archive: #34/#36 (fixed graph buffers), #37--49/#127/#128 (physical
 pages and complete window state), #157/#163/#171 (errors and joint state).
+Archive #94/#125/#175/#176: report initialization failures without hiding SDK causes.
 The native MemcacheBackend is used for initialization, never for its put/get
 wrappers: those wrappers can log a failure and return apparent completion.
 
@@ -290,7 +291,17 @@ class StrictMemcacheTransport:
 
         watchdog = _DeadlineWatchdog(kwargs.get("timeout_seconds", 60.0))
         kwargs["_watchdog"] = watchdog
-        backend = watchdog.run("backend initialization", initialize)
+        try:
+            backend = watchdog.run("backend initialization", initialize)
+        except AssertionError as exc:
+            pid = os.getpid()
+            requested_rank = "None (auto)" if local_rank is None else repr(local_rank)
+            raise TransferError(
+                "native memcache backend initialization failed "
+                f"(role={'scheduler' if scheduler else 'worker'}, "
+                f"requested_local_rank={requested_rank}, pid={pid}): {exc!r}. "
+                f"Inspect preceding SDK errors and the CANN plog for PID {pid}."
+            ) from exc
         return cls.from_backend(backend, scheduler=scheduler, **kwargs)
 
     @property

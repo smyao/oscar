@@ -602,6 +602,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #176 device3 HCCL建域ret19，native空AssertionError | TP编号与MemCache分配rank分列；已连控制服务不代表RDMA建域成功。初始化异常保留cause并给PID/角色；ret19为网络API错误类别，同次plog已明确物理3卡RoCE link down。先恢复该链路，不猜改协议/通信域或放宽期限。 |
 | #175 MemCache Config Store 6000连接拒绝，四worker初始化超时 | MetaService先于推理启动；从推理容器核对5000/6000监听与local/meta地址匹配。LocalService启动行不代表中央服务就绪，DirStore选择不代表SSD读写通过；保留超时和失败退出，不切无卸载。 |
 | #163续审：PC align的warm spec-width prefill读错GDN状态 | 保留真实prefill分类与第0列最终提交，阻止误入decode图；normal decode/dummy/capture保持。末尾预算、prefix命中、跨块预处理、conv/SSM与下一decode成链验证，不用总输入长度分界。 |
 | #173/#174 四指标精度不合格；native_exact方案无有效模型交付 | 默认撤下该policy并清除旧配置残留，保留失败证据；局部旋转误差改善不能替代四项质量与两性能场景共同验收。 |

@@ -165,6 +165,24 @@ python3 -c 'from memcache_hybrid import MetaService; MetaService.main()'
 
 此命令不会替用户修改旧 32GB 配置；已有 `prepare-node93` 入口才应用所要求的 40GB。日志中的 `Starting meta service local_service` 不是中央控制服务启动成功。当前只能确认 DirStore 被选择，仍未取得其初始化完成、SSD 写入/回读或模型服务成功证据；不通过增加 timeout 或关闭卸载掩盖失败。
 
+### 后续现场进展：三 rank 就绪，device 3 的 HCCL 初始化失败
+
+补充日志确认中央控制端口均已监听并接收四客户端；三个 worker 已实际分配每卡40GB，打印 `DirStore started` 与 `KV_OFFLOAD_READY`。前述32GB及DirStore仅被选择的记录是较早一轮状态，本轮已推进到三个rank的实际池分配和目录后端启动；尚无TP4联合成功或SSD I/O证据。
+
+失败者是 **Worker_TP3/device 3**，对应 **MemCache内部rank 2**。SDK动态rank与TP rank不可混用。其首个致命错误为 `HcclCommInitClusterInfoMemConfig failed! ret:19`，传播到LocalService初始化失败、原生空AssertionError及EngineCore的 `error ''`。官方 [HcclResult](https://www.hiascend.com/doc_center/source/en/canncommercial/800/apiref/hcclapiref/hcclcpp_07_0038.html) 将19定义为网络API调用失败；后续定向读取同次CANN日志已明确报告物理3卡的 `RoCE link status is down`，并在其后报告RDMA及设备侧16666监听失败。没有证据据后者单独认定端口占用；链路down的线缆、光模块或对端配置原因仍需设备侧核对。
+
+本次只为初始化断言增加失败上下文和保留原cause，不改变成功执行路径或SDK参数，不把错误呈现改进写成网络修复。已有plog扫描达到2048条上限且截断，按已知目录及故障进程文件名定向读取后成功取得底层原因，无需模型重跑。transport相关主机回归45项通过；实际网络恢复、TP4服务、SSD读写和性能尚未完成。详见档案#176与[脱敏摘要](../reports/memcache_hccl_20261109/target_excerpt.txt)。
+
+在能够访问驱动工具的宿主机或容器查询物理3卡当前链路、网络健康及光模块状态：
+
+```bash
+/usr/local/Ascend/driver/tools/hccn_tool -i 3 -link -g
+/usr/local/Ascend/driver/tools/hccn_tool -i 3 -net_health -g
+/usr/local/Ascend/driver/tools/hccn_tool -i 3 -optical -g
+```
+
+按状态修复该口及其对端交换机/线缆/光模块，确认链路UP后再以原前四卡、device_rdma、7878配置启动OSCAR。保留默认卸载；这不是关闭卸载、自动换协议或放宽超时的场景。命令和端口诊断依据：[官方故障诊断说明](https://www.hiascend.com/document/detail/en/mindcluster/2600/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag-toolkit/02_detail_function/01_diagnosis_logic.md)。
+
 ### 通用部署配置生成
 
 安装使用当前 Python 环境，依赖 `memfabric-hybrid`、`memcache-hybrid`、`pyzmq`。无需复制或覆盖 native 源码。以下变量必须用用户实际提供的地址、容量填写；配置生成命令不会连接网络或启动服务：

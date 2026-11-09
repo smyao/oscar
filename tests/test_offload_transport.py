@@ -2,14 +2,17 @@
 
 Archive #34/#36/#37--49/#127/#128/#157/#163/#171: fixed buffers, complete
 physical/window/GDN bytes, all-participant completion, and strict errors.
+Archive #94/#125/#175/#176: preserve visible initialization errors and their cause.
 """
 
 from dataclasses import dataclass
 import json
+import os
 import signal
 import subprocess
 import sys
 import textwrap
+from threading import get_ident
 from types import SimpleNamespace
 
 import pytest
@@ -257,6 +260,56 @@ def test_native_factory_uses_metadata_only_scheduler_and_explicit_worker_rank(mo
     worker = StrictMemcacheTransport.from_vllm_config(config, local_rank=3)
     assert calls == [("parallel", {"local_rank": 0, "init_bm": False}), "initialized", ("parallel", {"local_rank": 3, "lazy_init": False}), "initialized"]
     assert scheduler.scheduler and not worker.scheduler
+
+
+@pytest.mark.parametrize("scheduler,local_rank", [(False, None), (False, 3), (True, None)])
+def test_native_empty_initialization_assertion_has_context_and_preserves_cause(
+        monkeypatch, scheduler, local_rank):
+    import oscar_ascend.offload.transport as transport_module
+
+    original = AssertionError()
+    calls, deadlines, operations = [], [], []
+    caller_thread = get_ident()
+    parallel = object()
+
+    class Backend:
+        def __init__(self, parallel_config, **kwargs):
+            calls.append(("worker", parallel_config, kwargs, get_ident()))
+            raise original
+
+        @classmethod
+        def create_scheduler_client(cls, parallel_config):
+            calls.append(("scheduler", parallel_config, {}, get_ident()))
+            raise original
+
+    class Watchdog:
+        def __init__(self, timeout_seconds):
+            deadlines.append(timeout_seconds)
+
+        def run(self, operation, initialize):
+            operations.append((operation, get_ident()))
+            return initialize()
+
+    module_name = "vllm_ascend.distributed.kv_transfer.kv_pool.ascend_store.backend.memcache_backend"
+    monkeypatch.setitem(sys.modules, module_name, SimpleNamespace(MemcacheBackend=Backend))
+    monkeypatch.setattr(transport_module, "_DeadlineWatchdog", Watchdog)
+    with pytest.raises(TransferError) as error:
+        StrictMemcacheTransport.from_vllm_config(
+            SimpleNamespace(parallel_config=parallel), scheduler=scheduler,
+            local_rank=local_rank, timeout_seconds=7.5)
+
+    role = "scheduler" if scheduler else "worker"
+    expected_kwargs = {} if scheduler else {"local_rank": local_rank, "lazy_init": False}
+    assert calls == [(role, parallel, expected_kwargs, caller_thread)]
+    assert deadlines == [7.5]
+    assert operations == [("backend initialization", caller_thread)]
+    assert error.value.__cause__ is original
+    assert str(original) == ""  # Reproduce the native assert without a message.
+    message = str(error.value)
+    assert f"role={role}" in message
+    assert f"requested_local_rank={'None (auto)' if local_rank is None else local_rank}" in message
+    assert f"pid={os.getpid()}" in message and f"CANN plog for PID {os.getpid()}" in message
+    assert "AssertionError()" in message and "preceding SDK errors" in message
 
 
 def descriptor():

@@ -83,6 +83,12 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
+    # #127/#128: explicit transport selection never forces none -> align,
+    # changes the token budget, or substitutes the native scheduler.
+    from oscar_ascend.offload.config import offload_options
+    if variant in {"baseline", "native"}:
+        selected.pop("kv_offload", None)
+    offload_options(selected)
     # User withdrew the unsuccessful exact-current delivery. A reused
     # generated config must not carry its retired policy into any variant.
     selected.pop('oscar_current_only_policy', None)

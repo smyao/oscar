@@ -1,5 +1,7 @@
 # OSCAR Ascend：端到端设计与可证边界
 
+2026-11-09 KV 卸载：外部 `OscarAscendStoreConnector` 复用 MemCache SDK bootstrap，完整保存 packed/window/tags/GDN，保留原生 none/align、MTP、chunked prefill、prefix checkpoint 与图地址。调度、全 TP 提交、恢复及清理设计见 [卸载实现与部署](kv_offload_20261109.md)。本轮无真机连接，MemCache 尚待部署；不升级设备、质量或性能验收。
+
 2026-10-28档案#173/current-only新精度政策：在已有无历史精确suffix资格下，直接原Q/K/V native FIA，输出不经历旋转往返；原中心化、K/V旋转及INT2/精确snapshot写入保留。历史和混合来源仍完整v4旋转域。D.4四问：①current fused FIA，②避免全历史恢复且消除无必要有限精度变换，③原context/slot/finite/error门、输入缓冲与writer所有权均保留，④删除2个query-head GEMM，不增加copy、kernel或workspace。timer本身不动，K/V旋转从FIA相位移入store相位，总工作量账必须计入该迁移。详见[设计与证明](native_exact_current_precision_20261028.md)。
 
 2026-10-28档案#172：34bc的64K达标但32K及以下回归，原组合失败。当前统一恢复232b完整q4/q1 decode，C16/helper保持34bc完整源；不新增任何输入/context/历史长度分界，原调度和参数不变。D.4四问：作用于有界FIA的BF16发布；禁止旧全历史恢复；复用原单repeat发布及其完整所有权/FP32/错误协议，无新增工作区或条件；双目标必须同时成立。身份门、真实路由与fresh组合CANN见[通用回归修复](universal_regression_repair_20261028.md)。

@@ -40,8 +40,11 @@ def test_natural_bf16_rv_is_cached_during_workspace_reservation_without_changing
     name="model.layers.0.self_attn.attn"
     (tmp_path/"config.json").write_text(json.dumps({"num_hidden_layers":1,"layer_types":["full_attention"],"head_dim":256}))
     config=variant_config(json.loads(Path("configs/target.json").read_text()),"candidate")
+    # This isolates rotation-cache dispatch with a deliberately minimal fake
+    # artifact; authenticated offload PT identity has separate complete tests.
     config.update(model=str(tmp_path),experimental_bf16_attention=bf16,experimental_aligned_math=False,
-                  experimental_c16_tuned=False,experimental_official_math=False,rotation_method="hadamard")
+                  experimental_c16_tuned=False,experimental_official_math=False,rotation_method="hadamard",
+                  kv_offload={"enabled": False})
     provider=runtime.AscendRuntimeProvider(config)
     key=torch.eye(256);value=torch.eye(256)*2
     inverse=torch.arange(256*256,dtype=torch.float32).reshape(256,256)/4096 - 0.7

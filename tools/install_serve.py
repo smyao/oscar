@@ -35,6 +35,8 @@ def main(argv=None) -> int:
                         help="omit the stable branch explicit budget for this launch only")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
                         help="pass the native prefix-cache switch; disabled by default on aisbench-stable")
+    parser.add_argument("--kv-offload", action=argparse.BooleanOptionalAction, default=None,
+                        help="explicitly select AscendStore/memcache offload; no automatic failure fallback")
     parser.add_argument("--diagnose-trap", action="store_true",
                         help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
     add_model_arguments(parser)
@@ -51,6 +53,8 @@ def main(argv=None) -> int:
         config = apply_model_options(config, args, require_model=not args.plan)
         if args.enable_prefix_caching is not None:
             config["enable_prefix_caching"] = args.enable_prefix_caching
+        if args.kv_offload is not None:
+            config["kv_offload"] = dict(config.get("kv_offload", {}), enabled=args.kv_offload)
         if args.native_token_budget:
             config["use_native_token_budget"] = True
         if args.diagnose_trap:
@@ -77,7 +81,7 @@ def main(argv=None) -> int:
     effective_path = (log_dir / "effective-target.json" if write_effective
                       else args.config.resolve())
     stages = []
-    for name, command in deploy_plan(args.config, log_dir):
+    for name, command in deploy_plan(args.config, log_dir, config=config):
         if name not in BUILD_PHASES:
             continue
         # Plan mode remains read-only: derive commands from the original

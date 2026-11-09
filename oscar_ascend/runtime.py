@@ -741,14 +741,29 @@ class AscendRuntimeProvider:
         from .integration.specs import OscarFullAttentionSpec
         if torch.device(runner.device).type != "npu":
             raise OscarReadinessError("production KV allocation requires NPU")
-        if runner.vllm_config.kv_transfer_config is not None:
-            raise OscarReadinessError("target local-hybrid cache cannot be used by a KV transfer connector")
+        transfer = runner.vllm_config.kv_transfer_config
+        from .offload.config import offload_options
+        if offload_options(self.config) is not None and transfer is None:
+            raise OscarReadinessError("OSCAR offload is enabled but native KV transfer configuration is missing")
+        if transfer is not None:
+            from .offload.config import validate_transfer_config, offload_options
+            try:
+                validate_transfer_config(transfer)
+                if offload_options(self.config) != transfer.kv_connector_extra_config:
+                    raise ValueError("OSCAR target and native KV transfer configuration disagree")
+            except ValueError as error:
+                raise OscarReadinessError(str(error)) from error
+            self._offload_runner = runner
         specs = runner._get_layer_kv_cache_specs(config)
         raw = {}
         for tensor in config.kv_cache_tensors:
             if not all(isinstance(specs[name], (MambaSpec, OscarFullAttentionSpec)) for name in tensor.shared_by):
                 raise OscarReadinessError("target shared cache pool contains an undeclared cache spec")
-            allocation = torch.zeros(tensor.size, dtype=torch.int8, device=runner.device)
+            if transfer is None:
+                allocation = torch.zeros(tensor.size, dtype=torch.int8, device=runner.device)
+            else:
+                from .offload.config import allocate_aligned_bytes
+                allocation = allocate_aligned_bytes(torch, tensor.size, runner.device)
             for name in tensor.shared_by:
                 if name in raw:
                     raise OscarReadinessError(f"layer appears in multiple native allocations: {name}")
@@ -770,6 +785,10 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("runtime rotation dimension differs from model config")
         artifact = load_active_artifact(self.config, layer_names=target, head_dim=dim,
                                        model_fingerprint=fingerprint, device=device)
+        from .offload.config import offload_options
+        if offload_options(self.config) is not None:
+            from .offload.identity import rotation_artifact_identity
+            self._offload_rotation_identity = rotation_artifact_identity(artifact)
         if artifact.get("format_version") == 2:
             if not self.config.get("experimental_official_math", False):
                 raise OscarReadinessError("perhead-center artifacts require the official candidate math path")

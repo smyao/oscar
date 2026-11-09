@@ -37,9 +37,11 @@ def test_default_bf16_deploy_plan_has_no_synthetic_performance(tmp_path, capsys)
     logs = tmp_path / "unused"
     assert deploy.main(["--plan", "--log-dir", str(logs)]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert [name for name, _ in plan["stages"]] == ["bf16-correctness-gates", "service-probe"]
+    assert [name for name, _ in plan["stages"]] == ["bf16-correctness-gates", "probe-kv-offload",
+                                                   "probe-kv-offload-service", "service-probe"]
     assert "--probe-only" in plan["stages"][0][1]
-    assert "--correctness-only" in plan["stages"][1][1]
+    assert "--correctness-only" in plan["stages"][-1][1]
+    assert "torch.distributed.run" in plan["stages"][1][1]
     assert plan["performance"] == "not_run_user_requested"
     assert "--quantization" not in plan["vllm_argv"]
     assert not logs.exists()
@@ -59,7 +61,8 @@ def _setup(tmp_path, monkeypatch, failure=None):
         config = json.loads(path.read_text())
         assert config["experimental_bf16_attention"] is True
         assert config["model"] == str(model) and config["quantization"] is None
-        assert command[command.index("--config") + 1] == str(path)
+        if name != "probe-kv-offload":
+            assert command[command.index("--config") + 1] == str(path)
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         if name == "bf16-correctness-gates":
             out = logs / "bf16-correctness" / "status.json"
@@ -73,6 +76,29 @@ def _setup(tmp_path, monkeypatch, failure=None):
                 report["official_attention_gate"]["status"] = "not_run"
             if failure == "malformed_receipt":
                 report["target_config"] = "invalid"
+        elif name == "probe-kv-offload":
+            out = logs / "kv-offload.json"
+            report = {"status": "passed", "world_size": 4, "all_rank_device_evidence": True,
+                      "byte_comparison": "exact", "metadata_rpc_roundtrip": "exact",
+                      "remote_object_cleanup": "passed",
+                      "rank_results": [{"rank": rank, "status": "passed", "remote_object_cleanup": "passed"}
+                                       for rank in range(4)]}
+            if failure == "incomplete_tp":
+                report["world_size"] = 1
+            if failure == "missing_rpc":
+                report["metadata_rpc_roundtrip"] = "not_run"
+            if failure == "offload_cleanup":
+                report["rank_results"][2]["remote_object_cleanup"] = "failed"
+        elif name == "probe-kv-offload-service":
+            out = logs / "kv-offload-service/result.json"
+            report = {"status": "passed", "target_config_sha256": digest,
+                      "arms": {"none": {"status": "passed"}, "align": {"status": "passed"}}}
+            if failure == "missing_align":
+                del report["arms"]["align"]
+            if failure == "failed_restore":
+                report["arms"]["none"]["status"] = "failed"
+            if failure == "stale_offload_config":
+                report["target_config_sha256"] = "stale"
         else:
             assert name == "service-probe" and "--correctness-only" in command
             out = logs / "service-probe-report.json"
@@ -103,7 +129,7 @@ def test_correctness_success_reaches_formal_service_without_performance(monkeypa
         return 0
     monkeypatch.setattr(service_probe, "main", serve)
     assert deploy.main(["--model", str(model), "--log-dir", str(logs)]) == 0
-    assert calls == ["bf16-correctness-gates", "service-probe"]
+    assert calls == ["bf16-correctness-gates", "probe-kv-offload", "probe-kv-offload-service", "service-probe"]
     assert len(served) == 1
     state = json.loads((logs / "status.json").read_text())
     assert state["status"] == "stopped" and state["performance"] == "not_run_user_requested"
@@ -111,7 +137,8 @@ def test_correctness_success_reaches_formal_service_without_performance(monkeypa
 
 
 @pytest.mark.parametrize("failure", ["child", "missing_receipt", "stale_config", "fake_gate", "resource", "telemetry",
-                                     "malformed_receipt", "phase_exception"])
+                                     "malformed_receipt", "phase_exception", "incomplete_tp", "missing_rpc",
+                                     "missing_align", "failed_restore", "stale_offload_config", "offload_cleanup"])
 def test_bad_correctness_receipt_blocks_service(monkeypatch, tmp_path, failure):
     model, logs, _ = _setup(tmp_path, monkeypatch, failure)
     monkeypatch.setattr(service_probe, "main", lambda: pytest.fail("failed correctness gate must block formal serve"))

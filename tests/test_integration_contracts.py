@@ -21,6 +21,7 @@ from unittest.mock import patch
 from oscar_ascend import plugin
 from oscar_ascend.integration.runtime_api import clear_runtime
 from tools import deploy, prepare_rotations, target_cli
+from test_stable_launch_frozen import without_authorized_kv_transfer
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -74,7 +75,10 @@ class TargetContracts(unittest.TestCase):
             expected += ["--max-num-batched-tokens", "16384"]
         expected[expected.index("--hf-overrides") + 1] = "{}"  # native checkpoint RoPE
         config = json.loads((ROOT / "configs/target.json").read_text())
-        self.assertEqual(_options(target_cli.serve_argv(config)), _options(expected))
+        # The independently approved offload argument is checked in full;
+        # every historical Appendix-A option still compares unchanged.
+        actual = without_authorized_kv_transfer(target_cli.serve_argv(config))
+        self.assertEqual(_options(actual), _options(expected))
 
     def test_existing_plugin_allowlist_cannot_exclude_ascend(self):
         result = target_cli.target_env({"devices": [4, 5, 6, 7]}, {"VLLM_PLUGINS": "other_plugin"})
@@ -129,7 +133,10 @@ class TargetContracts(unittest.TestCase):
             config_path.write_text(json.dumps(config))
             logs = root / "logs"
 
-            def plan(_config, log_dir):
+            def plan(_config, log_dir, effective_config=None):
+                self.assertIsNotNone(effective_config)
+                self.assertEqual(effective_config["devices"], [4, 5, 6, 7])
+                self.assertNotIn("kv_offload", effective_config)  # Explicit native baseline.
                 marker = "from pathlib import Path; Path(" + repr(str(log_dir / "must-not-start")) + ").write_text('started')"
                 return [
                     ("probe-failed", [sys.executable, "-c", "raise SystemExit(7)"]),

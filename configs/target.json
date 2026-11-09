@@ -17,6 +17,12 @@
   "max_model_len": 262144,
   "use_native_token_budget": false,
   "enable_prefix_caching": false,
+  "kv_offload": {
+    "enabled": true,
+    "backend": "memcache",
+    "max_batch_objects": 256,
+    "timeout_seconds": 60
+  },
   "max_num_seqs": 128,
   "gpu_memory_utilization": 0.9,
   "compilation_config": {

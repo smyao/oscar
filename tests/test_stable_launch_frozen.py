@@ -3,6 +3,8 @@
 The fixture was captured from f96820f1. The 2026-10-18 user authorization changes
 model, public model name, activation dtype, weight quantization and the old
 checkpoint-specific YaRN override (official Qwen3.8 uses default RoPE).
+The 2026-11-09 user-authorized offload extension adds only the explicit
+KV-transfer argument for the active candidate. Native controls exclude it.
 Every other native argument remains checked against the original fixture.
 """
 import json
@@ -13,15 +15,36 @@ from tools import install_serve, observe_serve
 
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN = json.loads((ROOT / 'reports/stable_32k_64k_20261015/frozen_launch.json').read_text())
+AUTHORIZED_KV_OFFLOAD = {"enabled": True, "backend": "memcache",
+                         "max_batch_objects": 256, "timeout_seconds": 60}
+AUTHORIZED_KV_TRANSFER = {
+    "kv_connector": "OscarAscendStoreConnector",
+    "kv_connector_module_path": "oscar_ascend.offload.connector",
+    "kv_role": "kv_both", "kv_load_failure_policy": "fail",
+    "kv_connector_extra_config": {"enabled": True, "backend": "memcache", "use_layerwise": False,
+                                   "max_batch_objects": 256, "timeout_seconds": 60},
+}
 
 
-def authorized_model_arguments(argv):
+def without_authorized_kv_transfer(argv):
+    """Compare native math argv after checking the exact approved extension."""
+    result = list(argv)
+    assert result.count("--kv-transfer-config") == 1
+    index = result.index("--kv-transfer-config")
+    assert json.loads(result[index + 1]) == AUTHORIZED_KV_TRANSFER
+    del result[index:index + 2]
+    return result
+
+
+def authorized_model_arguments(argv, *, offload=True):
     result = list(argv)
     result[1] = '/softwarePlatform/models_directory/Qwen3.8-27B'
     result[result.index('--served-model-name') + 1] = 'qwen3.8'
     start = result.index('--quantization')
     result[start:start + 2] = ['--dtype', 'bfloat16']
     result[result.index("--hf-overrides")+1] = "{}"
+    if offload:
+        result += ["--kv-transfer-config", json.dumps(AUTHORIZED_KV_TRANSFER, separators=(",", ":"))]
     return result
 
 

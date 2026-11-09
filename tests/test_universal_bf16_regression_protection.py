@@ -21,6 +21,8 @@ from oscar_ascend.ops.cv_dispatch import OFFICIAL_CV_MAP, select_cv_op
 from tools import generate_official_attention as generated
 from tools import install_serve, observe_serve
 from tools.serving_variants import variant_config
+from offload_frozen_contract import before_authorized_offload_extension
+from test_stable_launch_frozen import AUTHORIZED_KV_OFFLOAD
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_232B_SHA256 = {
@@ -47,7 +49,14 @@ def digest(data):
 
 @pytest.mark.parametrize("path,expected", sorted(BASE_232B_SHA256.items()))
 def test_restored_and_unchanged_production_bytes_match_232b(path, expected):
-    assert digest((ROOT / path).read_bytes()) == expected
+    if path in {"oscar_ascend/runtime.py", "tools/target_cli.py", "configs/target.json"}:
+        # The user explicitly authorized offload and its bounded service probe.
+        # Remove only the exact reviewed seams, retaining the original SHA for
+        # every other byte. CANN and attention routes keep unconditional hashes.
+        original = before_authorized_offload_extension(path, (ROOT / path).read_text())
+        assert digest(original) == expected
+    else:
+        assert digest((ROOT / path).read_bytes()) == expected
 
 
 @pytest.mark.parametrize("path,expected", sorted(RETAINED_34BC_SHA256.items()))
@@ -70,6 +79,7 @@ def test_default_and_packaged_generation_cannot_reenable_decode_cast_experiment(
 
 def test_variant_source_only_adds_retired_policy_cleanup_to_accepted_source():
     text = (ROOT / 'tools/serving_variants.py').read_text()
+    text = before_authorized_offload_extension('tools/serving_variants.py', text)
     cleanup = """    # User withdrew the unsuccessful exact-current delivery. A reused
     # generated config must not carry its retired policy into any variant.
     selected.pop('oscar_current_only_policy', None)
@@ -85,6 +95,7 @@ def test_variant_source_only_adds_retired_policy_cleanup_to_accepted_source():
 def test_candidate_configuration_matches_accepted_performance_base(prefix):
     expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
     expected['enable_prefix_caching'] = prefix
+    expected['kv_offload'] = AUTHORIZED_KV_OFFLOAD
     assert candidate_config(prefix) == expected
 
 

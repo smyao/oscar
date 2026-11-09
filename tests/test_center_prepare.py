@@ -20,6 +20,7 @@ from tools import install_serve, observe_serve
 from tools.prepare_rotations import prepare
 from tools.serving_variants import variant_config, runtime_feature_summary
 from tools.target_cli import serve_argv
+from test_stable_launch_frozen import without_authorized_kv_transfer
 from test_official_rotation_calibration import model, rank_states, NAME
 
 
@@ -83,7 +84,7 @@ def test_candidate_enables_center_baseline_native_restore_shared_without_argv_ch
     assert 'rotation_k_clip' not in candidate
     assert 'rotation_variant' not in base
     # These are model/serving options; fitting recipe must not alter native argv.
-    assert serve_argv(candidate) == serve_argv(variant_config(base, 'baseline'))
+    assert without_authorized_kv_transfer(serve_argv(candidate)) == serve_argv(variant_config(base, 'baseline'))
     for variant in ('baseline', 'native'):
         assert 'rotation_variant' not in variant_config(candidate, variant)
         assert 'rotation_k_clip' not in variant_config(candidate, variant)

@@ -18,12 +18,17 @@ from .serving_variants import variant_config
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
+def plan(config_path: Path, log_dir: Path, config=None) -> list[tuple[str, list[str]]]:
     python = sys.executable
     cfg = str(config_path.resolve())
-    config = json.loads(config_path.read_text())
+    if config is None:
+        config = json.loads(config_path.read_text())
+    from oscar_ascend.offload.config import offload_options
+    dependencies = ["setuptools>=69", "wheel", "pybind11>=3", "cmake>=3.26", "ninja", "pytest"]
+    if offload_options(config) is not None:
+        dependencies += ["memfabric-hybrid", "memcache-hybrid", "pyzmq"]
     return [
-        ("build-dependencies", [python,"-m","pip","install","setuptools>=69","wheel","pybind11>=3","cmake>=3.26","ninja","pytest"]),
+        ("build-dependencies", [python,"-m","pip","install", *dependencies]),
         ("install-plugin", [python, "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(ROOT)]),
         ("build-ops", [python, "-m", "tools.build_ops", "--soc", config.get("soc_version", "ascend910b4"),
                        "--log-dir", str(log_dir / "build")]),
@@ -105,12 +110,29 @@ def _temporary_process_context(env: dict[str, str], argv: list[str]):
         sys.argv = prior_argv
 
 
-def _bf16_plan(config_path: Path, log_dir: Path):
+def _offload_probe_plan(config, config_path, log_dir):
+    from oscar_ascend.offload.config import offload_options
+    if offload_options(config) is None:
+        return []
+    return [
+        ("probe-kv-offload", [sys.executable, "-m", "torch.distributed.run", "--standalone",
+            "--nproc-per-node", str(config["tensor_parallel_size"]), "-m", "tools.probe_kv_offload",
+            "--output-json", str(log_dir / "kv-offload.json"),
+            "--timeout-seconds", str(offload_options(config)["timeout_seconds"])]),
+        ("probe-kv-offload-service", [sys.executable, "-m", "tools.probe_kv_offload_service",
+            "--config", str(config_path), "--output-dir", str(log_dir / "kv-offload-service")]),
+    ]
+
+
+def _bf16_plan(config_path: Path, log_dir: Path, config=None):
     """Reuse the complete signed correctness gates, without paired load."""
+    if config is None:
+        config = json.loads(config_path.read_text())
     return [
         ("bf16-correctness-gates", [sys.executable, "-m", "tools.observe_serve",
             "--config", str(config_path), "--variant", "candidate", "--probe-only",
             "--log-dir", str(log_dir / "bf16-correctness")]),
+        *_offload_probe_plan(config, config_path, log_dir),
         ("service-probe", [sys.executable, "-m", "tools.service_probe", "--config", str(config_path),
             "--correctness-only", "--log-dir", str(log_dir / "service-probe"),
             "--output", str(log_dir / "service-probe-report.json")]),
@@ -120,10 +142,11 @@ def _bf16_plan(config_path: Path, log_dir: Path):
 def _run_bf16_deployment(config, config_path, log_dir, status, env) -> int:
     status.update(performance="not_run_user_requested", validation_mode="correctness_only_user_requested")
     digest = hashlib.sha256(config_path.read_bytes()).hexdigest()
-    stages = _bf16_plan(config_path, log_dir)
+    stages = _bf16_plan(config_path, log_dir, config)
     gate_status_path = log_dir / "bf16-correctness" / "status.json"
     service_path = log_dir / "service-probe-report.json"
-    for path in (gate_status_path, service_path):
+    for path in (gate_status_path, service_path, log_dir / "kv-offload.json",
+                 log_dir / "kv-offload-service/result.json"):
         path.unlink(missing_ok=True)
     for name, command in stages:
         result = run_phase(name, command, cwd=ROOT, log_dir=log_dir, env=env,
@@ -145,6 +168,28 @@ def _run_bf16_deployment(config, config_path, log_dir, status, env) -> int:
                         or report.get("official_attention_gate" if config.get("experimental_official_math",False) else "aligned_attention_gate" if config.get("experimental_aligned_math",False) else "bf16_attention_gate", {}).get("status") != "passed"):
                     raise RuntimeError("fresh BF16 correctness/graph gates or effective config binding incomplete")
                 status["bf16_correctness"] = {"status": "passed", "report": str(gate_status_path)}
+            elif name == "probe-kv-offload":
+                report = _report(log_dir / "kv-offload.json")
+                ranks = report.get("rank_results", [])
+                if (report.get("status") != "passed"
+                        or report.get("world_size") != config["tensor_parallel_size"]
+                        or report.get("all_rank_device_evidence") is not True
+                        or report.get("byte_comparison") != "exact"
+                        or report.get("metadata_rpc_roundtrip") != "exact"
+                        or report.get("remote_object_cleanup") != "passed"
+                        or len(ranks) != config["tensor_parallel_size"]
+                        or {item.get("rank") for item in ranks} != set(range(config["tensor_parallel_size"]))
+                        or any(item.get("status") != "passed" or item.get("remote_object_cleanup") != "passed"
+                               for item in ranks)):
+                    raise RuntimeError("memcache TP byte transport/manifest RPC evidence is incomplete")
+                status["offload_transport"] = {"status": "passed", "report": str(log_dir / "kv-offload.json")}
+            elif name == "probe-kv-offload-service":
+                report = _report(log_dir / "kv-offload-service/result.json")
+                if (report.get("status") != "passed" or report.get("target_config_sha256") != digest
+                        or set(report.get("arms", {})) != {"none", "align"}
+                        or any(arm.get("status") != "passed" for arm in report["arms"].values())):
+                    raise RuntimeError("memcache none/align prefix/chunked/MTP swap service evidence is incomplete")
+                status["offload_service"] = {"status": "passed", "report": str(log_dir / "kv-offload-service/result.json")}
             else:
                 report = _report(service_path)
                 if (report.get("status") != "passed" or report.get("resource_release") != "passed"
@@ -210,7 +255,7 @@ def main(argv=None) -> int:
         raise
     effective_path = log_dir / "effective-target.json" if config != original_config else args.config.resolve()
     bf16 = config.get("experimental_bf16_attention", False) and not args.only
-    stages = _bf16_plan(effective_path, log_dir) if bf16 else plan(args.config, log_dir)
+    stages = _bf16_plan(effective_path, log_dir, config) if bf16 else plan(args.config, log_dir, config)
     if args.only:
         stages = [x for x in stages + diagnostic_plan(log_dir) if x[0] == args.only]
         if len(stages) != 1:

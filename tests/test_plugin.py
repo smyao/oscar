@@ -79,10 +79,17 @@ class PluginTests(unittest.TestCase):
     def setUp(self):
         clear_runtime()
         plugin.unregister()
+        # Readiness imports this genuine module lazily. Load it outside fake
+        # sys.modules patch.dict scopes: their rollback would otherwise remove
+        # the module entry while leaving ops.loader bound to an orphan object.
+        self._loader_module = importlib.import_module("oscar_ascend.ops.loader")
 
     def tearDown(self):
         plugin.unregister()
         clear_runtime()
+        from oscar_ascend import ops
+        self.assertIs(ops.loader, self._loader_module)
+        self.assertIs(sys.modules["oscar_ascend.ops.loader"], self._loader_module)
 
     def test_fresh_interpreter_register_imports_no_heavy_modules(self):
         source = """

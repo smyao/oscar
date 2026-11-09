@@ -69,6 +69,21 @@ def serve_argv(config: dict) -> list[str]:
         args += ["--scheduler-cls", scheduler]
     if config.get("profiler_config") is not None:
         args += ["--profiler-config",json.dumps(config["profiler_config"],separators=(",",":"))]
+    from oscar_ascend.offload.config import transfer_config
+    transfer = transfer_config(config)
+    if transfer is not None:
+        args += ["--kv-transfer-config", json.dumps(transfer, separators=(",", ":"))]
+    if "enable_chunked_prefill" in config:
+        chunked = config["enable_chunked_prefill"]
+        if type(chunked) is not bool:
+            raise ValueError("enable_chunked_prefill must be an explicit boolean")
+        args += ["--enable-chunked-prefill" if chunked else "--no-enable-chunked-prefill"]
+    if "offload_probe_num_gpu_blocks" in config:
+        capacity = config["offload_probe_num_gpu_blocks"]
+        if (os.environ.get("OSCAR_OFFLOAD_SERVICE_PROBE") != "1"
+                or type(capacity) is not int or capacity <= 0):
+            raise ValueError("offload cache capacity override is restricted to the explicit service probe")
+        args += ["--num-gpu-blocks-override", str(capacity)]
     if diagnose_guard_enabled(config):
         # Main-model graph guards are otherwise fused at capture and can
         # only surface as prior_work in a later eager diagnostic guard.
@@ -78,6 +93,11 @@ def serve_argv(config: dict) -> list[str]:
 
 def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
     env = dict(os.environ if base is None else base)
+    from oscar_ascend.offload.config import offload_options
+    if offload_options(config) is not None:
+        # Native init_none_hash reads this before building salted block hashes.
+        # A fixed seed lets a later service find the same shared prefix index.
+        env.setdefault("PYTHONHASHSEED", "0")
     if config.get("experimental_bf16_attention",False) and not diagnose_guard_enabled(config):
         # User paused performance work. A stale inherited observer control
         # must not install NPU Event sampling in a normal BF16 service.
@@ -108,6 +128,9 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     original = json.loads(args.config.read_text())
     config = apply_model_options(original, args, require_model=not args.print_command)
+    if args.native:
+        config = dict(config)
+        config.pop("kv_offload", None)
     command = serve_argv(config)
     if args.print_command:
         import shlex

@@ -22,6 +22,7 @@ from tools.model_config import (
     resolve_mamba_cache_dtypes,
 )
 from tools.serving_variants import variant_config, variant_features
+from test_stable_launch_frozen import without_authorized_kv_transfer
 
 
 _OMITTED = object()
@@ -223,7 +224,7 @@ def test_native_and_candidate_keep_identical_model_state_precision(tmp_path, pre
     candidate = variant_config(config, "candidate")
     native = variant_config(candidate, "native")
     assert not any(variant_features(native).values())
-    assert target_cli.serve_argv(candidate) == target_cli.serve_argv(native)
+    assert without_authorized_kv_transfer(target_cli.serve_argv(candidate)) == target_cli.serve_argv(native)
     assert argv_option(target_cli.serve_argv(native), "mamba_ssm_cache_dtype") == "bfloat16"
 
 

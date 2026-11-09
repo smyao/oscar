@@ -13,6 +13,7 @@ dependencies = []
 [project.optional-dependencies]
 test = ["pytest>=8", "torch>=2.10"]
 build = ["cmake>=3.26", "pybind11>=3", "ninja"]
+offload = ["memfabric-hybrid", "memcache-hybrid", "pyzmq"]
 
 [project.entry-points."vllm.general_plugins"]
 oscar_ascend = "oscar_ascend.plugin:register"

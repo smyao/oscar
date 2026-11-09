@@ -221,6 +221,9 @@ def _patch_runner(module: ModuleType) -> None:
             provider = require_runtime()
             if getattr(provider, "request_windows_enabled", False):
                 provider.publish_request_window_map(runner, scheduler_output)
+            if getattr(provider, "_offload_runner", None) is runner:
+                from vllm.distributed.kv_transfer import get_kv_transfer_group
+                get_kv_transfer_group().after_native_update_states(runner, scheduler_output)
             return result  # native deferred MTP corrections must survive
         return wrapped
 
@@ -228,6 +231,15 @@ def _patch_runner(module: ModuleType) -> None:
                           ("_update_states", updated)):
         if hasattr(cls, name):
             _patch(cls, name, wrapper)
+    if _offload_configured():
+        def completed(original):
+            def wrapped(runner, output_token_ids, scheduler_output):
+                result = original(runner, output_token_ids, scheduler_output)
+                from .offload.hooks import worker_step_completed
+                worker_step_completed(runner, output_token_ids, scheduler_output)
+                return result
+            return wrapped
+        _patch(cls, "_update_states_after_model_execute", completed)
     _patch_passive_runner(module)
 
 
@@ -286,6 +298,8 @@ def _patch_prefix_checkpoint_scheduler(module):
             from .integration.prefix_checkpoint import policy_for_scheduler
             policy = policy_for_scheduler(scheduler)
             scheduler._oscar_prefix_checkpoint_policy = policy
+            from .offload.hooks import scheduler_initialized
+            scheduler_initialized(scheduler)
             if policy is not None:
                 from .integration.prefix_checkpoint import PrefixCheckpointLeases
                 coordinator = scheduler.kv_cache_manager.coordinator
@@ -349,6 +363,58 @@ def _patch_prefix_checkpoint_coordinator(cls):
 def _patch_scheduler(module):
     _patch_prefix_checkpoint_scheduler(module)
     _patch_request_window_scheduler(module)
+    if _offload_configured():
+        _patch_offload_scheduler(module)
+
+
+def _offload_configured():
+    path = os.environ.get("OSCAR_TARGET_CONFIG")
+    if not path:
+        return False
+    from .offload.config import offload_options
+    return offload_options(json.loads(Path(path).read_text())) is not None
+
+
+def _patch_offload_scheduler(module):
+    """#37-49/#127/#128/#157/#163/#171: preserve native bodies and ordering."""
+    def preempt(original):
+        def wrapped(scheduler, request, *args, **kwargs):
+            from .offload.hooks import before_preempt
+            before_preempt(scheduler, request)
+            return original(scheduler, request, *args, **kwargs)
+        return wrapped
+
+    def output(original):
+        def wrapped(scheduler, scheduler_output, *args, **kwargs):
+            result = original(scheduler, scheduler_output, *args, **kwargs)
+            from .offload.hooks import after_output
+            after_output(scheduler, scheduler_output)
+            return result
+        return wrapped
+
+    def reset(original):
+        def wrapped(scheduler, *args, **kwargs):
+            from .offload.hooks import resetting_cache
+            # Native signature: (reset_running_requests=False, reset_connector=False).
+            force = kwargs.get("reset_running_requests", args[0] if args else False)
+            with resetting_cache(scheduler, reset_running_requests=force) as complete:
+                result = original(scheduler, *args, **kwargs)
+                complete(result)
+                return result
+        return wrapped
+
+    def branch(original):
+        def wrapped(scheduler, session, update):
+            from .offload.hooks import request_branched
+            request_branched(scheduler, session)
+            return original(scheduler, session, update)
+        return wrapped
+
+    _patch(module.Scheduler, "_preempt_request", preempt)
+    _patch(module.Scheduler, "update_from_output", output)
+    _patch(module.Scheduler, "reset_prefix_cache", reset)
+    if hasattr(module.Scheduler, "_update_request_as_session"):
+        _patch(module.Scheduler, "_update_request_as_session", branch)
 
 
 def _patch_attention_registration(module: ModuleType) -> None:

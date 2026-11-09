@@ -19,8 +19,10 @@ from tools.target_cli import serve_argv
 def configured():
     value=json.loads((Path(__file__).resolve().parents[1]/'configs/target.json').read_text())
     value.update({flag:True for flag in FEATURE_FLAGS.values()})
+    # Research request windows do not implement the production physical-page
+    # offload contract; test their original standalone routing explicitly.
     value.update(experimental_request_windows=True,experimental_bounded_whole_prefill=True,
-                 experimental_mdl_decode=False)
+                 experimental_mdl_decode=False,kv_offload={"enabled":False})
     return value
 
 

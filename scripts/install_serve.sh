@@ -4,6 +4,7 @@
 # --variant candidate 使用tools/serving_variants.py统一预设：组合decode、current-only、MTP精简、混合分流及整段prefill。
 # --rear-cards 本次使用物理卡4,5,6,7和端口7878；默认配置不变。
 # --enable-prefix-caching 本次开启前缀缓存；stable默认关闭，token预算仍为16384。
+# 当前target/node93配置默认开启MemCache卸载；显式--no-kv-offload关闭，故障不自动回退。
 set -euo pipefail
 TASK_ROOT="${BASH_SOURCE[0]%/*}/.."
 cd -- "${TASK_ROOT}"

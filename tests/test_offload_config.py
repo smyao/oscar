@@ -27,7 +27,7 @@ from oscar_ascend.offload.config import (
     transfer_config, validate_transfer_config,
 )
 from oscar_ascend.rotations import calibration_cache_identity, rotation_artifact_path
-from tools import install_serve, observe_serve, target_cli
+from tools import deploy, install_serve, observe_serve, target_cli
 from tools.serving_variants import variant_config, variant_features
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -302,11 +302,22 @@ def test_direct_native_cli_strips_offload_before_building_argv(tmp_path, capsys)
     assert "--kv-transfer-config" not in argv
 
 
-def test_fixed_default_candidate_command_enables_offload(capsys):
-    assert install_serve.main(["--variant", "candidate", "--plan"]) == 0
+@pytest.mark.parametrize("entry", [install_serve, deploy])
+@pytest.mark.parametrize("config_name, port", [(None, 8989), ("benchmark_node93.json", 7878)])
+def test_fixed_default_candidate_command_enables_offload(capsys, entry, config_name, port):
+    args = ["--plan"]  # No variant/offload flags: exercise the shipped defaults.
+    if config_name:
+        args += ["--config", str(ROOT / "configs" / config_name)]
+    assert entry.main(args) == 0
     report = json.loads(capsys.readouterr().out)
     _, transfer = remove_transfer(report["vllm_argv"])
     assert transfer["kv_connector"] == CONNECTOR
+    assert transfer["kv_connector_extra_config"]["backend"] == "memcache"
+    assert transfer["kv_load_failure_policy"] == "fail"
+    assert report["target_devices"] == [0, 1, 2, 3]
+    argv = report["vllm_argv"]
+    assert argv[argv.index("--port") + 1] == str(port)
+    assert argv[argv.index("--max-num-batched-tokens") + 1] == "16384"
 
 
 def test_explicit_disabled_config_stays_disabled():

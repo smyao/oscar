@@ -82,7 +82,7 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 
 私有 swap 使用本服务 session / 请求代际 / 版本隔离。恢复全 TP 完成、取消、分叉、成功强制重置、或有效本地 APC 已覆盖时触发清理。迟到保存 ACK 仍参与回收；删除只允许服务端根据当前 scope 的结构化 plan 派生私有 keys，不接受任意删除列表。共享 prefix payload 是缓存对象，独立于私有 swap 生命周期。进程崩溃后的对象驻留及存储服务自身故障属于存储端运维边界，不能把 MemCache 当成持久化数据库。
 
-必须单独说明容量边界：纯 DRAM MemCache 有高低水位驱逐，官方配置没有文档化的“关闭驱逐”选项。这里没有把原生 layerwise 读路径的 5 分钟 lease 假定为长期 swap 保活或自动续租。已卸载活动快照若被存储驱逐，恢复会明确报错，不能保证任意等待时长和任意存储压力下必然恢复。部署容量需覆盖活动快照与共享 prefix 的实际占用。公开的 SSD/UBS_IO 扩展有额外库和部署要求，未偷偷加入本次 DRAM 方案。依据：[MemCache 配置](https://github.com/Ascend/memcache/blob/master/doc/memcache_config.md)、[SSD 支持说明](https://github.com/Ascend/memcache/blob/master/doc/memcache_ssd_usage.md)。SIGKILL 或 SDK 硬超时也可能留下未回收 generation，不能声称异常退出后零遗留。
+必须单独说明容量边界：纯 DRAM MemCache 有高低水位驱逐，官方配置没有文档化的“关闭驱逐”选项。这里没有把原生 layerwise 读路径的 5 分钟 lease 假定为长期 swap 保活或自动续租。已卸载活动快照若被存储驱逐，恢复会明确报错，不能保证任意等待时长和任意存储压力下必然恢复。部署容量需覆盖活动快照与共享 prefix 的实际占用。用户已选择 DRAM＋SSD，存储下沉由安装的 SDK 实现；本地配置准备不证明 SSD 已启用，也没有增加存储保活保证。SSD 配置以安装版本为准；DirStore 目录字段与 UBS IO 裸盘字段不能互相替代。依据：[MemCache 配置](https://github.com/Ascend/memcache/blob/master/doc/memcache_config.md)、[SSD 支持说明](https://github.com/Ascend/memcache/blob/master/doc/memcache_ssd_usage.md)。SIGKILL 或 SDK 硬超时也可能留下未回收 generation，不能声称异常退出后零遗留。
 
 ## 部署
 
@@ -96,36 +96,54 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 | MetaService 文件 | `/usr/local/memcache_hybrid/latest/config/mmc-meta.conf` |
 | MetaService / Config Store | `tcp://127.0.0.1:5000` / `tcp://127.0.0.1:6000` |
 | MetaService metrics | `http://127.0.0.1:8000` |
-| 用户报告安装版本 | MemCache `1.2_260917`，MemFabric `1.2_260917`；UBS IO 版本未提供 |
+| 用户报告安装版本 | MemCache `1.2_260917`，MemFabric `1.2_260917` |
 | 通讯协议 / 最大 rank 数 | `device_rdma` / `256` |
-| DRAM | 每个 LocalService `32GB`；四个贡献内存的 TP worker 配置合计 `128GB`，不含其他进程和 SDK 开销 |
-| 驱逐高/低水位 | `90` / `80` |
+| DRAM | 最新每个 LocalService `40GB`；四个贡献内存的 TP worker 配置合计 `160GB`，不含其他进程和 SDK 开销 |
+| 驱逐高/低水位 / Meta 日志等级 | 最新 `70` / `60` / `error` |
 | rewarm / prefetch | `ock.mmc.rewarm.dram_watermark=95` / `ock.mmc.storage.prefetch.enabled=true` |
 | SSD 意图 | `ock.mmc.local_service.storage.enabled=true`；用户选择包含 SSD |
+| DirStore 配置路径 | `MMC_DIR_STORE_CONFIG_PATH=/usr/local/memcache_hybrid/latest/config/dir_store.conf`；用户确认文件尚不存在 |
+| 已知 DirStore 字段 | `mmc-local.conf` 中已有 `dir_store.base_path=/home/kvcache`、`dir_store.io_workers=32` |
+| 服务器标识 | `MMC_LOCAL_SERVICE_BACKEND_ID=1`，同服务器实例一致；不是磁盘后端类型选择器 |
 
-这些 loopback 地址要求相应客户端与服务位于同一网络命名空间；它们不提供跨机器 MetaService 访问。`world_size=256` 是上限，不是本次会创建 256 个 32GB 池。只凭两个配置文件不能证明端口监听、SDK 初始化或 SSD 读写已成功。
+最新 40GB 和 70/60 覆盖先前粘贴的 32GB 和 90/80。loopback 地址要求相应客户端与服务位于同一网络命名空间；它们不提供跨机器 MetaService 访问。`world_size=256` 是上限，不是本次会创建 256 个 40GB 池。只凭配置文件不能证明端口监听、SDK 初始化或 SSD 读写已成功。
 
-用户粘贴的 `ubsio.disk.path`、`ubsio.mem.size_in_gb`、`ubsio.standalone.device_count` 均被注释，实际生效配置及 UBS IO 版本仍待提供；MemCache/MemFabric 版本已报告如上。不能把 `dir_store.base_path=/home/kvcache` 当作 UBS IO 设备路径，也不能把注释示例的 `device_count=8` 直接启用。该值应按实际贡献 DRAM 的 LocalService 数核对，包括本节点其他服务；不能仅从本次 TP4 推断全机只有四个进程。
+用户随后确认 `dir_store.conf` 不存在；安装目录中 `.py/.conf/.md` 的只读搜索也只返回 `mmc-local.conf` 内的 DirStore 字段，未提供独立文件读取证据。因此环境脚本保留用户指定的路径变量，但配置准备不创建该文件，也不要求它存在；已有文件保持不动。搜索范围有限，不能由此断言 SDK 不支持 DirStore。
 
-公开 SSD 文档使用旧 `ock.mmc.ubs_io.enable` 键，而现场文件使用 `ock.mmc.local_service.storage.enabled`。保留现场键，不自动按不同版本的在线文档改写；需用安装版本的有效配置及初始化日志确认后端。SSD benchmark 还需要证明实际发生 SSD 写入/读取或驱逐后的 SSD 回读，单纯 `enabled=true`、DRAM 命中或普通 HTTP 完成均不是 SSD 性能证据。
+本项目原生参考 [kv_pool.md](../references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md) 的“Enable Memcache SSD Cache”使用相同的 `storage.enabled` 键，但其路径是内置 UBS IO，要求 `ubsio.disk.path` 为独占、未挂载块设备。当前 OSCAR 经原生 `MemcacheBackend` 调用 `DistributedObjectStore.init`，没有另选 DirStore；设置 `MMC_DIR_STORE_CONFIG_PATH` 本身不能替代后端选择，也不能替代 UBS 路径的必填项。须由安装 SDK 的实际读取和初始化证据确认采用哪条路径，不擅填裸盘或启用 `force_new_disk`。如果采用目录模式，还需核对 `/home/kvcache` 的实际挂载和 SSD 写入/回读；MetaService 启动、DRAM 命中或普通 HTTP 完成均不是 SSD 性能证据。
 
-在 node93 的 **OSCAR 工程目录**，以下环境脚本仅导出既有配置路径和卡组，不改 SDK 文件、不启动 MetaService，也不自动安装或启用磁盘：
+在 node93 的 **OSCAR 工程目录、当前 Bash** 中，环境脚本依次设置 `PYTHONHASHSEED=0`、服务器标识和前四卡可见性，再 source 用户指定的 CANN、ATB、MemFabric、MemCache 四个 `set_env.sh`，最后绑定三个 MMC 配置路径。`CUDA_VISIBLE_DEVICES` 与 `ASCEND_RT_VISIBLE_DEVICES` 一致，执行仍为 NPU。SDK 的最终非零返回立即停止后续初始化并实时打印，保留当前 shell 的 `errexit`、`nounset`、`pipefail` 状态。
+
+只查看准备结果和模型启动计划（不改配置、不启动 SDK 服务）：
 
 ```bash
-source scripts/env_node93_memcache.sh
+source scripts/env_node93_memcache.sh && \
+python3 -m tools.memcache_config prepare-node93 --plan && \
 bash scripts/install_serve.sh --config configs/benchmark_node93.json --variant candidate --plan
 ```
 
-待实际 SDK/UBS 配置、MetaService 健康和测试资源确认后，设备/服务正确性入口为：
+启动分两个终端。终端一先确保没有占用相同端口的现有 MetaService，再执行：
 
 ```bash
-source scripts/env_node93_memcache.sh
+bash scripts/start_node93_memcache.sh
+```
+
+该命令加载环境，校验匹配的 5000/6000 地址和已提供的 storage 开关，将 local 改为 40GB/device_rdma、meta 改为 error/70/60，保留其他有效键，随后调用实际 `memcache_hybrid.MetaService.main()` 前台运行。所有输出直接显示，失败停止；不会自动重启或终止已有服务。输入校验先于写入，但多文件更新不是事务，磁盘写入错误可能留下部分更新。修改文件不改变已启动服务的配置，须在启动前执行准备。
+
+命令保留 `/home/kvcache` 中的已有对象，不执行示例中的递归删除；冷/暖缓存条件必须单独控制和记录。环境加载本身不改任何配置，也不清理目录。
+
+终端二在 MetaService 已就绪且对应 SDK 存储后端可用后，运行设备/服务正确性入口：
+
+```bash
+source scripts/env_node93_memcache.sh && \
 bash scripts/install_probe_serve.sh --config configs/benchmark_node93.json
 ```
 
 需要 APC 的实际服务测试显式选择原生 prefix caching；既有 offload 服务探针会独立覆盖 none/align，不改变正式配置的默认值。性能比较至少区分同参 OSCAR 无卸载、有卸载的冷请求、本地暖 prefix、远端暖 prefix 和实际抢占场景；SSD 测量单列后端 I/O 证据。现有 `benchmarks.measure` 使用唯一 cache salt 的冷请求，不直接冒充暖 prefix 或 SSD 专项 benchmark。
 
-本轮本地只检查配置差异、两个入口的 `--plan` 输出与环境脚本语法，均通过。没有连接 node93、启动服务、操作磁盘或产出 benchmark 数字。初始 659 项结果仍是代码主机回归，不转写为这套现场配置的设备通过。
+正式直启与完整探针入口使用 `target.json` 或 `benchmark_node93.json` 时，默认开启卸载，不需要额外传 `--kv-offload`；`install_serve.sh --no-kv-offload` 可显式关闭。SDK/传输错误不会自动切到无卸载运行。外部卸载之外的 OSCAR 数值、图模式、PT 和调度预算保持原配置。
+
+本轮配置准备、部署、卸载配置及 shell 静态检查共 61 项通过；另有 1 项全仓库档案头检查仍在已有的 `tools/experiments/export_shared_fp32.py` 失败，与之前基底记录一致。环境脚本另有 17 个本地 stub 场景通过（初始化顺序、当前 shell 环境保留、四处失败停止与退出码、shell 选项恢复、SDK 覆写后重新绑定用户变量）；脚本语法与两个入口的默认启动计划通过。没有连接 node93、启动真实服务、操作目标磁盘或产出 benchmark 数字。初始 659 项结果仍是代码主机回归，不转写为这套现场配置的设备通过。
 
 ### 通用部署配置生成
 

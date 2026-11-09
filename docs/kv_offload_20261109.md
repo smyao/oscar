@@ -110,7 +110,7 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 
 用户随后确认 `dir_store.conf` 不存在；安装目录中 `.py/.conf/.md` 的只读搜索也只返回 `mmc-local.conf` 内的 DirStore 字段，未提供独立文件读取证据。因此环境脚本保留用户指定的路径变量，但配置准备不创建该文件，也不要求它存在；已有文件保持不动。搜索范围有限，不能由此断言 SDK 不支持 DirStore。
 
-本项目原生参考 [kv_pool.md](../references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md) 的“Enable Memcache SSD Cache”使用相同的 `storage.enabled` 键，但其路径是内置 UBS IO，要求 `ubsio.disk.path` 为独占、未挂载块设备。当前 OSCAR 经原生 `MemcacheBackend` 调用 `DistributedObjectStore.init`，没有另选 DirStore；设置 `MMC_DIR_STORE_CONFIG_PATH` 本身不能替代后端选择，也不能替代 UBS 路径的必填项。须由安装 SDK 的实际读取和初始化证据确认采用哪条路径，不擅填裸盘或启用 `force_new_disk`。如果采用目录模式，还需核对 `/home/kvcache` 的实际挂载和 SSD 写入/回读；MetaService 启动、DRAM 命中或普通 HTTP 完成均不是 SSD 性能证据。
+本项目原生参考 [kv_pool.md](../references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md) 的“Enable Memcache SSD Cache”使用相同的 `storage.enabled` 键，但其路径是内置 UBS IO，要求 `ubsio.disk.path` 为独占、未挂载块设备。当前 OSCAR 经原生 `MemcacheBackend` 调用 `DistributedObjectStore.init`，没有另选 DirStore；设置 `MMC_DIR_STORE_CONFIG_PATH` 本身不能替代后端选择，也不能替代 UBS 路径的必填项。后续用户日志已明确该次运行选择 `backendType=dir_store`（见下方故障节）；该证据优先于通用 UBS 示例，不再为这次已选择的目录路径要求裸盘参数。仍不擅填磁盘或启用 `force_new_disk`。如果采用目录模式，还需核对 `/home/kvcache` 的实际挂载和 SSD 写入/回读；MetaService 启动、DRAM 命中或普通 HTTP 完成均不是 SSD 性能证据。
 
 在 node93 的 **OSCAR 工程目录、当前 Bash** 中，环境脚本依次设置 `PYTHONHASHSEED=0`、服务器标识和前四卡可见性，再 source 用户指定的 CANN、ATB、MemFabric、MemCache 四个 `set_env.sh`，最后绑定三个 MMC 配置路径。`CUDA_VISIBLE_DEVICES` 与 `ASCEND_RT_VISIBLE_DEVICES` 一致，执行仍为 NPU。SDK 的最终非零返回立即停止后续初始化并实时打印，保留当前 shell 的 `errexit`、`nounset`、`pipefail` 状态。
 
@@ -132,7 +132,13 @@ bash scripts/start_node93_memcache.sh
 
 命令保留 `/home/kvcache` 中的已有对象，不执行示例中的递归删除；冷/暖缓存条件必须单独控制和记录。环境加载本身不改任何配置，也不清理目录。
 
-终端二在 MetaService 已就绪且对应 SDK 存储后端可用后，运行设备/服务正确性入口：
+终端二必须与推理进程处于同一容器/网络命名空间。先确认两个控制端口都已监听：
+
+```bash
+ss -ltnp '( sport = :5000 or sport = :6000 )'
+```
+
+端口监听仅证明 TCP 端点存在，不是 SDK 或 SSD 验收。缺少 6000 时，先查看终端一 MetaService 的启动输出，不继续反复启动 vLLM。MetaService 已就绪且对应 SDK 存储后端可用后，运行设备/服务正确性入口：
 
 ```bash
 source scripts/env_node93_memcache.sh && \
@@ -144,6 +150,20 @@ bash scripts/install_probe_serve.sh --config configs/benchmark_node93.json
 正式直启与完整探针入口使用 `target.json` 或 `benchmark_node93.json` 时，默认开启卸载，不需要额外传 `--kv-offload`；`install_serve.sh --no-kv-offload` 可显式关闭。SDK/传输错误不会自动切到无卸载运行。外部卸载之外的 OSCAR 数值、图模式、PT 和调度预算保持原配置。
 
 本轮配置准备、部署、卸载配置及 shell 静态检查共 61 项通过；另有 1 项全仓库档案头检查仍在已有的 `tools/experiments/export_shared_fp32.py` 失败，与之前基底记录一致。环境脚本另有 17 个本地 stub 场景通过（初始化顺序、当前 shell 环境保留、四处失败停止与退出码、shell 选项恢复、SDK 覆写后重新绑定用户变量）；脚本语法与两个入口的默认启动计划通过。没有连接 node93、启动真实服务、操作目标磁盘或产出 benchmark 数字。初始 659 项结果仍是代码主机回归，不转写为这套现场配置的设备通过。
+
+### 2026-11-09 12:25 用户日志：Config Store 连接拒绝
+
+本次新日志已确认 worker 选择 `backendType=dir_store`、`storageEnabled=1`、`device_rdma`，实际 DRAM 仍为每 LocalService 32GB。实际加载的运行时版本与此前用户报告的安装包标签不同，具体运行时信息仅保留在本地原文。因果边界见档案 #175 及 [脱敏诊断摘要](../reports/memcache_startup_20261109/target_excerpt.txt)。
+
+首个明确失败是四 worker 连接 `127.0.0.1:6000` 被拒绝，持续 60 次后触发原有 60 秒初始化保护。EngineCore 的 `cancelled`、共享内存等待和资源清理警告是后续失败链；没有证据将本次失败归因于 attention、图模式或缺少 `dir_store.conf`。若 MetaService 启在宿主机而 vLLM 在独立容器，容器的 `127.0.0.1` 不会自动指向宿主机服务；按本轮 loopback 配置应在同一命名空间启动两者。
+
+默认开启卸载只会连接配置的存储服务，不自动启动中央 MetaService/Config Store。上方两个终端的顺序是服务启动前提。先运行 `bash scripts/start_node93_memcache.sh` 并保持前台，再核对 5000/6000，之后才运行模型服务。若当前工程还没有这个脚本，在用户已设置的 SDK 环境和 `MMC_META_CONFIG_PATH` 下，中央服务的等价官方入口为：
+
+```bash
+python3 -c 'from memcache_hybrid import MetaService; MetaService.main()'
+```
+
+此命令不会替用户修改旧 32GB 配置；已有 `prepare-node93` 入口才应用所要求的 40GB。日志中的 `Starting meta service local_service` 不是中央控制服务启动成功。当前只能确认 DirStore 被选择，仍未取得其初始化完成、SSD 写入/回读或模型服务成功证据；不通过增加 timeout 或关闭卸载掩盖失败。
 
 ### 通用部署配置生成
 

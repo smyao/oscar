@@ -1,5 +1,7 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
+> 2026-11-09 最新追加 #175：MemCache Config Store 6000 连接拒绝，四 worker 初始化超时；现场已选择 DirStore、实际 DRAM 仍为 32GB，部署恢复与验收边界见文末。
+
 > 2026-09-22 本项目续录：实际共 **164 条（G1–G34、#1–#130）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#126 来自用户回传的 node93 日志；早先75项store/merge原语NPU探针通过；最新日志已完成编译/初次profiling与KV预算，止于 #128 的MTP元数据虚拟块复制。完整服务、图与性能尚未验收。
 
 > **本文档是给调试 agent 用的"报错 → 日志"查表档案，禁止从头线性阅读。** 使用方法：
@@ -28875,3 +28877,16 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **根因边界**：#173的旋转往返反例只证明局部有限精度差异，不能证明模型收益；本次反馈不支持继续以它作为默认改动的交付依据。没有逐层激活、设备相位或同轮对照，不将单轮分数与耗时全部归因到某个算子，也不以RPS差异解释结果。后续代码审计与合成协议反例必须单列本地证据，不写成本条已确认的现场根因。
 
 **回归检查**：撤下验证固定current-only完整源码身份、candidate配置与614c快照一致、旧配置残留不能重新启用退役policy；保留原q4/q1/C4/C16源码与原路由门。具体主机结果见本轮withdrawal_validation.json；不将恢复源码或主机通过写成新的NPU/质量/性能验收。
+
+
+## [175] 真机条目（2026-11-09 用户回传）· MemCache Config Store 连接拒绝导致 TP4 初始化超时
+
+**证据**：用户提供的真机日志。脱敏诊断摘要为 [`reports/memcache_startup_20261109/target_excerpt.txt`](reports/memcache_startup_20261109/target_excerpt.txt)；完整原文按字节留在本地同目录 `target_failure.txt`，已忽略，不纳入版本库或推送。片段无部署 SHA，不把本地提交当成现场身份。
+
+**症状与直接原因**：四个 worker 初始化 MemCache，连接 `127.0.0.1:6000` 返回 `errno:111`；约 60 秒后 SDK 报重试 60 次仍失败，OSCAR backend initialization watchdog 达到原有 60 秒期限并终止四个 worker。后续 `No available shared memory broadcast block`、`RuntimeError: cancelled`、EngineCore failed、API 退出及 resource_tracker 警告处在该失败链之后，不能作为首因。已确认 Config Store 端点对这些进程不可达；缺同一网络命名空间的监听信息和 MetaService 启动日志，不能进一步断言是未启动、启动失败、不同容器或监听绑定错误。
+
+**配置新证据**：实际读取用户指定的 local 配置，LocalService 明确 `backendType=dir_store`、`storageEnabled=1`、`device_rdma`、DRAM `34359738368` 字节（32GB），尚未体现用户后来要求的 40GB。日志中实际加载的运行时版本与此前报告的安装包标签不同，两者不能混为相同版本证据；具体构建信息仅保留在本地原文。`Starting meta service local_service` 属于 worker 的 LocalService，不是中央 MetaService/Config Store 已监听的证据。已选 DirStore 不等于其初始化完成、SSD 有实际 I/O，片段未证明读取独立 `dir_store.conf`。
+
+**处置与同族**：沿用 #29（实际加载环境）、#94/#125（可见失败与真实退出）、#27（接缝完成不等于服务验收）。恢复部署顺序：在推理所在容器/网络命名空间先运行已有 `scripts/start_node93_memcache.sh`，用用户确认的配置准备并前台调用官方 `MetaService.main()`；从同一推理命名空间核对 5000/6000 监听，成功后再运行默认开启卸载的 node93 candidate。脚本不自动管理已有服务，不删除 `/home/kvcache`。若 6000 未监听，先检查该 MetaService 的前台失败输出，不能不断重启 vLLM。旧代码环境也可在设置既有 SDK 环境和 `MMC_META_CONFIG_PATH` 后直接调用同一官方 Python 入口。
+
+**边界**：本条为用户真实日志归档及启动说明修正，没有 agent 连接真机、修改 SDK/磁盘、改变 OSCAR 执行逻辑、延长 watchdog 或新增启动审计。`dir_store` 选择从未知更新为该次日志已确认；控制服务恢复、40GB 生效、SSD 初始化/读写、NPU 图回放、质量和 benchmark 仍待现场复验，不记录为已修复通过。

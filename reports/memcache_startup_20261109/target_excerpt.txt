@@ -1,0 +1,18 @@
+用户真机日志的脱敏诊断摘要；不是完整原文。
+已省略内部路径、进程号、线程号、构建标识和运行时构建信息。
+原始日志仅留本地 target_failure.txt，不纳入版本库或推送。
+
+实际 LocalService 字段：
+  backendType=dir_store
+  storageEnabled=1
+  dataOpType=device_rdma
+  localDRAMSize=34359738368
+
+四个 worker 的共同失败链：
+  connect to 127.0.0.1:6000 errno:111
+  Failed to connect to 127.0.0.1:6000 after tried 60 times
+  OSCAR memcache backend initialization exceeded its SDK deadline
+  EngineCore failed to start
+
+时间差约 60 秒。这里只确认连接拒绝和超时退出；
+未证明中央服务启动状态、网络命名空间、DirStore 初始化完成或 SSD I/O。

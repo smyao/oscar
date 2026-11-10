@@ -210,6 +210,29 @@ def test_registration_uses_owning_aligned_region_and_deduplicates_aliases():
         transport.put([obj("bad", offset=len(store.memory) - 4, length=8)])
 
 
+@pytest.mark.parametrize("offset,length,valid", [
+    (0, 32, True), (31, 1, True), (32, 32, True), (128, 32, True),
+    (-1, 1, False), (0, 33, False), (31, 2, False), (63, 2, False),
+    (64, 1, False), (127, 2, False), (159, 2, False), (160, 1, False),
+])
+def test_dma_span_checks_preserve_gaps_and_adjacent_owner_boundaries(offset, length, valid):
+    store = FakeStore()
+    transport = StrictMemcacheTransport(store, registration_alignment=1)
+    try:
+        # Registration order is not address order; two owners are adjacent.
+        transport.register_buffers([(BASE + 128, 32), (BASE, 32), (BASE + 32, 32)])
+        item = obj("span", offset=offset, length=length)
+        if valid:
+            transport.put([item])
+            assert store.objects["span"] == bytes(store.memory[offset:offset + length])
+        else:
+            with pytest.raises(ValueError, match="unregistered"):
+                transport.put([item])
+            assert not any(call[0] == "put" for call in store.calls)
+    finally:
+        transport.close()
+
+
 def test_bounded_batches_keep_arbitrary_objects_whole():
     store, transport = setup_transport(max_batch_objects=2, max_batch_bytes=24)
     objects = [obj(str(i), offset=i * 16, length=8) for i in range(5)]

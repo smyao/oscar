@@ -3,6 +3,8 @@
 Archive #37-49/#127/#128/#157/#163/#171: addresses are worker-local; keys
 identify a committed logical state across every physical group and TP shard.
 No proportional truncation of windows or recurrent state is permitted.
+Archive #182/#183: prefix identity queries keep native hashes and physical
+alignment, without constructing unused per-layer page-hash vectors.
 """
 from __future__ import annotations
 
@@ -80,19 +82,30 @@ def hash_at(request, tokens: int, hash_block_size: int) -> str:
     raise ValueError("native block hash encoding changed")
 
 
-def prefix_plan(request, generation: int, epoch: int, tokens: int, blocks,
-                geometry, hash_block_size: int, *, local_tokens: int = 0) -> PayloadPlan:
-    from .scheduler import freeze_block_ids
+def prefix_identity(request, tokens: int, geometry, hash_block_size: int) -> str:
+    """Return the existing stable index identity without materializing pages."""
     digest = hash_at(request, tokens, hash_block_size)
-    page_hashes = []
     for layer in geometry:
         if layer["cache_family"] != "oscar_full":
             continue
-        block = layer["storage_block_size"]
-        if tokens % block:
+        if tokens % layer["storage_block_size"]:
             raise ValueError("prefix publication requires a complete physical FULL page")
-        page_hashes.append((layer["layer_name"], tuple(
-            hash_at(request, end, hash_block_size) for end in range(block, tokens + 1, block))))
+    return f"prefix/state/{digest}"
+
+
+def prefix_plan(request, generation: int, epoch: int, tokens: int, blocks,
+                geometry, hash_block_size: int, *, local_tokens: int = 0,
+                include_page_hashes: bool = True) -> PayloadPlan:
+    from .scheduler import freeze_block_ids
+    geometry = tuple(geometry)
+    identity = prefix_identity(request, tokens, geometry, hash_block_size)
+    page_hashes = []
+    if include_page_hashes:
+        for layer in geometry:
+            if layer["cache_family"] == "oscar_full":
+                block = layer["storage_block_size"]
+                page_hashes.append((layer["layer_name"], tuple(
+                    hash_at(request, end, hash_block_size) for end in range(block, tokens + 1, block))))
     return PayloadPlan(request.request_id, generation, 0, epoch, tokens,
-                       freeze_block_ids(blocks), f"prefix/state/{digest}",
+                       freeze_block_ids(blocks), identity,
                        tuple(page_hashes), local_tokens)

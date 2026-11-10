@@ -17,6 +17,7 @@ cancel an in-flight DMA and then allow its registered buffer to be reused.
 
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import dataclass
 import json
 import math
@@ -478,15 +479,18 @@ class StrictMemcacheTransport:
         if any(not isinstance(obj, TransferObject) for obj in objects):
             raise TypeError("objects must be TransferObject instances")
         _keys(obj.key for obj in objects)
+        # Registered owners never overlap. Search their ordered boundaries
+        # rather than rescanning every owner for every layer/page component.
+        # Adjacent owners remain separate: a span may not straddle either.
+        regions = sorted(self._regions, key=lambda region: region.address)
+        starts = [region.address for region in regions]
         for obj in objects:
             if obj.nbytes > self.max_batch_bytes:
                 raise ValueError(f"object {obj.key!r} exceeds max_batch_bytes; split at a schema object boundary")
             for segment in obj.segments:
-                if not any(
-                    segment.address >= region.address
-                    and segment.address + segment.length <= region.address + region.length
-                    for region in self._regions
-                ):
+                index = bisect_right(starts, segment.address) - 1
+                if (index < 0 or segment.address + segment.length
+                        > regions[index].address + regions[index].length):
                     raise ValueError(f"object {obj.key!r} references an unregistered byte range")
         return objects
 

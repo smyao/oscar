@@ -163,6 +163,7 @@ def test_prefix_manifest_cannot_cross_local_reset_view(bridge_module, monkeypatc
     # Simulate a corrupt/misdirected metadata lookup: payload bytes still exist,
     # but the body must bind the requested new index AND its prefix view.
     sender.metadata_client.get = lambda key: dict(old_manifest, index_key=key)
+    sender.metadata_client.exists = lambda keys: (True,) * len(keys)
     from oscar_ascend.offload.transport import TransferError
     with pytest.raises(TransferError, match="incompatible identity"):
         sender.get_num_new_matched_tokens(request, 0)

@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-10 卸载控制路径优化：参照原生批量查询与写前存在性过滤，加入短候选批量预查、线程独占的持久IPC连接、轻量prefix身份构造、全TP完整checkpoint写前去重及注册地址二分校验。卸载与prefix checkpoint专项主机回归440项通过；513个冷候选由513次RPC降到3次，最长暖命中保持1次RPC/1次终点hash。原有错误处理、驱逐、共享页、chunked prefill、MTP/GDN、私有swap与图地址合同保持；CANN/PT/数值/timer/启动参数未修改。详见[实现与验证范围](kv_offload_20261109.md)。未连接真机或测速，不据主机调用量认定端到端加速、模型质量或现场命中率。
+
 2026-11-10 prefix索引查询：用户最新07:49日志已有四rank kind=prefix恢复，External prefix cache hit rate达到40.6%；这是现有服务证据。针对未发布索引先GET触发SDK ERROR的主机反例，改为先严格查exists、保留真实错误与驱逐竞态处理，115项相关主机测试通过。见[档案#183](../issue1_full_record.md)。修复尚无现场部署结果，不能把日志消噪、部分prefix/swap成功当作SSD、质量、性能或70%命中率验收。
 
 2026-11-10 PC默认修正：用户确认直接运行node93脚本、未额外开启PC并看到0%命中。该入口现默认同时开启卸载和prefix caching；真实shell、原生none/align选择及完整prefix字节恢复等55项主机测试通过，最终argv确认PC开启、卸载开启、端口7878。见[档案#182](../issue1_full_record.md)。尚无修改后的现场命中率，不能宣称恢复到基线70%；其他入口默认配置、数值和图逻辑不改。

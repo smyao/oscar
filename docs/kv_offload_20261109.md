@@ -33,6 +33,21 @@ SDK 调用要求完整返回状态数组，拒绝异常、部分成功、非法�
 
 前缀manifest读取也先检查存在性：未发布的候选索引直接返回miss，不调用会对缺失键打印ERROR的SDK Get。预查后读取为空仍再次确认是否被驱逐；对象仍存在却读空、SDK异常及校验失败继续报错。此顺序修正不缓存miss、不改变发布/查找范围，也不把所有SDK info invalid无条件吞掉。用户07:49日志已有外部命中40.6%及四rank前缀恢复；与本轮尚未部署的查询修复分开记录，详见档案#183。
 
+### 2026-11-10：参照原生实现减少查询与重复保存
+
+依据档案#127/#128/#157/#163/#171/#182/#183，以及只读原生 `LookupKeyClient`、发送线程的存在性过滤，本轮在原有协议内优化控制路径：
+
+- 最长候选保留一次manifest RPC的暖命中路径；缺失或payload不完整时，较短候选按最多256个索引批量检查，只有存在的索引才读取manifest。仍按长度降序选择完整checkpoint，不缓存miss。每个候选只读取终点原生hash，不再生成最终会丢弃的逐层逐页hash列表。
+- RPC client复用context，并为每个调用线程保留独立REQ socket；失败交换关闭socket，不自动重发请求。超时后的迟到回复不能回答下一次请求。关闭client时释放全部连接；跨fork复用明确失败。
+- 调度端在发布任务下发前统一检查同一终点已有索引。只有namespace/view/边界/keys与全TP payload全部完整，才省略本次共享prefix保存；缺失、驱逐或缺任一TP组件仍执行原保存。私有swap不去重，各worker不独立跳过保存。索引或payload在判断后被驱逐，只影响未来缓存可用性；后续lookup依然重新检查。
+- DMA地址校验按已注册、互不重叠的owner区间二分查找，保留间隙、边界和跨相邻owner拒绝规则，避免每个segment扫描全部注册区间。
+
+manifest格式、namespace、存储key和真实传输字节不变，已有缓存可继续读取。全TP检查、尺寸校验、提交事件、MTP/GDN状态记录、固定图地址、同步传输和末端checkpoint发布范围保持原合同；没有通过删除校验或改变异步加载政策换取调用量下降。并发新writer仍用独立generation，不删除可能被其他reader选中的共享payload。
+
+主机调用计数回归：513个全部缺失候选从513次RPC降为3次（最长候选1次加两批256索引）；最长暖命中为1次RPC/1次终点hash读取。冷索引仍不调用SDK Get。这些是确定的主机工作量变化，不是NPU或端到端速度测量。既有 `start_node93_oscar.sh` 和固定candidate安装入口直接加载本实现，无新开关；端口7878、前四卡、16384预算、PC与卸载默认值保持。
+
+验证命令：`.venv/bin/python -m pytest -q tests/test_offload_*.py tests/test_prefix_checkpoint_*.py`，440项通过。覆盖实际ZMQ IPC连接复用、线程隔离、超时迟到回复、SDK错误、并发发布、驱逐/缺页、全TP检查、写前去重、原生生命周期、chunked prefill、none/align及MTP提交边界。candidate卸载启动计划也已确认PC、端口、设备及预算；没有启动NPU服务或运行性能测试。
+
 官方语义依据：[MemCache Python API](https://github.com/Ascend/memcache/blob/master/doc/memcache_python_api.md)、[MemFabric 文档](https://github.com/Ascend/memfabric_hybrid/blob/master/README.md)。本项目固定参考位置：`references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md`、`.../ascend_store/backend/memcache_backend.py`、`.../ascend_store/pool_worker.py` 及原生 V1 scheduler / runner。
 
 ## 主动抢占到恢复的状态机

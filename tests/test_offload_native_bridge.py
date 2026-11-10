@@ -150,6 +150,7 @@ def connector_pair(bridge_module, monkeypatch, mode):
                 store.objects.pop(key, None)
             return len(keys)
         instance.metadata_client = NS(get=manifests.get,
+                                      exists=lambda keys: tuple(key in manifests for key in keys),
                                       put=lambda key, value: manifests.__setitem__(key, value),
                                       remove_swap=remove_swap)
         instance._group_for_layer = {"full": 0, "gdn": 1}

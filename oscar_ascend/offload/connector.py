@@ -5,6 +5,8 @@ native scheduling, committed MTP/GDN semantics and captured pool addresses.
 The native AscendStore SDK bootstrap is reused. Its lossy exception wrappers,
 proportional partial-page slicing and align-only scheduler are not reused.
 Transfers are synchronous ownership barriers, not claimed asynchronous overlap.
+Archive #182/#183: batch cold prefix-index probes while retaining descending
+complete-checkpoint selection, explicit errors and native salted identities.
 """
 from __future__ import annotations
 
@@ -23,7 +25,7 @@ from vllm.distributed.kv_transfer.kv_connector.v1.base import (
 from .config import validate_transfer_config, allocate_aligned_bytes
 from .layout import export_kv_caches, registration_regions, StorageRegion
 from .identity import build_namespace_identity
-from .plans import PayloadPlan, object_key, expected_keys, snapshot_key, prefix_plan
+from .plans import PayloadPlan, object_key, expected_keys, snapshot_key, prefix_plan, prefix_identity
 from .scheduler import (OffloadSchedulerState, RequestSnapshot, SnapshotAck,
                         OffloadLifecycleError, freeze_block_ids, token_digest)
 from .state import WorkerCheckpointTracker, reset_restored_cursor
@@ -307,6 +309,34 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         scheduler = self._require_scheduler()
         return int(scheduler.kv_cache_manager.coordinator.hash_block_size)
 
+    def _present_prefix_indices(self, index_keys):
+        # Per-call only: a later publication must be visible after a cold miss.
+        unique = tuple(dict.fromkeys(index_keys))
+        present = set()
+        for start in range(0, len(unique), 256):
+            batch = unique[start:start + 256]
+            for key, exists in zip(batch, self.metadata_client.exists(batch), strict=True):
+                if exists:
+                    present.add(key)
+        return present
+
+    def _read_complete_prefix(self, index_key, plan):
+        manifest = self.metadata_client.get(index_key)
+        if manifest is None:  # It may be evicted after the batch probe.
+            return None
+        if (manifest.get("namespace") != self.namespace
+                or manifest.get("prefix_view") != self._prefix_view
+                or manifest.get("index_key") != index_key
+                or manifest.get("committed_tokens") != plan.committed_tokens
+                or not isinstance(manifest.get("base_key"), str)
+                or not manifest["base_key"].startswith("prefix/data/")):
+            raise TransferError("published prefix manifest has an incompatible identity")
+        plan = replace(plan, base_key=manifest["base_key"], page_hashes=())
+        keys = expected_keys(self.namespace, self.world_size, plan, self.geometry)
+        if manifest.get("keys") != list(keys):
+            raise TransferError("published prefix manifest has incomplete/mixed payload keys")
+        return plan if all(self.transport.exists(keys)) else None
+
     def get_num_new_matched_tokens(self, request, num_computed_tokens):
         self._require_scheduler()
         resume = self.scheduler_state.match_resume(request, num_computed_tokens)
@@ -320,29 +350,38 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         generation = self.scheduler_state.observe_request(request)
         # All FULL pages, all GDN components, all TP ranks must exist for the
         # SAME checkpoint. A missing object is a miss; SDK failures propagate.
-        for count in range(limit, num_computed_tokens, -policy.alignment_tokens):
-            plan = prefix_plan(request, generation, self.scheduler_state.epoch,
-                               count, (), self.geometry, self._hash_block_size(),
-                               local_tokens=num_computed_tokens)
-            index_key = self._prefix_index_key(plan.base_key)
-            manifest = self.metadata_client.get(index_key)
-            if manifest is None:
-                continue
-            if (manifest.get("namespace") != self.namespace
-                    or manifest.get("prefix_view") != self._prefix_view
-                    or manifest.get("index_key") != index_key
-                    or manifest.get("committed_tokens") != count
-                    or not isinstance(manifest.get("base_key"), str)
-                    or not manifest["base_key"].startswith("prefix/data/")):
-                raise TransferError("published prefix manifest has an incompatible identity")
-            plan = replace(plan, base_key=manifest["base_key"], page_hashes=())
-            keys = expected_keys(self.namespace, self.world_size, plan, self.geometry)
-            if manifest.get("keys") != list(keys):
-                raise TransferError("published prefix manifest has incomplete/mixed payload keys")
-            if all(self.transport.exists(keys)):
-                self._prefix_matches[request.request_id] = plan
-                print(f"[oscar] KV_OFFLOAD_PREFIX_HIT request={request.request_id} tokens={count}", flush=True)
-                return count - num_computed_tokens, False
+        counts = range(limit, num_computed_tokens, -policy.alignment_tokens)
+        if not counts:
+            return 0, False
+        hash_block_size = self._hash_block_size()
+        # Preserve the single-RPC warm path. host_get already probes SDK
+        # existence before GET, so a cold first candidate still performs no
+        # missing-object SDK GET. Only shorter candidates need batch probing.
+        plan = prefix_plan(request, generation, self.scheduler_state.epoch,
+            counts[0], (), self.geometry, hash_block_size,
+            local_tokens=num_computed_tokens, include_page_hashes=False)
+        plan = self._read_complete_prefix(self._prefix_index_key(plan.base_key), plan)
+        if plan is not None:
+            self._prefix_matches[request.request_id] = plan
+            print(f"[oscar] KV_OFFLOAD_PREFIX_HIT request={request.request_id} tokens={plan.committed_tokens}", flush=True)
+            return plan.committed_tokens - num_computed_tokens, False
+        counts = counts[1:]
+        for start in range(0, len(counts), 256):
+            candidates = tuple((count, self._prefix_index_key(prefix_identity(
+                request, count, self.geometry, hash_block_size)))
+                for count in counts[start:start + 256])
+            present = self._present_prefix_indices(key for _, key in candidates)
+            for count, index_key in candidates:
+                if index_key not in present:
+                    continue
+                plan = prefix_plan(request, generation, self.scheduler_state.epoch,
+                    count, (), self.geometry, hash_block_size,
+                    local_tokens=num_computed_tokens, include_page_hashes=False)
+                plan = self._read_complete_prefix(index_key, plan)
+                if plan is not None:
+                    self._prefix_matches[request.request_id] = plan
+                    print(f"[oscar] KV_OFFLOAD_PREFIX_HIT request={request.request_id} tokens={count}", flush=True)
+                    return count - num_computed_tokens, False
         return 0, False
 
     def update_state_after_alloc(self, request, blocks, num_external_tokens):
@@ -389,7 +428,19 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                     prefixes.append(prefix_plan(
                         request, generations[rid], state.epoch, end,
                         scheduler.kv_cache_manager.get_blocks(rid), self.geometry,
-                        self._hash_block_size()))
+                        self._hash_block_size(), include_page_hashes=False))
+        if prefixes:
+            indexed = [(self._prefix_index_key(plan.base_key), plan) for plan in prefixes]
+            present = self._present_prefix_indices(key for key, _ in indexed)
+            complete = {}
+            for key, plan in indexed:
+                identity = (key, plan.committed_tokens)
+                if key in present and identity not in complete:
+                    complete[identity] = self._read_complete_prefix(key, plan) is not None
+            # This is cache-write deduplication, not a promised restore. A later
+            # lookup revalidates every TP payload if the retained set is evicted.
+            prefixes = [plan for key, plan in indexed
+                        if not complete.get((key, plan.committed_tokens), False)]
         preemptions = state.drain_preemptions()
         for snapshot in preemptions:
             if snapshot.identity in self._swap_payloads:

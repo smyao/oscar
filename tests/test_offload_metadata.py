@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
+from threading import Barrier, Event, current_thread
 import time
 from types import SimpleNamespace
 
@@ -243,6 +244,238 @@ def test_missing_rpc_server_has_bounded_failure():
             client.get("prefix")
         assert time.monotonic() - started < 0.5
         client.close()
+
+
+def test_rpc_exists_batches_cold_indexes_without_get_or_negative_cache(rpc):
+    store, transport, _, client = rpc
+    calls = []
+    original_exists = store.batch_is_exist
+    original_get = store.get
+    def counted_exists(keys):
+        calls.append(tuple(keys))
+        return original_exists(keys)
+    store.batch_is_exist = counted_exists
+    store.get = lambda key: pytest.fail("existence queries must not call SDK Get")
+    keys = tuple(f"cold-index-{index}" for index in range(256))
+    assert client.exists(keys) == (False,) * 256
+    assert calls == [keys]
+    assert not transport.failed
+    # Existence is a fresh query, not a negative cache or a manifest proof.
+    manifest = body("first")
+    manifest["index_key"] = keys[0]
+    client.put(keys[0], manifest)
+    calls.clear()
+    assert client.exists(keys) == (True,) + (False,) * 255
+    assert calls == [keys]
+    assert not transport.failed
+    store.get = original_get
+    assert client.get(keys[0]) == manifest
+
+
+def test_rpc_exists_chunks_wire_requests_at_256_and_preserves_order(rpc):
+    store, _, server, client = rpc
+    keys = tuple(f"index-{index}" for index in range(257))
+    store.objects.update({keys[index]: b"not-a-manifest" for index in (0, 255, 256)})
+    requests = []
+    original_dispatch = server.dispatch
+    def dispatch(request):
+        requests.append(request)
+        return original_dispatch(request)
+    server.dispatch = dispatch
+    result = client.exists(keys)
+    assert result == tuple(index in (0, 255, 256) for index in range(257))
+    assert requests == [{"op": "exists", "keys": list(keys[:256])},
+                        {"op": "exists", "keys": list(keys[256:])}]
+    assert client.exists(()) == ()
+    assert len(requests) == 2
+
+
+@pytest.mark.parametrize("keys", ["prefix", b"prefix", ["prefix", "prefix"], [True], [""], ["x" * 256]])
+def test_rpc_exists_rejects_invalid_client_keys_before_sdk(rpc, keys):
+    store, _, _, client = rpc
+    store.batch_is_exist = lambda keys: pytest.fail("invalid keys must not reach the SDK")
+    with pytest.raises((ValueError, TypeError)):
+        client.exists(keys)
+
+
+@pytest.mark.parametrize("keys", [[], ["same", "same"], [False], "prefix",
+                                 [f"key-{index}" for index in range(257)]])
+def test_rpc_exists_rejects_invalid_wire_batch_before_sdk(rpc, keys):
+    store, _, server, _ = rpc
+    store.batch_is_exist = lambda keys: pytest.fail("invalid wire batch must not reach the SDK")
+    assert server.dispatch({"op": "exists", "keys": keys})["status"] == "error"
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("exists SDK failed"), [2]])
+def test_rpc_exists_preserves_sdk_errors_instead_of_returning_misses(rpc, failure):
+    store, transport, _, client = rpc
+    def invalid_exists(keys):
+        if isinstance(failure, Exception):
+            raise failure
+        return failure
+    store.batch_is_exist = invalid_exists
+    with pytest.raises(TransferError, match="batch_is_exist"):
+        client.exists(["prefix"])
+    assert transport.failed
+
+
+@pytest.mark.parametrize("response", [
+    {"status": "ok", "exists": []},
+    {"status": "ok", "exists": [True, False]},
+    {"status": "ok", "exists": [1]},
+    {"status": "ok", "exists": "false"},
+    {"status": "ok"},
+    {"status": "missing"},
+    {"status": "ok", "exists": [False], "unexpected": True},
+])
+def test_rpc_exists_rejects_malformed_responses(rpc, response):
+    _, _, server, client = rpc
+    server.dispatch = lambda request: response
+    with pytest.raises(TransferError):
+        client.exists(["prefix"])
+
+
+@pytest.fixture
+def zmq_connections(monkeypatch, rpc):
+    """Observe real IPC resources and socket thread ownership, not private fields."""
+    import zmq
+    original_context = zmq.Context
+    contexts, sockets = [], []
+    class SocketObserver:
+        def __init__(self, socket):
+            self.socket = socket
+            self.owner = current_thread()
+        def __getattr__(self, name):
+            return getattr(self.socket, name)
+        def connect(self, *args, **kwargs):
+            assert current_thread() is self.owner
+            return self.socket.connect(*args, **kwargs)
+        def send(self, *args, **kwargs):
+            assert current_thread() is self.owner, "REQ socket crossed calling threads"
+            return self.socket.send(*args, **kwargs)
+        def recv(self, *args, **kwargs):
+            assert current_thread() is self.owner, "REQ socket crossed calling threads"
+            return self.socket.recv(*args, **kwargs)
+    class ObservedContext(original_context):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            contexts.append(self)
+        def socket(self, socket_type, *args, **kwargs):
+            socket = super().socket(socket_type, *args, **kwargs)
+            if socket_type == zmq.REQ:
+                observer = SocketObserver(socket)
+                sockets.append(observer)
+                return observer
+            return socket
+    monkeypatch.setattr(zmq, "Context", ObservedContext)
+    return SimpleNamespace(contexts=contexts, sockets=sockets)
+
+
+def test_metadata_client_reuses_same_thread_resources_and_closes_idempotently(rpc, zmq_connections):
+    _, _, server, _ = rpc
+    tracked = zmq_connections
+    client = MetadataClient(server.endpoint, timeout_seconds=1)
+    try:
+        for _ in range(3):
+            assert client.get("prefix") is None
+            assert client.exists(["first/full", "missing"]) == (True, False)
+        assert len(tracked.contexts) == len(tracked.sockets) == 1
+        assert not tracked.contexts[0].closed and not tracked.sockets[0].closed
+    finally:
+        client.close()
+    client.close()
+    assert all(context.closed for context in tracked.contexts)
+    assert all(socket.closed for socket in tracked.sockets)
+    for operation in (lambda: client.get("prefix"), lambda: client.exists(["prefix"]),
+                      lambda: client.exists(())):
+        with pytest.raises(TransferError, match="closed"):
+            operation()
+    assert len(tracked.contexts) == len(tracked.sockets) == 1
+
+
+def test_one_metadata_client_uses_separate_reusable_sockets_for_calling_threads(rpc, zmq_connections):
+    _, _, server, _ = rpc
+    tracked = zmq_connections
+    client = MetadataClient(server.endpoint, timeout_seconds=1)
+    barrier = Barrier(2)
+    def query(index):
+        barrier.wait(timeout=2)
+        for _ in range(3):
+            assert client.exists([f"{index}/full", f"missing-{index}"]) == (True, False)
+        return current_thread()
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            owners = list(pool.map(query, (0, 1)))
+        assert len(tracked.contexts) == 1
+        assert len(tracked.sockets) == 2
+        assert {socket.owner for socket in tracked.sockets} == set(owners)
+    finally:
+        client.close()
+    assert all(context.closed for context in tracked.contexts)
+    assert all(socket.closed for socket in tracked.sockets)
+
+
+@pytest.mark.parametrize("bad_response", [
+    {"status": "unrecognized"},
+    {"status": "error", "error_type": "FixtureError", "error": "failed exchange"},
+])
+def test_failed_exchange_discards_connection_without_retry(rpc, zmq_connections, bad_response):
+    _, _, server, _ = rpc
+    tracked = zmq_connections
+    original_dispatch = server.dispatch
+    calls = []
+    def dispatch(request):
+        calls.append(request)
+        return bad_response if len(calls) == 1 else original_dispatch(request)
+    server.dispatch = dispatch
+    client = MetadataClient(server.endpoint, timeout_seconds=1)
+    try:
+        with pytest.raises(TransferError):
+            client.get("first-query")
+        assert len(calls) == 1
+        assert len(tracked.sockets) == 1 and tracked.sockets[0].closed
+        assert client.get("second-query") is None
+        assert [request["key"] for request in calls] == ["first-query", "second-query"]
+        assert len(tracked.sockets) == 2
+    finally:
+        client.close()
+    assert all(context.closed for context in tracked.contexts)
+    assert all(socket.closed for socket in tracked.sockets)
+
+
+def test_timed_out_exchange_discards_socket_and_late_reply_cannot_answer_next_request(rpc, zmq_connections):
+    store, _, server, _ = rpc
+    tracked = zmq_connections
+    late_entered, release_late = Event(), Event()
+    calls = []
+    old, new = body("old"), body("new")
+    old["index_key"], new["index_key"] = "late", "next"
+    store.objects.update(late=encode_manifest(old), next=encode_manifest(new))
+    original_dispatch = server.dispatch
+    def dispatch(request):
+        calls.append(request)
+        if request.get("key") == "late":
+            late_entered.set()
+            assert release_late.wait(timeout=2), "test failed to release the first reply"
+        return original_dispatch(request)
+    server.dispatch = dispatch
+    client = MetadataClient(server.endpoint, timeout_seconds=0.05)
+    try:
+        with pytest.raises(TransferError, match="deadline"):
+            client.get("late")
+        assert late_entered.is_set()
+        assert len(calls) == 1  # No automatic retry of the failed exchange.
+        assert len(tracked.sockets) == 1 and tracked.sockets[0].closed
+        release_late.set()
+        client.timeout_seconds = 1
+        assert client.get("next") == new
+        assert [request["key"] for request in calls] == ["late", "next"]
+        assert len(tracked.sockets) == 2
+    finally:
+        release_late.set()
+        client.close()
+    assert all(context.closed for context in tracked.contexts)
+    assert all(socket.closed for socket in tracked.sockets)
 
 
 def test_sdk_host_contract_is_strict_and_scheduler_cannot_do_data_io():

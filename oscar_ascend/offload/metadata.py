@@ -4,6 +4,8 @@ Archive #34/#36/#37--49/#127/#128/#157/#163/#171: a checkpoint is published
 only after all TP/group payloads complete. Immutable payload generations are
 selected by a checksummed manifest; a torn concurrent manifest is an error,
 never a mixed-generation cache hit. No SDK atomic overwrite/CAS is assumed.
+Archive #183: batch cold-index probes without GET or cached misses; keep
+timeouts and SDK errors distinct from missing objects when reusing RPC.
 
 Official Ascend/memcache doc/memcache_python_api.md defines host put/get;
 init_bm=False clients cannot read/write data. The scheduler therefore routes
@@ -18,16 +20,18 @@ import hashlib
 import hmac
 import json
 import math
-from threading import Event, Lock, Thread
+import os
+from threading import Event, Lock, Thread, current_thread
 import time
 import traceback
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from .transport import MAX_HOST_OBJECT_BYTES, MissingObjectsError, StrictMemcacheTransport, TransferError
 
 
 MANIFEST_SCHEMA = "oscar-kv-committed-generation-v1"
 MAX_RPC_BYTES = 2 * MAX_HOST_OBJECT_BYTES
+MAX_LOOKUP_KEYS = 256
 
 
 class ManifestIntegrityError(TransferError):
@@ -110,6 +114,15 @@ def _key(value: Any) -> str:
     if not isinstance(value, str) or not value or len(value.encode()) >= 256:
         raise ValueError("invalid metadata object key")
     return value
+
+
+def _lookup_keys(values: Iterable[str]) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)):
+        raise ValueError("metadata lookup needs a sequence of keys")
+    keys = tuple(_key(value) for value in values)
+    if len(set(keys)) != len(keys):
+        raise ValueError("duplicate metadata lookup key")
+    return keys
 
 
 def _unbase64(value: Any) -> bytes:
@@ -261,6 +274,12 @@ class MetadataServer:
             if not isinstance(request, dict):
                 raise ValueError("metadata RPC request must be an object")
             operation = request.get("op")
+            if operation == "exists" and set(request) == {"op", "keys"}:
+                values = request["keys"]
+                if not isinstance(values, list) or not 0 < len(values) <= MAX_LOOKUP_KEYS:
+                    raise ValueError("metadata existence batch exceeds its bounded key count")
+                keys = _lookup_keys(values)
+                return {"status": "ok", "exists": list(self.transport.exists(keys))}
             if operation == "remove_swap" and set(request) == {"op", "plan"}:
                 removed, missing = self.remove_swap(request["plan"])
                 return {"status": "ok", "removed": removed, "missing": missing}
@@ -335,7 +354,11 @@ class MetadataServer:
 
 
 class MetadataClient:
-    """Bounded request/response client; never reads data via scheduler SDK."""
+    """Bounded RPC with persistent, thread-owned sockets and no replay.
+
+    A failed exchange discards its REQ socket so a delayed reply can never
+    answer a subsequent request. Mutations are never automatically retried.
+    """
 
     def __init__(self, endpoint: str, *, timeout_seconds: float = 60.0):
         if not isinstance(endpoint, str) or not endpoint.startswith("ipc://"):
@@ -344,6 +367,34 @@ class MetadataClient:
         self.timeout_seconds = _timeout_ms(timeout_seconds) / 1000
         self._lock = Lock()
         self._closed = False
+        self._owner_pid = os.getpid()
+        self._context = None
+        self._sockets: dict[Thread, Any] = {}
+
+    def _healthy(self) -> None:
+        if os.getpid() != self._owner_pid:
+            raise TransferError("metadata RPC client cannot be reused after fork")
+        if self._closed:
+            raise TransferError("metadata RPC client is closed")
+
+    def _socket(self):
+        import zmq
+        owner = current_thread()
+        socket = self._sockets.get(owner)
+        if socket is None:
+            if self._context is None:
+                self._context = zmq.Context()
+            socket = self._context.socket(zmq.REQ)
+            try:
+                socket.setsockopt(zmq.LINGER, 0)
+                socket.setsockopt(zmq.IMMEDIATE, 1)
+                socket.setsockopt(zmq.MAXMSGSIZE, MAX_RPC_BYTES)
+                socket.connect(self.endpoint)
+            except BaseException:
+                socket.close(linger=0)
+                raise
+            self._sockets[owner] = socket
+        return socket
 
     def _rpc(self, request: dict[str, Any]) -> dict[str, Any]:
         import zmq
@@ -351,17 +402,12 @@ class MetadataClient:
         if len(payload) > MAX_RPC_BYTES:
             raise ValueError("metadata RPC message exceeds its bounded size")
         with self._lock:
-            if self._closed:
-                raise TransferError("metadata RPC client is closed")
-            context = zmq.Context()
-            socket = context.socket(zmq.REQ)
+            self._healthy()
+            socket = self._socket()
             deadline = time.monotonic() + self.timeout_seconds
+            complete = False
             try:
-                socket.setsockopt(zmq.LINGER, 0)
-                socket.setsockopt(zmq.IMMEDIATE, 1)
-                socket.setsockopt(zmq.MAXMSGSIZE, MAX_RPC_BYTES)
                 socket.setsockopt(zmq.SNDTIMEO, _timeout_ms(self.timeout_seconds))
-                socket.connect(self.endpoint)
                 socket.send(payload)
                 socket.setsockopt(zmq.RCVTIMEO, _timeout_ms(max(0.001, deadline - time.monotonic())))
                 data = socket.recv()
@@ -372,14 +418,34 @@ class MetadataClient:
                     raise TransferError("invalid metadata RPC response")
                 if response["status"] == "error":
                     raise TransferError(f"metadata RPC {response.get('error_type')}: {response.get('error')}")
+                complete = True
                 return response
             except zmq.Again as exc:
                 raise TransferError("metadata RPC exceeded its bounded deadline") from exc
             except (ValueError, UnicodeError) as exc:
                 raise TransferError(f"invalid metadata RPC response: {exc}") from exc
+            except zmq.ZMQError as exc:
+                raise TransferError(f"metadata RPC socket failed: {exc}") from exc
             finally:
-                socket.close(linger=0)
-                context.term()
+                if not complete:
+                    self._sockets.pop(current_thread(), None)
+                    socket.close(linger=0)
+
+    def exists(self, keys: Iterable[str]) -> tuple[bool, ...]:
+        keys = _lookup_keys(keys)
+        with self._lock:
+            self._healthy()
+        result = []
+        for start in range(0, len(keys), MAX_LOOKUP_KEYS):
+            batch = keys[start : start + MAX_LOOKUP_KEYS]
+            response = self._rpc({"op": "exists", "keys": list(batch)})
+            values = response.get("exists")
+            if (set(response) != {"status", "exists"} or response["status"] != "ok"
+                    or not isinstance(values, list) or len(values) != len(batch)
+                    or any(type(value) is not bool for value in values)):
+                raise TransferError("metadata existence response has invalid per-key states")
+            result.extend(values)
+        return tuple(result)
 
     def get(self, key: str) -> dict[str, Any] | None:
         response = self._rpc({"op": "get", "key": _key(key)})
@@ -410,4 +476,12 @@ class MetadataClient:
 
     def close(self) -> None:
         with self._lock:
+            if os.getpid() != self._owner_pid:
+                raise TransferError("metadata RPC client cannot be reused after fork")
             self._closed = True
+            for socket in self._sockets.values():
+                socket.close(linger=0)
+            self._sockets.clear()
+            if self._context is not None:
+                self._context.term()
+                self._context = None

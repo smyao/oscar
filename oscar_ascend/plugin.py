@@ -363,8 +363,41 @@ def _patch_prefix_checkpoint_coordinator(cls):
 def _patch_scheduler(module):
     _patch_prefix_checkpoint_scheduler(module)
     _patch_request_window_scheduler(module)
+    _patch_prefix_cache_logging(module)
     if _offload_configured():
         _patch_offload_scheduler(module)
+    else:
+        _patch_scheduler_output(module)
+
+
+def _patch_prefix_cache_logging(module):
+    """Observe successful admission once; native lookup/allocation stay intact."""
+    def scheduled(original):
+        def wrapped(scheduler, scheduler_output):
+            from .integration.step_stats import capture_step_kind
+            capture_step_kind(scheduler, scheduler_output)
+            result = original(scheduler, scheduler_output)
+            from .integration.prefix_stats import log_scheduled_prefix_cache
+            log_scheduled_prefix_cache(scheduler, scheduler_output)
+            return result
+        return wrapped
+
+    _patch(module.Scheduler, "_update_after_schedule", scheduled)
+
+
+def _patch_scheduler_output(module):
+    """One wrapper owns offload bookkeeping and completed-step observation."""
+    def output(original):
+        def wrapped(scheduler, scheduler_output, model_runner_output, *args, **kwargs):
+            result = original(scheduler, scheduler_output, model_runner_output, *args, **kwargs)
+            from .offload.hooks import after_output
+            after_output(scheduler, scheduler_output)
+            from .integration.step_stats import record_completed_step
+            record_completed_step(scheduler, scheduler_output, model_runner_output)
+            return result
+        return wrapped
+
+    _patch(module.Scheduler, "update_from_output", output)
 
 
 def _offload_configured():
@@ -382,14 +415,6 @@ def _patch_offload_scheduler(module):
             from .offload.hooks import before_preempt
             before_preempt(scheduler, request)
             return original(scheduler, request, *args, **kwargs)
-        return wrapped
-
-    def output(original):
-        def wrapped(scheduler, scheduler_output, *args, **kwargs):
-            result = original(scheduler, scheduler_output, *args, **kwargs)
-            from .offload.hooks import after_output
-            after_output(scheduler, scheduler_output)
-            return result
         return wrapped
 
     def reset(original):
@@ -411,7 +436,7 @@ def _patch_offload_scheduler(module):
         return wrapped
 
     _patch(module.Scheduler, "_preempt_request", preempt)
-    _patch(module.Scheduler, "update_from_output", output)
+    _patch_scheduler_output(module)
     _patch(module.Scheduler, "reset_prefix_cache", reset)
     if hasattr(module.Scheduler, "_update_request_as_session"):
         _patch(module.Scheduler, "_update_request_as_session", branch)

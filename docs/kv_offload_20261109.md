@@ -50,6 +50,32 @@ manifest格式、namespace、存储key和真实传输字节不变，已有缓存
 
 官方语义依据：[MemCache Python API](https://github.com/Ascend/memcache/blob/master/doc/memcache_python_api.md)、[MemFabric 文档](https://github.com/Ascend/memfabric_hybrid/blob/master/README.md)。本项目固定参考位置：`references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md`、`.../ascend_store/backend/memcache_backend.py`、`.../ascend_store/pool_worker.py` 及原生 V1 scheduler / runner。
 
+### 每请求 prefix cache 命中日志
+
+当前OSCAR入口默认在每条请求首次成功获调度时打印一行 `PREFIX_CACHE_REQUEST`，无需新增启动参数。例如：
+
+```text
+[oscar] PREFIX_CACHE_REQUEST {"request_id":"example","phase":"initial_schedule","prompt_tokens":4096,"local_hit_tokens":1024,"external_hit_tokens":2048,"total_hit_tokens":3072,"hit_rate_denominator":"prompt_tokens","local_hit_rate_pct":25.0,"external_hit_rate_pct":50.0,"total_hit_rate_pct":75.0}
+```
+
+三个百分比均以完整prompt token数为分母，合计为 `(local_hit_tokens + external_hit_tokens) / prompt_tokens`。external表示本地命中以外新增的外部前缀命中，不与local重复；它与原生周期汇总 `External prefix cache hit rate` 的剩余token分母不同，不能直接对比这两个百分比。
+
+日志直接读取原生 `PrefillStats`，不新增缓存查询、设备回读或同步。只在EngineCore记录一次，后续chunked prefill、decode和私有swap抢占恢复不重复打印。关闭卸载或PC时也会记录实际本地/外部命中（无命中为0）；排队中就取消、尚未获得调度的请求没有此记录。`initial_schedule`表示本次成功调度采用的匹配数，不是DMA或整个prefill完成证明。原生计数缺失/非法时明确打印 `status=unavailable`，不编造0%或影响推理策略。
+
+### PD融合的主模型step统计
+
+同一默认入口也输出累计 `PD_STEP_STATS`：每100个已完成且可分类的非空主模型step打印一次；请求表清空时补齐未输出的尾段。每个EngineCore从服务启动开始累计，四个TP worker不会重复计数。示例（仅说明格式）：
+
+```text
+[oscar] PD_STEP_STATS {"scope":"engine_lifetime","count_basis":"completed_classified_main_model_steps","total_steps":100,"pure_decode_steps":70,"pure_prefill_steps":10,"mixed_steps":20,"excluded_steps":0,"pure_decode_pct":70.0,"pure_prefill_pct":10.0,"mixed_pct":20.0}
+```
+
+`pure_decode_pct = pure_decode_steps / total_steps × 100`。在原生调度推进token位置前，逐请求用 `num_computed_tokens < num_prompt_tokens` 判断是否处于prefill：全部为decode则纯decode，全部为prefill则纯prefill，同时存在则mixed。最后一个prefill chunk和只剩1 token的暖prefill仍为prefill；MTP的多token decode仍为decode。阶段快照保留在本step的scheduler output，不会被随后异步调度、抢占或取消改写。
+
+只有主模型返回后，原生输出处理及OSCAR卸载状态更新均成功，才计数；不统计内部MTP draft调用，不新增设备同步，不修改timer。空调度及只有KV收发回执的空模型输出不纳入有效step；无法匹配完整请求集合或阶段信息缺失时计入 `excluded_steps`，不伪归为decode。异步KV错误通知可能属于其他请求，不能据此否定当前已经返回的主模型step。正常应满足 `total_steps = pure_decode_steps + pure_prefill_steps + mixed_steps`，有excluded时需同时查看这个缺口。该指标是批次中请求阶段的数量占比，不是decode图/内核选择或设备耗时占比。
+
+两项日志的主机验证共117项通过：新增请求日志14项、PD step统计24项，加现有插件/原生prefix生命周期/卸载完成与reset等79项。包含读取实际原生PrefillStats、执行原生/AsyncScheduler更新方法、短prefill与MTP decode分类、异步阶段快照、周期/尾段打印、错误传播及卸载hook顺序；没有运行真机或性能测试。
+
 ## 主动抢占到恢复的状态机
 
 ```mermaid

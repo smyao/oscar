@@ -35,10 +35,11 @@ def scheduler_class(native_groups, monkeypatch):
     cls = native_class()
     base = cls.__mro__[1]
     coordinator = _coordinator_with_hashing(native_groups, monkeypatch)
-    split = definitions(
+    methods = definitions(
         "references/vllm/vllm/v1/core/sched/scheduler.py", "prefix_integration_native_split",
-        set(), {}, monkeypatch, methods=[("Scheduler", "_mamba_block_aligned_split")]
-    )._mamba_block_aligned_split
+        set(), {}, monkeypatch, methods=[("Scheduler", "_mamba_block_aligned_split"),
+                                        ("Scheduler", "update_from_output")]
+    )
 
     def initialized(self, running=(), waiting=()):
         FixtureBase.__init__(self, running, waiting)
@@ -51,7 +52,8 @@ def scheduler_class(native_groups, monkeypatch):
         self.max_num_scheduled_tokens = 16384
 
     base.__init__ = initialized
-    base._mamba_block_aligned_split = split
+    base._mamba_block_aligned_split = methods._mamba_block_aligned_split
+    base.update_from_output = methods.update_from_output
     return cls, base, coordinator
 
 

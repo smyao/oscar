@@ -27,8 +27,7 @@ from .service_probe import (
     load_tokenizer, _http, parse_gauges, parse_mtp_metrics, evaluate_mtp_metrics,
 )
 from .npu_resources import read_npu_resources, wait_for_release
-from .target_cli import serve_argv, target_env, log_stats_disabled
-from .probe_evidence import ProbeEvidence, evaluate_mtp_events, preempted_requests
+from .target_cli import serve_argv, target_env
 from oscar_ascend.offload.config import offload_options
 
 PREEMPTIONS = "vllm:num_preemptions_total"
@@ -163,18 +162,10 @@ def event_records(text: str) -> list[dict]:
     return result
 
 
-def require_swap_evidence(text: str, before: str, after: str, world_size=4, *, native_events=None) -> dict:
-    if native_events is None:
-        first, last = parse_gauges(before, {PREEMPTIONS}), parse_gauges(after, {PREEMPTIONS})
-        if PREEMPTIONS not in first or PREEMPTIONS not in last or last[PREEMPTIONS] <= first[PREEMPTIONS]:
-            raise ServiceProbeError("native preemption counter did not increase")
-        evidence = {"native_preemptions_delta": last[PREEMPTIONS] - first[PREEMPTIONS]}
-        requests = None
-    else:
-        requests = preempted_requests(native_events)
-        if not requests:
-            raise ServiceProbeError("no completed native preemption event")
-        evidence = {"source": "native_scheduler_probe_events", "completed_preemptions": len(requests)}
+def require_swap_evidence(text: str, before: str, after: str, world_size=4) -> dict:
+    first, last = parse_gauges(before, {PREEMPTIONS}), parse_gauges(after, {PREEMPTIONS})
+    if PREEMPTIONS not in first or PREEMPTIONS not in last or last[PREEMPTIONS] <= first[PREEMPTIONS]:
+        raise ServiceProbeError("native preemption counter did not increase")
     save, restored = {}, {}
     for row in event_records(text):
         if row["event"] != "SWAP_SAVE" and not (row["event"] == "RESTORE" and row.get("kind") == "swap"):
@@ -185,11 +176,11 @@ def require_swap_evidence(text: str, before: str, after: str, world_size=4, *, n
         target = save if row["event"] == "SWAP_SAVE" else restored
         target.setdefault(key, set()).add(int(row["rank"]))
     complete = [key for key, ranks in save.items()
-                if ranks == set(range(world_size)) and restored.get(key) == ranks
-                and (requests is None or key[0] in requests)]
+                if ranks == set(range(world_size)) and restored.get(key) == ranks]
     if not complete:
         raise ServiceProbeError("no same-generation committed swap completed save and restore on every TP rank")
-    return {**evidence, "complete_joint_swaps": [list(key) for key in complete]}
+    return {"native_preemptions_delta": last[PREEMPTIONS] - first[PREEMPTIONS],
+            "complete_joint_swaps": [list(key) for key in complete]}
 
 
 def require_prefix_evidence(text: str, world_size=4) -> dict:
@@ -255,8 +246,7 @@ def _owned(config, directory: Path, report: dict):
     before = read_npu_resources(config, log_dir=directory / "resources", timeout=30)
     report["resources_before"] = before
     try:
-        with managed_server(config, path, log_dir=directory, lifecycle=report["server"],
-                            native_probe_evidence=True) as server:
+        with managed_server(config, path, log_dir=directory, lifecycle=report["server"]) as server:
             yield server
     finally:
         report["resource_release"] = wait_for_release(config, before,
@@ -364,20 +354,14 @@ def run_probe(config_path: Path, output_dir: Path, *, request_timeout=300.0) -> 
                         raise ServiceProbeError("pressure geometry differs from the measured baseline")
                     if observed["num_blocks"] != plan["num_gpu_blocks"]:
                         raise ServiceProbeError("native pool did not apply the explicit probe capacity")
-                    evidence = ProbeEvidence(server).start() if log_stats_disabled(pressure) else None
-                    before = "" if evidence is not None else _metrics(server, directory / "pressure", "before", 30)
+                    before = _metrics(server, directory / "pressure", "before", 30)
                     offset = server.log.stat().st_size
                     with ThreadPoolExecutor(max_workers=2) as pool:
                         futures = [pool.submit(_request, server, pressure, tokens,
                                    output_tokens=OUTPUT_TOKENS, label=f"{mode}-pressure-{i}",
                                    timeout=request_timeout) for i, tokens in enumerate(prompts)]
                         actual = [future.result() for future in futures]
-                    after = "" if evidence is not None else _metrics(server, directory / "pressure", "after", 30)
-                    native_events = None
-                    if evidence is not None:
-                        evidence.stop()
-                        native_events = evidence.read()
-                        atomic_json(directory / "pressure" / "native_scheduler_events.json", native_events)
+                    after = _metrics(server, directory / "pressure", "after", 30)
                     for baseline, resumed in zip(baselines, actual):
                         if baseline["generated_token_ids"] != resumed["generated_token_ids"]:
                             raise ServiceProbeError("preemption/resume changed generated token IDs")
@@ -385,10 +369,8 @@ def run_probe(config_path: Path, output_dir: Path, *, request_timeout=300.0) -> 
                         stream.seek(offset)
                         events = stream.read().decode(errors="replace")
                     arm["pressure"]["requests"] = actual
-                    arm["pressure"]["swap_evidence"] = require_swap_evidence(events, before, after,
-                                                                            native_events=native_events)
-                    mtp = (evaluate_mtp_metrics(parse_mtp_metrics(before), parse_mtp_metrics(after))
-                           if evidence is None else evaluate_mtp_events(native_events))
+                    arm["pressure"]["swap_evidence"] = require_swap_evidence(events, before, after)
+                    mtp = evaluate_mtp_metrics(parse_mtp_metrics(before), parse_mtp_metrics(after))
                     if mtp["status"] != "passed":
                         raise ServiceProbeError("native MTP execution was not observed under offload pressure")
                     arm["pressure"]["mtp"] = mtp

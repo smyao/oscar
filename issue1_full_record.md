@@ -1,9 +1,5 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
-> 2026-11-09 最新追加 #176：控制服务已连接；device 3 的HCCL建域返回19导致MemCache初始化失败，三个worker已40GB/DirStore/卸载就绪，尚未TP4通过。
-
-> 2026-11-09 最新追加 #175：MemCache Config Store 6000 连接拒绝，四 worker 初始化超时；现场已选择 DirStore、实际 DRAM 仍为 32GB，部署恢复与验收边界见文末。
-
 > 2026-09-22 本项目续录：实际共 **164 条（G1–G34、#1–#130）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#126 来自用户回传的 node93 日志；早先75项store/merge原语NPU探针通过；最新日志已完成编译/初次profiling与KV预算，止于 #128 的MTP元数据虚拟块复制。完整服务、图与性能尚未验收。
 
 > **本文档是给调试 agent 用的"报错 → 日志"查表档案，禁止从头线性阅读。** 使用方法：
@@ -28879,55 +28875,3 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **根因边界**：#173的旋转往返反例只证明局部有限精度差异，不能证明模型收益；本次反馈不支持继续以它作为默认改动的交付依据。没有逐层激活、设备相位或同轮对照，不将单轮分数与耗时全部归因到某个算子，也不以RPS差异解释结果。后续代码审计与合成协议反例必须单列本地证据，不写成本条已确认的现场根因。
 
 **回归检查**：撤下验证固定current-only完整源码身份、candidate配置与614c快照一致、旧配置残留不能重新启用退役policy；保留原q4/q1/C4/C16源码与原路由门。具体主机结果见本轮withdrawal_validation.json；不将恢复源码或主机通过写成新的NPU/质量/性能验收。
-
-
-## [175] 真机条目（2026-11-09 用户回传）· MemCache Config Store 连接拒绝导致 TP4 初始化超时
-
-**证据**：用户提供的真机日志。脱敏诊断摘要为 [`reports/memcache_startup_20261109/target_excerpt.txt`](reports/memcache_startup_20261109/target_excerpt.txt)；完整原文按字节留在本地同目录 `target_failure.txt`，已忽略，不纳入版本库或推送。片段无部署 SHA，不把本地提交当成现场身份。
-
-**症状与直接原因**：四个 worker 初始化 MemCache，连接 `127.0.0.1:6000` 返回 `errno:111`；约 60 秒后 SDK 报重试 60 次仍失败，OSCAR backend initialization watchdog 达到原有 60 秒期限并终止四个 worker。后续 `No available shared memory broadcast block`、`RuntimeError: cancelled`、EngineCore failed、API 退出及 resource_tracker 警告处在该失败链之后，不能作为首因。已确认 Config Store 端点对这些进程不可达；缺同一网络命名空间的监听信息和 MetaService 启动日志，不能进一步断言是未启动、启动失败、不同容器或监听绑定错误。
-
-**配置新证据**：实际读取用户指定的 local 配置，LocalService 明确 `backendType=dir_store`、`storageEnabled=1`、`device_rdma`、DRAM `34359738368` 字节（32GB），尚未体现用户后来要求的 40GB。日志中实际加载的运行时版本与此前报告的安装包标签不同，两者不能混为相同版本证据；具体构建信息仅保留在本地原文。`Starting meta service local_service` 属于 worker 的 LocalService，不是中央 MetaService/Config Store 已监听的证据。已选 DirStore 不等于其初始化完成、SSD 有实际 I/O，片段未证明读取独立 `dir_store.conf`。
-
-**处置与同族**：沿用 #29（实际加载环境）、#94/#125（可见失败与真实退出）、#27（接缝完成不等于服务验收）。恢复部署顺序：在推理所在容器/网络命名空间先运行已有 `scripts/start_node93_memcache.sh`，用用户确认的配置准备并前台调用官方 `MetaService.main()`；从同一推理命名空间核对 5000/6000 监听，成功后再运行默认开启卸载的 node93 candidate。脚本不自动管理已有服务，不删除 `/home/kvcache`。若 6000 未监听，先检查该 MetaService 的前台失败输出，不能不断重启 vLLM。旧代码环境也可在设置既有 SDK 环境和 `MMC_META_CONFIG_PATH` 后直接调用同一官方 Python 入口。
-
-**边界**：本条为用户真实日志归档及启动说明修正，没有 agent 连接真机、修改 SDK/磁盘、改变 OSCAR 执行逻辑、延长 watchdog 或新增启动审计。`dir_store` 选择从未知更新为该次日志已确认；控制服务恢复、40GB 生效、SSD 初始化/读写、NPU 图回放、质量和 benchmark 仍待现场复验，不记录为已修复通过。
-
-
-## [176] 真机条目（2026-11-09 用户回传）· device 3 的 MemFabric HCCL 网络初始化失败，外层异常消息为空
-
-**证据**：两份附件及随后补充的初始化原文。脱敏诊断摘要为 [`reports/memcache_hccl_20261109/target_excerpt.txt`](reports/memcache_hccl_20261109/target_excerpt.txt)，附件原文只保留本地被忽略的 `raw/`，不推送。片段无部署 SHA，不用本地身份替代现场证据。
-
-**前项进展**：中央服务已监听5000/6000/8000并接受四客户端，#175的6000连接拒绝已越过。三个成功worker已各分配42949672960字节DRAM、完成DirStore启动、注册物理缓存并打印KV_OFFLOAD_READY，40GB已在这些worker实际分配；不是仅配置文件存在。尚无TP4联合就绪、SSD落盘/回读、服务请求、图/质量/性能通过证据。
-
-**首个致命错误**：Worker_TP3/deviceId 3 对应 MemCache 内部分配的rank 2，其 `HcclCommInitClusterInfoMemConfig` 返回19，继而PrepareOpenDeviceV2、InitTransManager、smem_bm_create2、LocalService启动失败，SDK init非零触发原生 `MemcacheBackend._setup_store` 的 `assert res == 0`。原生异常无消息，RPC仅转发异常字符串，因此EngineCore显示 `Worker failed with error ''`。四进程都有较早的RaInit328002警告，但三进程随后成功，不能据共同警告判定唯一首因。清理中的HalHostUnregisterEx ret8及resource_tracker提示不倒置为启动首因。本次未触发60秒watchdog期限，不通过延长该期限修复。
-
-**编号与根因边界**：TP0/device0→SDK rank3，TP1/device1→SDK rank1，TP2/device2→SDK rank0，TP3/device3→SDK rank2。不能把Meta日志中的rank2断开错认为TP2失败。官方 [HcclResult](https://www.hiascend.com/doc_center/source/en/canncommercial/800/apiref/hcclapiref/hcclcpp_07_0038.html) 定义19为HCCL_E_NETWORK（网络API调用失败）；该类别不能区分具体端口、设备网络资源或通信参数问题。仅凭该初始化片段不能推定通信域重名或硬件损坏，也不凭该码改协议/卡号/world_size/通信域参数。后续定向读取已确认RoCE link down，见下文。允许参考源码核实当前worker同线程复用原生SDK初始化；device_rdma下没有额外初始化次数或新增HCCL通信域。
-
-**底层定位及处置**：已有plog按该故障进程查询返回no_matching_evidence，但entries_scanned=2048且truncated=true；这不是不存在底层错误的证据。随后按已知日志目录和PID定向读取同次日志，找到HCCP RaHdcRdevInit在phyId3返回-67，HCCL明确报 `rdma init failed because RoCE link status is down`，随后RDMA init返回19、设备侧16666监听失败、HCCL建域失败。RoCE链路down已确认；16666报错发生在RDMA初始化失败之后，未证明独立端口冲突。仍未定位是线缆/光模块、对端端口状态或其他链路配置原因，需恢复物理3卡RoCE链路后按原0–3/device_rdma配置复验。没有要求重跑模型来获取已有证据。外部适配器仅给初始化阶段的AssertionError补充角色、请求local_rank、PID和原异常repr，raise-from保留原始异常链；SDK成功路径、失败停止、原生初始化参数、watchdog期限、OSCAR数学/CANN/图/调度保持。该错误呈现修正不等于底层网络修复。
-
-**验证边界**：transport主机回归45项通过，验证空AssertionError的上下文、原cause、原调用线程与单次初始化，以及既有transport/timeout行为；见本轮验证记录。没有agent连接真机或运行性能测试；网络故障已定位至物理3卡RoCE link down，但链路恢复和TP4服务复验仍未完成。
-
-**2026-11-10补充及处置范围修正**：用户提供当前物理3卡link DOWN、health Receive timeout、光模块present及LOS/LOL为零的查询结果，同时确认成功基线也使用0–3卡和device_rdma，已完成教程2.2的私有SDK安装及原生补丁。光功率阈值内不能证明整条链路正常，也不能据down单独定位损坏器件；成功基线事实不能被忽略，不把“先换硬件”当成继续适配的前提。教程明确分别安装MemFabric1.2.1与MemCache1.2.0，因此这两个不同组件的版本号并不构成错配证据。用户给出的补丁仅透传exists/batch_is_exist的flags参数，并让发送线程写前去重传1，不改变HCCL初始化；OSCAR既有读/发布完整性查询保持默认0，不臆测标志的SDK内部语义。部署接续复用现场SDK，按教程的统计关闭要求保留可核验的独立探针证据；详细对照见 `docs/node93_baseline_alignment_20261110.md`。这些接续改动不是本次初始化错误已修复或SSD/模型/性能已通过的证明。
-
-
-## [177] 真机条目（2026-11-10 用户回传）· 重复启动 MetaService 触发进程锁，且主机准备已先执行
-
-**现场事实**：用户执行 `bash scripts/start_node93_memcache.sh --prepare-host`，终端先打印 hugepages 写入、`/dev/shm` remount 和目录创建，再显示配置准备结果，最后 SDK 报 `process lock file is locked`、`meta service is already running`，`MetaService.main()` 返回 -1，外层抛出 RuntimeError。没有本次 worker、数据传输或模型执行证据，不把此前 #176 的 RoCE 故障作为本次错误解释。`dir_store_config_exists=false` 和 LD_PRELOAD 警告不是这段错误的直接原因；准备报告的 `service_started=false` 只描述准备函数没有启动服务，不能据此判断系统中不存在已运行的服务。本条只记录用户日志的脱敏摘要，不提交整段机器日志。
-
-**源码核实**：原入口无条件先准备主机、改配置，再调用 SDK 前台入口，没有识别已有服务。官方 MemCache `MmcMetaServiceProcess::CheckIsRunning` 使用 `/tmp/mmc_meta_service.lock` 与 POSIX `F_SETLK` 写锁；文件存在不等于持锁，文件打开或加锁失败也不能单独证明服务健康。依据是[官方实现](https://github.com/Ascend/memcache/blob/master/src/memcache/csrc/meta_service/mmc_meta_service_process.cpp)，不冒称现场私有 SDK 与公开版本逐字相同。原生 `references/vllm-ascend/.../backend/memcache_backend.py` 的 scheduler 客户端固定 `init(0, init_bm=False)`，提供无需启动 worker 存储的元数据查询接入方式。
-
-**修复**：node93 入口统一进入生命周期管理，任何主机/配置变更之前先检查两个配置端点。两端均存在时，隔离子进程以 metadata-only SDK 客户端执行随机单键 `batch_is_exist(..., 0)`，严格接受单项整数0/1并关闭自身客户端；15秒内通过才打印复用并返回0，跳过 host、配置写入和第二次 MetaService 初始化。仅一个端点存在、查询失败/超时、启动尚未就绪或锁读取不确定时，变更前明确失败。冷启动前只读 `F_GETLK` 检查官方 SDK 锁；残留空文件不拦启动，不创建/删除/接管 SDK 锁。另用 OSCAR 自己的非阻塞锁覆盖检查至前台服务结束，避免此入口并发准备。SDK 真实 -1/异常仍失败；外部绕过本入口并发启动的最终竞争仍由 SDK 锁裁决，不吞返回码、不杀现有服务。
-
-**验证边界**：本地验证使用模拟 SDK、真实主机子进程/文件锁及临时配置，覆盖重复调用零变更、冲突、并发、查询错误和冷启动失败。结果见 `reports/memcache_idempotent_startup_20261110/validation.json`。这些证据不构成现场私有 SDK、TP4、SSD I/O、图、模型质量或性能复验。OSCAR 执行逻辑、内核、PT、预算、MTP、卡号、协议、端口和水位没有改动。
-
-
-## [178] 真机条目（2026-11-10 用户回传）· 复用检查通过后中央服务关闭，TP4 再次遇到 6000 连接拒绝
-
-**现场时间线**：01:31:43 独立 metadata-only 客户端连接5000、查询并关闭自身客户端，入口明确打印复用成功；#177的重复启动锁错误在这次调用中已越过。用户随后提供的中央日志显示，01:31:54.275 5000监听线程退出；01:31:55.163开始关闭Config Store，55.166的6000监听退出，55.544关闭完成，55.788的8000监听退出。模型附件从01:51:33起，四worker连接127.0.0.1:6000返回errno111，约60秒后SDK连接重试失败并触发原有初始化watchdog，随后EngineCore cancelled及资源清理。已有证据将直接原因收窄为中央控制服务在模型连接之前已关闭；未证明触发关闭的进程、信号或操作者。用户环境没有`ss`，不把该命令缺失当作端口不存在证据。这里只保留脱敏摘要，不提交完整机器日志。
-
-**已证实的入口副作用**：中央01:31:43.154在5000和6000各有一条 `Failed to read header`，对应上一版 `socket.create_connection` 后立即关闭的裸TCP监听探测。公开[AccLink连接处理](https://github.com/Ascend/memfabric_hybrid/blob/master/src/acc_links/csrc/acc_tcp_listener.cpp)在读不到完整报头时记录错误、关闭本次accepted fd并返回，监听循环继续；它不能作为探测会关闭整个中央服务的源码证据。公开MetaService客户端close只清理自己的client，独立验证子进程正常返回后也没有遗留超时定时器；OSCAR部署只清理自己创建的新session，没有按名字终止外部MetaService的代码。本次私有SDK未逐位核验，不能把这些源码边界写成现场退出原因已确定，也不归咎用户Ctrl+C。
-
-**处置**：修复确定存在的协议探测副作用：监听识别改为只读当前网络命名空间的Linux `/proc/net/tcp` / `tcp6`，不发空报文、不依赖ss；保留独立SDK元数据语义查询与严格失败。无法读取、表格式损坏或IPv6双栈有歧义时停止，不误判冷启动。复用返回明确不接管或守护旧中央进程；文档区分检查窗口和真正持续运行的中央服务窗口，后者须在OSCAR全程保持。前台入口打印PID，并在SDK主函数返回时打印时间/PID/result，不改信号或服务策略。协议、0–3卡、40GB、70/60、HTTP7878、SDK初始化、OSCAR数学/内核/图/调度/超时均不改变。
-
-**验证边界**：147项本地主机回归通过，覆盖Linux监听表样本、无网络连接断言、原有复用/冲突/锁/隔离客户端与退出返回，见 `reports/memcache_listener_check_20261110/validation.json`。不是node93服务恢复或SSD/NPU验收；中央服务退出的触发原因仍未确定，不通过加长worker超时、改通信参数或关闭卸载掩盖。

@@ -6,7 +6,7 @@
 
 本次增加外部 `OscarAscendStoreConnector`，复用 AscendStore 的 MemCache backend 初始化及 V1 KV connector 调用链。代码覆盖当前 TP4 / DP1 / PP1 / CP1 混合模型的主动抢占恢复、原生 prefix cache、chunked prefill、none/align、MTP3、请求取消、streaming session 代际、缓存重置和资源释放。实际安装在固定 candidate 入口，默认 APC 仍关闭；启用 APC 时使用原生 align 策略。
 
-初始开发时 MemCache 部署地址与容量未提供；用户随后提供了 node93 的现场配置，并选择 DRAM＋SSD benchmark，具体见下方 node93 配置节。本地没有 NPU，本轮也没有连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
+当前 MemCache 尚未部署，用户尚未提供 meta/config-store 地址与每卡 DRAM 容量。本地没有 NPU，且本轮明确禁止 agent 连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
 
 ## 为什么不能直接把 AscendStoreConnector 接到 OSCAR
 
@@ -82,108 +82,9 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 
 私有 swap 使用本服务 session / 请求代际 / 版本隔离。恢复全 TP 完成、取消、分叉、成功强制重置、或有效本地 APC 已覆盖时触发清理。迟到保存 ACK 仍参与回收；删除只允许服务端根据当前 scope 的结构化 plan 派生私有 keys，不接受任意删除列表。共享 prefix payload 是缓存对象，独立于私有 swap 生命周期。进程崩溃后的对象驻留及存储服务自身故障属于存储端运维边界，不能把 MemCache 当成持久化数据库。
 
-必须单独说明容量边界：纯 DRAM MemCache 有高低水位驱逐，官方配置没有文档化的“关闭驱逐”选项。这里没有把原生 layerwise 读路径的 5 分钟 lease 假定为长期 swap 保活或自动续租。已卸载活动快照若被存储驱逐，恢复会明确报错，不能保证任意等待时长和任意存储压力下必然恢复。部署容量需覆盖活动快照与共享 prefix 的实际占用。用户已选择 DRAM＋SSD，存储下沉由安装的 SDK 实现；本地配置准备不证明 SSD 已启用，也没有增加存储保活保证。SSD 配置以安装版本为准；DirStore 目录字段与 UBS IO 裸盘字段不能互相替代。依据：[MemCache 配置](https://github.com/Ascend/memcache/blob/master/doc/memcache_config.md)、[SSD 支持说明](https://github.com/Ascend/memcache/blob/master/doc/memcache_ssd_usage.md)。SIGKILL 或 SDK 硬超时也可能留下未回收 generation，不能声称异常退出后零遗留。
+必须单独说明容量边界：纯 DRAM MemCache 有高低水位驱逐，官方配置没有文档化的“关闭驱逐”选项。这里没有把原生 layerwise 读路径的 5 分钟 lease 假定为长期 swap 保活或自动续租。已卸载活动快照若被存储驱逐，恢复会明确报错，不能保证任意等待时长和任意存储压力下必然恢复。部署容量需覆盖活动快照与共享 prefix 的实际占用。公开的 SSD/UBS_IO 扩展有额外库和部署要求，未偷偷加入本次 DRAM 方案。依据：[MemCache 配置](https://github.com/Ascend/memcache/blob/master/doc/memcache_config.md)、[SSD 支持说明](https://github.com/Ascend/memcache/blob/master/doc/memcache_ssd_usage.md)。SIGKILL 或 SDK 硬超时也可能留下未回收 generation，不能声称异常退出后零遗留。
 
 ## 部署
-
-### node93 本轮 benchmark 配置（用户已确认）
-
-`configs/benchmark_node93.json` 绑定物理卡 **0,1,2,3** 和模型 HTTP 端口 **7878**，复用现场已经安装的私有 SDK；后续基线教程适配见 [接续部署说明](node93_baseline_alignment_20261110.md)。模型、TP4/MTP3、16384 token budget、图模式和默认 APC 策略保持。**不要追加 `--rear-cards`**，该选项会切到 4–7 卡。通用 `target.json` 默认端口仍为 8989。
-
-| 现场配置项 | 用户提供的值 |
-| --- | --- |
-| LocalService 文件 | `/usr/local/memcache_hybrid/latest/config/mmc-local.conf` |
-| MetaService 文件 | `/usr/local/memcache_hybrid/latest/config/mmc-meta.conf` |
-| MetaService / Config Store | `tcp://127.0.0.1:5000` / `tcp://127.0.0.1:6000` |
-| MetaService metrics | `http://127.0.0.1:8000` |
-| 用户报告安装版本 | MemCache `1.2_260917`，MemFabric `1.2_260917` |
-| 通讯协议 / 最大 rank 数 | `device_rdma` / `256` |
-| DRAM | 最新每个 LocalService `40GB`；四个贡献内存的 TP worker 配置合计 `160GB`，不含其他进程和 SDK 开销 |
-| 驱逐高/低水位 / Meta 日志等级 | 最新 `70` / `60` / `error` |
-| rewarm / prefetch | `ock.mmc.rewarm.dram_watermark=95` / `ock.mmc.storage.prefetch.enabled=true` |
-| SSD 意图 | `ock.mmc.local_service.storage.enabled=true`；用户选择包含 SSD |
-| DirStore 配置路径 | `MMC_DIR_STORE_CONFIG_PATH=/usr/local/memcache_hybrid/latest/config/dir_store.conf`；用户确认文件尚不存在 |
-| 已知 DirStore 字段 | `mmc-local.conf` 中已有 `dir_store.base_path=/home/kvcache`、`dir_store.io_workers=32` |
-| 服务器标识 | `MMC_LOCAL_SERVICE_BACKEND_ID=1`，同服务器实例一致；不是磁盘后端类型选择器 |
-
-最新 40GB 和 70/60 覆盖先前粘贴的 32GB 和 90/80。loopback 地址要求相应客户端与服务位于同一网络命名空间；它们不提供跨机器 MetaService 访问。`world_size=256` 是上限，不是本次会创建 256 个 40GB 池。只凭配置文件不能证明端口监听、SDK 初始化或 SSD 读写已成功。
-
-用户随后确认 `dir_store.conf` 不存在；安装目录中 `.py/.conf/.md` 的只读搜索也只返回 `mmc-local.conf` 内的 DirStore 字段，未提供独立文件读取证据。因此环境脚本保留用户指定的路径变量，但配置准备不创建该文件，也不要求它存在；已有文件保持不动。搜索范围有限，不能由此断言 SDK 不支持 DirStore。
-
-本项目原生参考 [kv_pool.md](../references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md) 的“Enable Memcache SSD Cache”使用相同的 `storage.enabled` 键，但其路径是内置 UBS IO，要求 `ubsio.disk.path` 为独占、未挂载块设备。当前 OSCAR 经原生 `MemcacheBackend` 调用 `DistributedObjectStore.init`，没有另选 DirStore；设置 `MMC_DIR_STORE_CONFIG_PATH` 本身不能替代后端选择，也不能替代 UBS 路径的必填项。后续用户日志已明确该次运行选择 `backendType=dir_store`（见下方故障节）；该证据优先于通用 UBS 示例，不再为这次已选择的目录路径要求裸盘参数。仍不擅填磁盘或启用 `force_new_disk`。如果采用目录模式，还需核对 `/home/kvcache` 的实际挂载和 SSD 写入/回读；MetaService 启动、DRAM 命中或普通 HTTP 完成均不是 SSD 性能证据。
-
-在 node93 的 **OSCAR 工程目录、当前 Bash** 中，环境脚本依次设置 `PYTHONHASHSEED=0`、服务器标识和前四卡可见性，再 source 用户指定的 CANN、ATB、MemFabric、MemCache 四个 `set_env.sh`，最后绑定三个 MMC 配置路径。`CUDA_VISIBLE_DEVICES` 与 `ASCEND_RT_VISIBLE_DEVICES` 一致，执行仍为 NPU。SDK 的最终非零返回立即停止后续初始化并实时打印，保留当前 shell 的 `errexit`、`nounset`、`pipefail` 状态。
-
-只查看准备结果和模型启动计划（不改配置、不启动 SDK 服务）：
-
-```bash
-source scripts/env_node93_memcache.sh && \
-python3 -m tools.memcache_config prepare-node93 --plan && \
-bash scripts/install_serve.sh --config configs/benchmark_node93.json --variant candidate --plan
-```
-
-启动分两个终端。终端一执行（允许重复调用，已有服务经 SDK 元数据查询确认后复用）：
-
-```bash
-bash scripts/start_node93_memcache.sh
-```
-
-该命令加载环境，校验匹配的 5000/6000 地址和已提供的 storage 开关。已有服务通过有界、独立子进程中的 SDK 元数据查询后直接复用，跳过主机准备、配置写入和重复启动；端口连通本身不算验证成功。无现有服务且无启动冲突时，才将 local 改为 40GB/device_rdma、meta 改为 error/70/60，保留其他有效键，随后调用实际 `memcache_hybrid.MetaService.main()` 前台运行。所有输出直接显示，失败停止；不会自动重启或终止已有服务。详见[幂等启动行为与边界](node93_baseline_alignment_20261110.md)。输入校验先于写入，但多文件更新不是事务，磁盘写入错误可能留下部分更新。修改文件不改变已启动服务的配置，复用也不证明其运行参数与文件相同。
-
-命令保留 `/home/kvcache` 中的已有对象，不执行示例中的递归删除；冷/暖缓存条件必须单独控制和记录。环境加载本身不改任何配置，也不清理目录。
-
-终端二必须与推理进程处于同一容器/网络命名空间。先确认两个控制端口都已监听：
-
-```bash
-ss -ltnp '( sport = :5000 or sport = :6000 )'
-```
-
-端口监听仅证明 TCP 端点存在，不是 SDK 或 SSD 验收。缺少 6000 时，先查看终端一 MetaService 的启动输出，不继续反复启动 vLLM。MetaService 已就绪且对应 SDK 存储后端可用后，运行设备/服务正确性入口：
-
-```bash
-source scripts/env_node93_memcache.sh && \
-bash scripts/install_probe_serve.sh --config configs/benchmark_node93.json
-```
-
-需要 APC 的实际服务测试显式选择原生 prefix caching；既有 offload 服务探针会独立覆盖 none/align，不改变正式配置的默认值。性能比较至少区分同参 OSCAR 无卸载、有卸载的冷请求、本地暖 prefix、远端暖 prefix 和实际抢占场景；SSD 测量单列后端 I/O 证据。现有 `benchmarks.measure` 使用唯一 cache salt 的冷请求，不直接冒充暖 prefix 或 SSD 专项 benchmark。
-
-正式直启与完整探针入口使用 `target.json` 或 `benchmark_node93.json` 时，默认开启卸载，不需要额外传 `--kv-offload`；`install_serve.sh --no-kv-offload` 可显式关闭。SDK/传输错误不会自动切到无卸载运行。外部卸载之外的 OSCAR 数值、图模式、PT 和调度预算保持原配置。
-
-本轮配置准备、部署、卸载配置及 shell 静态检查共 61 项通过；另有 1 项全仓库档案头检查仍在已有的 `tools/experiments/export_shared_fp32.py` 失败，与之前基底记录一致。环境脚本另有 17 个本地 stub 场景通过（初始化顺序、当前 shell 环境保留、四处失败停止与退出码、shell 选项恢复、SDK 覆写后重新绑定用户变量）；脚本语法与两个入口的默认启动计划通过。没有连接 node93、启动真实服务、操作目标磁盘或产出 benchmark 数字。初始 659 项结果仍是代码主机回归，不转写为这套现场配置的设备通过。
-
-### 2026-11-09 12:25 用户日志：Config Store 连接拒绝
-
-本次新日志已确认 worker 选择 `backendType=dir_store`、`storageEnabled=1`、`device_rdma`，实际 DRAM 仍为每 LocalService 32GB。实际加载的运行时版本与此前用户报告的安装包标签不同，具体运行时信息仅保留在本地原文。因果边界见档案 #175 及 [脱敏诊断摘要](../reports/memcache_startup_20261109/target_excerpt.txt)。
-
-首个明确失败是四 worker 连接 `127.0.0.1:6000` 被拒绝，持续 60 次后触发原有 60 秒初始化保护。EngineCore 的 `cancelled`、共享内存等待和资源清理警告是后续失败链；没有证据将本次失败归因于 attention、图模式或缺少 `dir_store.conf`。若 MetaService 启在宿主机而 vLLM 在独立容器，容器的 `127.0.0.1` 不会自动指向宿主机服务；按本轮 loopback 配置应在同一命名空间启动两者。
-
-默认开启卸载只会连接配置的存储服务，不自动启动中央 MetaService/Config Store。上方两个终端的顺序是服务启动前提。先运行 `bash scripts/start_node93_memcache.sh` 并保持前台，再核对 5000/6000，之后才运行模型服务。若当前工程还没有这个脚本，在用户已设置的 SDK 环境和 `MMC_META_CONFIG_PATH` 下，中央服务的等价官方入口为：
-
-```bash
-python3 -c 'from memcache_hybrid import MetaService; MetaService.main()'
-```
-
-此命令不会替用户修改旧 32GB 配置；已有 `prepare-node93` 入口才应用所要求的 40GB。日志中的 `Starting meta service local_service` 不是中央控制服务启动成功。当前只能确认 DirStore 被选择，仍未取得其初始化完成、SSD 写入/回读或模型服务成功证据；不通过增加 timeout 或关闭卸载掩盖失败。
-
-### 后续现场进展：三 rank 就绪，device 3 的 HCCL 初始化失败
-
-补充日志确认中央控制端口均已监听并接收四客户端；三个 worker 已实际分配每卡40GB，打印 `DirStore started` 与 `KV_OFFLOAD_READY`。前述32GB及DirStore仅被选择的记录是较早一轮状态，本轮已推进到三个rank的实际池分配和目录后端启动；尚无TP4联合成功或SSD I/O证据。
-
-失败者是 **Worker_TP3/device 3**，对应 **MemCache内部rank 2**。SDK动态rank与TP rank不可混用。其首个致命错误为 `HcclCommInitClusterInfoMemConfig failed! ret:19`，传播到LocalService初始化失败、原生空AssertionError及EngineCore的 `error ''`。官方 [HcclResult](https://www.hiascend.com/doc_center/source/en/canncommercial/800/apiref/hcclapiref/hcclcpp_07_0038.html) 将19定义为网络API调用失败；后续定向读取同次CANN日志已明确报告物理3卡的 `RoCE link status is down`，并在其后报告RDMA及设备侧16666监听失败。没有证据据后者单独认定端口占用；链路down的线缆、光模块或对端配置原因仍需设备侧核对。
-
-本次只为初始化断言增加失败上下文和保留原cause，不改变成功执行路径或SDK参数，不把错误呈现改进写成网络修复。已有plog扫描达到2048条上限且截断，按已知目录及故障进程文件名定向读取后成功取得底层原因，无需模型重跑。transport相关主机回归45项通过；实际网络恢复、TP4服务、SSD读写和性能尚未完成。详见档案#176与[脱敏摘要](../reports/memcache_hccl_20261109/target_excerpt.txt)。
-
-在能够访问驱动工具的宿主机或容器查询物理3卡当前链路、网络健康及光模块状态：
-
-```bash
-/usr/local/Ascend/driver/tools/hccn_tool -i 3 -link -g
-/usr/local/Ascend/driver/tools/hccn_tool -i 3 -net_health -g
-/usr/local/Ascend/driver/tools/hccn_tool -i 3 -optical -g
-```
-
-2026-11-10 用户返回查询结果：link DOWN、health Receive timeout，光模块存在、所列光功率在阈值内、LOS/LOL 标志为零；同时明确成功基线使用同样前四卡和 `device_rdma`，并已按教程完成 SDK 安装及原生补丁。不能从当前 down 状态单独认定器件损坏，或让用户先换硬件来代替软件差异核对。本轮按 [成功基线配方](node93_baseline_alignment_20261110.md) 接续适配，保持原设备和协议；补丁没有修改初始化阶段，因此也不把查询参数适配写成此错误已修复。命令依据：[官方故障诊断说明](https://www.hiascend.com/document/detail/en/mindcluster/2600/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag-toolkit/02_detail_function/01_diagnosis_logic.md)。
-
-### 通用部署配置生成
 
 安装使用当前 Python 环境，依赖 `memfabric-hybrid`、`memcache-hybrid`、`pyzmq`。无需复制或覆盖 native 源码。以下变量必须用用户实际提供的地址、容量填写；配置生成命令不会连接网络或启动服务：
 

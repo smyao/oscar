@@ -588,8 +588,6 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
-2026-11-09档案#175：TP4 MemCache 初始化连接本命名空间 `127.0.0.1:6000` 被拒绝，60秒后触发既有保护退出。先启动官方 MetaService 入口并确认同一推理网络命名空间的5000/6000监听，再启动默认卸载服务。现场已选 `dir_store`、仍读32GB；不靠延长超时或改算子处理。见 [部署恢复步骤](docs/kv_offload_20261109.md)。
-
 2026-10-28本地续审#163：不得由固定32K内部块对齐外推align永无末4续块。回归覆盖实际prefix命中、末尾剩余预算、同块/换块SSM与conv状态、nativeprefill最终提交/下一decode及图恢复；当前修复扩展到none/align，见[修复与207项回归](docs/gdn_prefill_state_20261028.md)。这不是新增真机条目。
 
 2026-10-28档案#173/#174：性能已达标但127条PC质量集十轮top3四项不合格。native_exact局部旋转方案后来被用户反馈否决，默认已撤下。保留失败与独立数值证据，不再启用该policy；见[历史交付及撤下](docs/native_exact_current_precision_20261028.md)。
@@ -602,8 +600,6 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
-| #176 device3 HCCL建域ret19，native空AssertionError | TP编号与MemCache分配rank分列；已连控制服务不代表RDMA建域成功。初始化异常保留cause并给PID/角色；ret19为网络API错误类别，同次plog已明确物理3卡RoCE link down。先恢复该链路，不猜改协议/通信域或放宽期限。 |
-| #175 MemCache Config Store 6000连接拒绝，四worker初始化超时 | MetaService先于推理启动；从推理容器核对5000/6000监听与local/meta地址匹配。LocalService启动行不代表中央服务就绪，DirStore选择不代表SSD读写通过；保留超时和失败退出，不切无卸载。 |
 | #163续审：PC align的warm spec-width prefill读错GDN状态 | 保留真实prefill分类与第0列最终提交，阻止误入decode图；normal decode/dummy/capture保持。末尾预算、prefix命中、跨块预处理、conv/SSM与下一decode成链验证，不用总输入长度分界。 |
 | #173/#174 四指标精度不合格；native_exact方案无有效模型交付 | 默认撤下该policy并清除旧配置残留，保留失败证据；局部旋转误差改善不能替代四项质量与两性能场景共同验收。 |
 | #172 长输入改善而短输入回归 | 不将某个prefill helper直接移入共用decode；拆开实际执行阶段，保住已达标基底。所有长度使用相同组合，禁止按输入/context/历史长度切版本；两端目标必须同时成立。源码身份与实际路由测试防止生成链混回撤下项。 |

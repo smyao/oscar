@@ -2,18 +2,14 @@
 
 Archive #34/#36/#37--49/#127/#128/#157/#163/#171: fixed buffers, complete
 physical/window/GDN bytes, all-participant completion, and strict errors.
-Archive #94/#125/#175/#176: preserve visible initialization errors and their cause.
-User-supplied 2026-11-10 patch: exact flags forwarding, with no inferred SDK policy.
 """
 
 from dataclasses import dataclass
 import json
-import os
 import signal
 import subprocess
 import sys
 import textwrap
-from threading import get_ident
 from types import SimpleNamespace
 
 import pytest
@@ -77,8 +73,8 @@ class FakeStore:
             self.objects.pop(key, None)
         return self.result("remove_batch", result)
 
-    def batch_is_exist(self, keys, flags):
-        self.calls.append(("exists", tuple(keys), flags))
+    def batch_is_exist(self, keys):
+        self.calls.append(("exists", tuple(keys)))
         return self.result("exists", [int(key in self.objects) for key in keys])
 
     def batch_get_key_info(self, keys):
@@ -128,41 +124,6 @@ def test_full_components_and_gdn_roundtrip_without_token_proportional_copy():
     transport.get([item])
     assert b"".join(store.memory[s.address - BASE : s.address - BASE + s.length] for s in segments) == expected
     assert store.memory[13:32] == b"\xff" * 19
-    assert [call[2] for call in store.calls if call[0] == "exists"] == [0]
-
-
-@pytest.mark.parametrize("flags", [0, 1])
-def test_exists_forwards_explicit_flag_for_every_bounded_batch(flags):
-    store, transport = setup_transport(max_batch_objects=2)
-    store.objects.update({"a": b"a", "d": b"d"})
-    assert transport.exists(["a", "b", "c", "d", "e"], flags) == (True, False, False, True, False)
-    assert [call for call in store.calls if call[0] == "exists"] == [
-        ("exists", ("a", "b"), flags),
-        ("exists", ("c", "d"), flags),
-        ("exists", ("e",), flags),
-    ]
-
-
-@pytest.mark.parametrize("flags", [True, False, None, -1, 2, 0.0, 1.0, "0", "1"])
-def test_invalid_exists_flag_fails_before_any_sdk_call(flags):
-    store = FakeStore()
-    transport = StrictMemcacheTransport(store)
-    with pytest.raises(ValueError, match="flags must be integer 0 or 1"):
-        transport.exists(["key"], flags)
-    assert store.calls == []
-    assert not transport.failed
-    assert transport._watchdog is None
-
-
-@pytest.mark.parametrize("flags", [0, 1])
-def test_exists_signature_failure_has_no_implicit_flag_fallback(flags):
-    store, transport = setup_transport()
-    store.overrides["exists"] = TypeError("SDK rejects this existence signature")
-    with pytest.raises(TransferError, match="TypeError") as error:
-        transport.exists(["key"], flags)
-    assert error.value.__cause__ is store.overrides["exists"]
-    assert [call for call in store.calls if call[0] == "exists"] == [("exists", ("key",), flags)]
-    assert transport.failed
 
 
 @pytest.mark.parametrize("status", [None, [], [0, 0], [-1], [1], [False], ["0"]])
@@ -298,56 +259,6 @@ def test_native_factory_uses_metadata_only_scheduler_and_explicit_worker_rank(mo
     assert scheduler.scheduler and not worker.scheduler
 
 
-@pytest.mark.parametrize("scheduler,local_rank", [(False, None), (False, 3), (True, None)])
-def test_native_empty_initialization_assertion_has_context_and_preserves_cause(
-        monkeypatch, scheduler, local_rank):
-    import oscar_ascend.offload.transport as transport_module
-
-    original = AssertionError()
-    calls, deadlines, operations = [], [], []
-    caller_thread = get_ident()
-    parallel = object()
-
-    class Backend:
-        def __init__(self, parallel_config, **kwargs):
-            calls.append(("worker", parallel_config, kwargs, get_ident()))
-            raise original
-
-        @classmethod
-        def create_scheduler_client(cls, parallel_config):
-            calls.append(("scheduler", parallel_config, {}, get_ident()))
-            raise original
-
-    class Watchdog:
-        def __init__(self, timeout_seconds):
-            deadlines.append(timeout_seconds)
-
-        def run(self, operation, initialize):
-            operations.append((operation, get_ident()))
-            return initialize()
-
-    module_name = "vllm_ascend.distributed.kv_transfer.kv_pool.ascend_store.backend.memcache_backend"
-    monkeypatch.setitem(sys.modules, module_name, SimpleNamespace(MemcacheBackend=Backend))
-    monkeypatch.setattr(transport_module, "_DeadlineWatchdog", Watchdog)
-    with pytest.raises(TransferError) as error:
-        StrictMemcacheTransport.from_vllm_config(
-            SimpleNamespace(parallel_config=parallel), scheduler=scheduler,
-            local_rank=local_rank, timeout_seconds=7.5)
-
-    role = "scheduler" if scheduler else "worker"
-    expected_kwargs = {} if scheduler else {"local_rank": local_rank, "lazy_init": False}
-    assert calls == [(role, parallel, expected_kwargs, caller_thread)]
-    assert deadlines == [7.5]
-    assert operations == [("backend initialization", caller_thread)]
-    assert error.value.__cause__ is original
-    assert str(original) == ""  # Reproduce the native assert without a message.
-    message = str(error.value)
-    assert f"role={role}" in message
-    assert f"requested_local_rank={'None (auto)' if local_rank is None else local_rank}" in message
-    assert f"pid={os.getpid()}" in message and f"CANN plog for PID {os.getpid()}" in message
-    assert "AssertionError()" in message and "preceding SDK errors" in message
-
-
 def descriptor():
     return CheckpointDescriptor("schema+pt+model", "immutable-save-generation", {0: ("r0/full", "r0/gdn"), 1: ("r1/full", "r1/gdn")})
 
@@ -432,7 +343,7 @@ def test_sdk_deadline_kills_worker_even_when_c_call_holds_python_gil():
         import ctypes
         from oscar_ascend.offload.transport import StrictMemcacheTransport
         class BlockingStore:
-            def batch_is_exist(self, keys, flags):
+            def batch_is_exist(self, keys):
                 ctypes.PyDLL(None).sleep(3)
                 raise AssertionError("SDK timeout returned to the caller")
         StrictMemcacheTransport(BlockingStore(), timeout_seconds=0.08).exists(["key"])

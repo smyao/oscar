@@ -771,10 +771,9 @@ def _apply_callback(callback, module: ModuleType) -> None:
 
 
 class _AfterExecLoader(importlib.abc.Loader):
-    def __init__(self, loader, callback, callback_runner=None):
+    def __init__(self, loader, callback):
         self.loader = loader
         self.callback = callback
-        self.callback_runner = callback_runner
 
     def create_module(self, spec):
         creator = getattr(self.loader, "create_module", None)
@@ -782,9 +781,7 @@ class _AfterExecLoader(importlib.abc.Loader):
 
     def exec_module(self, module):
         self.loader.exec_module(module)
-        if self.callback_runner is not None:
-            self.callback_runner(self.callback, module)
-        elif _enabled:
+        if _enabled:
             _apply_callback(self.callback, module)
 
     def __getattr__(self, name):
@@ -792,14 +789,9 @@ class _AfterExecLoader(importlib.abc.Loader):
 
 
 class _NativeSeamFinder(importlib.abc.MetaPathFinder):
-    def __init__(self, callbacks=None, enabled=None, callback_runner=None):
-        self.callbacks = _callbacks if callbacks is None else callbacks
-        self.enabled = (lambda: _enabled) if enabled is None else enabled
-        self.callback_runner = callback_runner
-
     def find_spec(self, fullname, path=None, target=None):
-        callback = self.callbacks.get(fullname)
-        if callback is None or not self.enabled():
+        callback = _callbacks.get(fullname)
+        if callback is None or not _enabled:
             return None
         # Preserve the host's loader choice, including editable install hooks.
         # Only finders after us are considered to avoid re-entering ourselves.
@@ -817,7 +809,7 @@ class _NativeSeamFinder(importlib.abc.MetaPathFinder):
             if spec is not None:
                 if spec.loader is None or not hasattr(spec.loader, "exec_module"):
                     raise OscarHookConflictError(f"native seam has unsupported loader: {fullname}")
-                spec.loader = _AfterExecLoader(spec.loader, callback, self.callback_runner)
+                spec.loader = _AfterExecLoader(spec.loader, callback)
                 return spec
         return None
 
@@ -829,11 +821,6 @@ def register() -> None:
     It also performs no operator loading or device initialization.
     """
     global _enabled, _finder
-    # Archive #27/#176: independent host evidence only in an explicit probe.
-    # Native baseline workers use this same general-plugin entry point.
-    if os.environ.get("OSCAR_PROBE_EVIDENCE_DIR"):
-        from .probe_evidence import register as register_probe_evidence
-        register_probe_evidence()
     if os.environ.get("OSCAR_ENABLED") != "1":
         # Spawned native TP workers invoke this general-plugin entry point.
         # They must install only observation, never the OSCAR runtime factory.
@@ -884,8 +871,6 @@ def register_passive_observer() -> None:
 def unregister() -> None:
     """Restore exact original descriptors; refuse to erase another plugin."""
     global _enabled, _finder, _passive_only
-    from .probe_evidence import unwrap_outer_hooks, unregister as unregister_probe_evidence
-    unwrap_outer_hooks()
     for patch in _patches:
         if patch.owner.__dict__.get(patch.name) is not patch.replacement:
             raise OscarHookConflictError(f"cannot restore externally changed {patch.owner.__name__}.{patch.name}")
@@ -904,7 +889,6 @@ def unregister() -> None:
     _enabled = False
     _passive_only = False
     _clear_loaded_selector_cache()
-    unregister_probe_evidence()
 
 
 def hook_status() -> dict:

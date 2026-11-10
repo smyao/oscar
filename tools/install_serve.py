@@ -36,7 +36,7 @@ def main(argv=None) -> int:
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
                         help="pass the native prefix-cache switch; disabled by default on aisbench-stable")
     parser.add_argument("--kv-offload", action=argparse.BooleanOptionalAction, default=None,
-                        help="AscendStore/memcache offload is enabled in the shipped configs; --no-kv-offload disables it explicitly; no automatic failure fallback")
+                        help="explicitly select AscendStore/memcache offload; no automatic failure fallback")
     parser.add_argument("--diagnose-trap", action="store_true",
                         help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
     add_model_arguments(parser)

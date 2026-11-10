@@ -232,9 +232,8 @@ def _phase(name: str, command: list[str], *, config: dict, env: dict,
 def _preflight(config_path: Path, config: dict, env: dict, log_dir: Path,
                status: dict, variant: str) -> None:
     python = sys.executable
-    from oscar_ascend.offload.config import offload_options
-    offload_dependencies = (["memfabric-hybrid", "memcache-hybrid", "pyzmq"]
-                            if offload_options(config) is not None else [])
+    from .offload_dependencies import offload_install_dependencies
+    offload_dependencies = offload_install_dependencies(config, env)
     for name, command in (
         ("install-dependencies", [python, "-m", "pip", "install", "setuptools>=69", "wheel",
                                    "pybind11>=3", "cmake>=3.26", "ninja", "pytest", *offload_dependencies]),

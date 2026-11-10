@@ -6,7 +6,7 @@
 
 本次增加外部 `OscarAscendStoreConnector`，复用 AscendStore 的 MemCache backend 初始化及 V1 KV connector 调用链。代码覆盖当前 TP4 / DP1 / PP1 / CP1 混合模型的主动抢占恢复、原生 prefix cache、chunked prefill、none/align、MTP3、请求取消、streaming session 代际、缓存重置和资源释放。实际安装在固定 candidate 入口，默认 APC 仍关闭；启用 APC 时使用原生 align 策略。
 
-当前 MemCache 尚未部署，用户尚未提供 meta/config-store 地址与每卡 DRAM 容量。本地没有 NPU，且本轮明确禁止 agent 连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
+最初提交时 MemCache 尚未部署；2026-11-10 用户已提供安装好的 SDK 和启动环境，并选择回滚至 `3d4fa54` 后仅对齐卸载启动参数。本地没有 NPU，且本轮明确禁止 agent 连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
 
 ## 为什么不能直接把 AscendStoreConnector 接到 OSCAR
 
@@ -85,6 +85,31 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 必须单独说明容量边界：纯 DRAM MemCache 有高低水位驱逐，官方配置没有文档化的“关闭驱逐”选项。这里没有把原生 layerwise 读路径的 5 分钟 lease 假定为长期 swap 保活或自动续租。已卸载活动快照若被存储驱逐，恢复会明确报错，不能保证任意等待时长和任意存储压力下必然恢复。部署容量需覆盖活动快照与共享 prefix 的实际占用。公开的 SSD/UBS_IO 扩展有额外库和部署要求，未偷偷加入本次 DRAM 方案。依据：[MemCache 配置](https://github.com/Ascend/memcache/blob/master/doc/memcache_config.md)、[SSD 支持说明](https://github.com/Ascend/memcache/blob/master/doc/memcache_ssd_usage.md)。SIGKILL 或 SDK 硬超时也可能留下未回收 generation，不能声称异常退出后零遗留。
 
 ## 部署
+
+### 2026-11-10：接续用户已安装的 MemCache
+
+中央 MetaService 保持运行，在 OSCAR 工程目录执行：
+
+```bash
+bash scripts/start_node93_oscar.sh
+```
+
+本次回滚提交 `0e7af09` 的文件树与 `3d4fa54` 完全相同。此后新增的启动包装仅设置用户提供的卸载环境：`PYTHONHASHSEED=0`、`MMC_LOCAL_SERVICE_BACKEND_ID=1`、前四卡的 ASCEND/CUDA 可见列表，按 CANN→ATB→MemFabric→MemCache 顺序 source 已安装 SDK，指定 `/usr/local/memcache_hybrid/latest/config/mmc-meta.conf` 和 `mmc-local.conf`。它不创建配置、不启动或检查中央服务、不准备主机资源、不清理缓存。没有添加 `MMC_DIR_STORE_CONFIG_PATH`。
+
+入口随后执行既有 `install_serve.sh --variant candidate --kv-offload`；编译、旋转文件准备和推理流程保持原样。卸载环境标记 `OSCAR_OFFLOAD_SDK_SOURCE=installed` 使部署仅补装卸载所需的 pyzmq，不让 pip 解析 MemFabric/MemCache SDK。普通入口未设置该标记时保持原有依赖安装行为。缺少或无法加载 SDK 时仍报错停止。也可以在当前 Bash 中 `source scripts/env_node93_memcache.sh` 后运行固定 `bash scripts/install_serve.sh --variant candidate`。
+
+| 用户基线的卸载设置 | OSCAR 对应行为 |
+| --- | --- |
+| `backend=memcache`、`kv_role=kv_both` | 原有生成配置已包含这两项 |
+| `AscendStoreConnector` | 保留 `OscarAscendStoreConnector` 外部适配，才能传输完整 packed/window/tags/GDN；底层复用原生 MemCache backend |
+| `lookup_rpc_port="0"` | 复用原生 lookup IPC 路径函数的默认0，再追加 engine 标识隔离实例；它不是HTTP端口 |
+| `load_async="false"` | OSCAR 既有回载为同步完成。无需新增字段；JSON字符串 `"false"` 不等于布尔 `false`，不能据字符串推断原生版本已关闭异步 |
+
+这两个原生专用字段不直接加入 OSCAR 的严格选项集合，也不改变其同步回载与 IPC 行为。模型、token budget、HTTP端口、prefix cache、RoPE、MTP、图模式、统计和数值配置全部保持回滚版本：随库默认是16384、8989、APC关闭，不复制用户基线的4096、6969、APC开启和YaRN参数。显式已有参数仍可传给包装入口；前后卡模式会让两种设备可见变量保持一致。
+
+本次启动适配验证：111项卸载配置/传输/部署、固定argv和直启流程回归通过，另14项临时SDK stub的shell测试通过，覆盖source顺序、环境传递、失败停止及真实退出码。`configs/`、`csrc/`、`oscar_ascend/`、`tools/serving_variants.py`和`tools/install_serve.py`与3d4fa54逐文件一致；shell语法及diff检查通过。测试未加载真实SDK/NPU，不能作为本次现场链路、四卡启动或SSD回读验收。
+
+### 独立环境的配置生成（已有配置无需执行）
 
 安装使用当前 Python 环境，依赖 `memfabric-hybrid`、`memcache-hybrid`、`pyzmq`。无需复制或覆盖 native 源码。以下变量必须用用户实际提供的地址、容量填写；配置生成命令不会连接网络或启动服务：
 

@@ -2,7 +2,7 @@
 
 固定优化交付入口：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。每轮实现均须同步编译、候选配置和实际算子路由；直启与probe共用`tools/serving_variants.py`候选预设。该直启命令仍不运行测试/probe/AISBench，后四卡只需追加`--rear-cards`。
 
-2026-11-09：当前 candidate 默认接入 AscendStore/MemCache KV 卸载，启动前须部署 MemCache 并设置 `MMC_LOCAL_CONFIG_PATH`。完整机制、地址/容量配置生成、prefix cache / chunked prefill / 抢占恢复及验收命令见 [KV 卸载说明](docs/kv_offload_20261109.md)。默认仍为原版 Qwen3.8-27B、APC 关闭、预算 16384、原生 MTP3 和图模式；显式 `--no-kv-offload` 可运行无卸载配置。MemCache 尚未部署，本次无真机、质量或性能通过结论；下方旧版本实验记录不作为本轮验收。
+2026-11-10：按用户选择回滚至 `3d4fa54` 的首次完整 KV 卸载实现，随后仅对齐卸载启动环境。已按用户基线安装 SDK、且中央 MemCache 服务已运行时，执行 `bash scripts/start_node93_oscar.sh`：依次加载 CANN/ATB/MemFabric/MemCache，设置既有 MMC 配置路径并启用 candidate 卸载，复用已安装 SDK。服务仍读取 `configs/target.json`，默认前四卡、端口8989、预算16384、APC关闭、原生MTP3和图模式；不复制基线中的4096、6969、APC开启或YaRN覆盖。完整机制及参数对应见 [KV 卸载说明](docs/kv_offload_20261109.md)。本次未连接真机，尚无四卡完整服务、SSD I/O、质量或性能通过结论。
 
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 

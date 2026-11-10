@@ -56,6 +56,41 @@ def test_disabled_probe_plan_keeps_existing_correctness_stages(tmp_path):
     assert [name for name, _ in plan] == ["bf16-correctness-gates", "service-probe"]
 
 
+def test_sourced_sdk_launch_preserves_full_service_argv(tmp_path, monkeypatch, capsys):
+    # User's installed SDKs must not be replaced; this selection must not
+    # change token budget, prefix cache, RoPE, MTP, graph, placement or port.
+    plans = []
+    for source in ("pip", "installed"):
+        monkeypatch.setenv("OSCAR_OFFLOAD_SDK_SOURCE", source)
+        assert install_serve.main(["--plan", "--variant", "candidate", "--kv-offload",
+                                   "--log-dir", str(tmp_path / "unused")]) == 0
+        plans.append(json.loads(capsys.readouterr().out))
+    assert plans[0]["vllm_argv"] == plans[1]["vllm_argv"]
+    for index, source in enumerate(("pip", "installed")):
+        command = dict(plans[index]["stages"])["build-dependencies"]
+        assert "pyzmq" in command
+        for sdk in ("memfabric-hybrid", "memcache-hybrid"):
+            assert (sdk in command) is (source == "pip")
+    assert not (tmp_path / "unused").exists()
+
+
+def test_offload_sdk_selection_rejects_unknown_source():
+    from tools.offload_dependencies import offload_install_dependencies
+    with pytest.raises(ValueError, match="OSCAR_OFFLOAD_SDK_SOURCE"):
+        offload_install_dependencies({"kv_offload": {"enabled": True}},
+                                     {"OSCAR_OFFLOAD_SDK_SOURCE": "typo"})
+    assert offload_install_dependencies({"kv_offload": {"enabled": False}},
+                                        {"OSCAR_OFFLOAD_SDK_SOURCE": "installed"}) == []
+
+
+def test_offload_keeps_both_device_masks_equal_for_explicit_placement():
+    from tools.target_cli import target_env
+    for devices in ([0, 1, 2, 3], [4, 5, 6, 7]):
+        env = target_env({"devices": devices, "kv_offload": {"enabled": True}},
+                         {"CUDA_VISIBLE_DEVICES": "stale"})
+        assert env["CUDA_VISIBLE_DEVICES"] == env["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
+
+
 @pytest.mark.parametrize("enabled", [False, True])
 def test_probe_entry_installs_sdk_before_device_gates(tmp_path, monkeypatch, enabled):
     calls = []

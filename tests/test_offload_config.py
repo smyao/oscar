@@ -281,6 +281,7 @@ def test_offload_selection_cannot_change_pt_math_or_timer_configuration():
     base_env = {"OSCAR_TIMER_CONTROL": "/tmp/explicit-timer", "OSCAR_PASSIVE_TIMING_CONTROL": "/tmp/stale"}
     enabled_env = target_cli.target_env(enabled, base_env)
     assert enabled_env.pop("PYTHONHASHSEED") == "0"
+    assert enabled_env.pop("CUDA_VISIBLE_DEVICES") == ",".join(map(str, enabled["devices"]))
     assert enabled_env == target_cli.target_env(disabled, base_env)
 
 

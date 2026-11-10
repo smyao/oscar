@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-10：用户指定回滚至首次完整卸载提交3d4fa54，回滚提交0e7af09文件树逐项相同；93项卸载配置/传输/部署主机测试通过。随后仅接续用户提供的SDK加载及MMC环境，以start_node93_oscar.sh启动既有candidate；模型、预算、端口、APC、RoPE、MTP、图、内核/PT/timer保持回滚值。没有恢复中央服务管理或新诊断工具。适配后111项配置/传输/部署/固定argv回归及14项隔离shell测试通过，语法与diff检查通过；没有连接真机，不能据此称链路或端到端卸载已修复。
+
 2026-11-09 KV 卸载：新增 AscendStore/MemCache 外部适配、完整物理状态保存/恢复、prefix/chunked prefill 与原生抢占生命周期回归、真实 SDK/NPU 和短服务探针入口。详见 [实现、部署与证据边界](kv_offload_20261109.md)。用户尚未部署 MemCache，地址和容量待提供；本轮没有真机连接或测速，以下 42 项设备、图、质量与性能状态不据主机测试升级。
 
 2026-10-28 当前修复：PC align的warm spec-width prefill也会被错误fold为decode，读写错误GDN checkpoint。已扩展#163的原生prefill分类与图接缝修复，207项相关主机回归通过，全部生产CANN与614c相同。固定candidate自动启用；四项模型验收状态不据本地反例升级。见[状态修复与范围](gdn_prefill_state_20261028.md)。

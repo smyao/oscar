@@ -23,10 +23,9 @@ def plan(config_path: Path, log_dir: Path, config=None) -> list[tuple[str, list[
     cfg = str(config_path.resolve())
     if config is None:
         config = json.loads(config_path.read_text())
-    from oscar_ascend.offload.config import offload_options
+    from .offload_dependencies import offload_install_dependencies
     dependencies = ["setuptools>=69", "wheel", "pybind11>=3", "cmake>=3.26", "ninja", "pytest"]
-    if offload_options(config) is not None:
-        dependencies += ["memfabric-hybrid", "memcache-hybrid", "pyzmq"]
+    dependencies += offload_install_dependencies(config)
     return [
         ("build-dependencies", [python,"-m","pip","install", *dependencies]),
         ("install-plugin", [python, "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(ROOT)]),

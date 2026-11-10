@@ -108,6 +108,10 @@ def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, st
     if not isinstance(devices, list) or len(devices) != 4 or len(set(devices)) != 4 or any(type(x) is not int or x < 0 for x in devices):
         raise ValueError("configs/target.json devices must contain the four physical NPU IDs selected for this task")
     env["ASCEND_RT_VISIBLE_DEVICES"] = ",".join(map(str, devices))
+    if offload_options(config) is not None:
+        # User's MemCache launch binds both names to the same selected cards,
+        # including an explicit rear-cards override applied by install_serve.
+        env["CUDA_VISIBLE_DEVICES"] = env["ASCEND_RT_VISIBLE_DEVICES"]
     env["OSCAR_ENABLED"] = "1"
     plugins = [p.strip() for p in env.get("VLLM_PLUGINS", "").split(",") if p.strip()]
     # With no allowlist vLLM loads every registered plugin. Do not accidentally exclude Ascend.

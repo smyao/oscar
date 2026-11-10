@@ -28875,3 +28875,21 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **根因边界**：#173的旋转往返反例只证明局部有限精度差异，不能证明模型收益；本次反馈不支持继续以它作为默认改动的交付依据。没有逐层激活、设备相位或同轮对照，不将单轮分数与耗时全部归因到某个算子，也不以RPS差异解释结果。后续代码审计与合成协议反例必须单列本地证据，不写成本条已确认的现场根因。
 
 **回归检查**：撤下验证固定current-only完整源码身份、candidate配置与614c快照一致、旧配置残留不能重新启用退役policy；保留原q4/q1/C4/C16源码与原路由门。具体主机结果见本轮withdrawal_validation.json；不将恢复源码或主机通过写成新的NPU/质量/性能验收。
+
+
+## [181] 真机条目（2026-11-10 用户回传）· 06:03 卸载启动在物理卡3的RoCE初始化失败
+
+**本次证据**：两份模型终端片段中，PID34668于06:03:33成功握手MetaService的5000端口，启动40GB LocalService及DirStore；TP0、TP1打印KV_OFFLOAD_READY。EngineCore随后在initialize_from_config的worker RPC收到空异常并退出。用户进一步定向读取PID34670的已有CANN plog，06:03:26明确记录phyId(3)的RaHdcRdevInit ret(-67)、`rdma init failed because RoCE link status is down`、devid[3]的RDMA return[19]，之后出现16666监听失败及HcclCommInitClusterInfoMemConfig失败。这是本轮日志直接确认的链路状态，不是沿用此前故障推测。
+
+**定位边界**：当前阻断点为物理卡3的RoCE链路DOWN导致RDMA/HCCL初始化失败。后续16666监听报错没有EADDRINUSE或占用者证据，不能另判为端口冲突；清理阶段HalHostUnregisterEx ret8不是首因。现有证据不能区分对端端口、链路配置、线缆或光模块原因，也不证明硬件损坏。部分worker就绪不代表四卡服务或SSD读写验收通过。
+
+**处置与验证边界**：保持0–3卡、device_rdma及现有OSCAR参数；按已成功基线核对卡3实际连接的对端及链路状态，恢复后以hccn_tool的link/net_health只读查询确认，再运行既有start_node93_oscar.sh。中央服务正常时不重复启动，不以更换HTTP/Meta/HCCL端口、增加超时或修改算子处理本故障。本轮仅记录用户真机证据；agent未连接真机、修改生产代码或配置、重启服务、运行测试或取得恢复成功证据。
+
+
+## [182] 真机反馈（2026-11-10）· node93卸载入口未默认开启PC，用户报告命中率0%
+
+**现场事实**：用户确认当前服务可跑通，直接执行`bash scripts/start_node93_oscar.sh`，没有额外传`--enable-prefix-caching`，日志Prefix cache hit rate为0%；用户报告原生加卸载基线约70%。未提供本轮完整引擎配置或同轮请求统计，不将70%当作本实现已验证的恢复目标结果。
+
+**配置与调用链**：原node93包装只传candidate和kv-offload，target.json的enable_prefix_caching=false使最终argv显式关闭PC。prefix_checkpoint要求APC开启及原生align模式；无policy时OSCAR connector不发布共享prefix并直接返回外部命中0。这是本次已确认的启动默认配套遗漏，不只是统计字段缺失。原生分别统计本地Prefix cache与External prefix cache，不能把两项混作同一命中率。
+
+**修正与验证**：node93专用入口默认同时传`--kv-offload --enable-prefix-caching`，用户末尾显式`--no-enable-prefix-caching`仍可覆盖；其他入口继续读取原配置。55项相关主机测试通过，含真实shell传参、原生none/align选择、全TP发布及本地驱逐后重复prefix字节恢复；另直接核对包装实际参数进入install_serve后生成的vLLM argv，默认PC开启、卸载开启、前四卡和7878一致。仅修启动默认值，OSCAR数学/算子/图/PT/预算不变；没有连接真机、重新评测或取得现场70%命中率证据。

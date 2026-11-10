@@ -148,14 +148,14 @@ def test_helper_reasserts_user_values_after_sdk_defaults(launch_tree):
     assert_selected_environment(json.loads(tree.output.read_text()))
 
 
-@pytest.mark.parametrize("arguments", [[], ["--plan"], ["--rear-cards"],
+@pytest.mark.parametrize("arguments", [[], ["--plan"], ["--rear-cards"], ["--no-enable-prefix-caching"],
     ["--config", "my configuration.json", "--log-dir", "logs with spaces", "--literal=$(untouched)", ""]])
 def test_wrapper_execs_only_candidate_offload_and_preserves_user_arguments(launch_tree, arguments):
     tree = launch_tree
     result = run_wrapper(tree, *arguments)
     assert result.returncode == 0, result.stderr
     captured = json.loads(tree.output.read_text())
-    assert captured["argv"] == ["--variant", "candidate", "--kv-offload", *arguments]
+    assert captured["argv"] == ["--variant", "candidate", "--kv-offload", "--enable-prefix-caching", *arguments]
     assert captured["pid"] == result.pid  # Wrapper exec replaces its process; no detached service.
     assert captured["cwd"] == str(tree.project)
     assert_selected_environment(captured)
@@ -191,7 +191,8 @@ def test_install_failure_exit_code_remains_visible_to_caller(launch_tree):
     launch_tree.env["TEST_INSTALL_RETURN_CODE"] = "43"
     result = run_wrapper(launch_tree)
     assert result.returncode == 43
-    assert json.loads(launch_tree.output.read_text())["argv"] == ["--variant", "candidate", "--kv-offload"]
+    assert json.loads(launch_tree.output.read_text())["argv"] == [
+        "--variant", "candidate", "--kv-offload", "--enable-prefix-caching"]
 
 
 def test_env_helper_requires_source_instead_of_creating_an_unusable_subshell(launch_tree):

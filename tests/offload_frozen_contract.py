@@ -6,7 +6,7 @@ normalized, and no wildcard AST/file/hash exemption is permitted here.
 """
 import json
 
-from test_stable_launch_frozen import AUTHORIZED_KV_OFFLOAD
+from test_stable_launch_frozen import AUTHORIZED_HTTP_PORT, AUTHORIZED_KV_OFFLOAD
 
 
 _RUNTIME_GATE = '''        transfer = runner.vllm_config.kv_transfer_config
@@ -78,6 +78,10 @@ def before_authorized_offload_extension(path, text):
     if path == "configs/target.json":
         value = json.loads(text)
         assert value.pop("kv_offload") == AUTHORIZED_KV_OFFLOAD
+        # 2026-11-10: only the explicitly authorized HTTP port differs from
+        # the original snapshot; preserve the old fixture and all other keys.
+        assert value["port"] == AUTHORIZED_HTTP_PORT
+        value["port"] = 8989
         return json.dumps(value, indent=2) + "\n"
     changes = {
         "oscar_ascend/runtime.py": (

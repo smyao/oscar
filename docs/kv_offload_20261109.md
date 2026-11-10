@@ -4,7 +4,7 @@
 
 ## 交付范围与验收边界
 
-本次增加外部 `OscarAscendStoreConnector`，复用 AscendStore 的 MemCache backend 初始化及 V1 KV connector 调用链。代码覆盖当前 TP4 / DP1 / PP1 / CP1 混合模型的主动抢占恢复、原生 prefix cache、chunked prefill、none/align、MTP3、请求取消、streaming session 代际、缓存重置和资源释放。实际安装在固定 candidate 入口，默认 APC 仍关闭；启用 APC 时使用原生 align 策略。
+本次增加外部 `OscarAscendStoreConnector`，复用 AscendStore 的 MemCache backend 初始化及 V1 KV connector 调用链。代码覆盖当前 TP4 / DP1 / PP1 / CP1 混合模型的主动抢占恢复、原生 prefix cache、chunked prefill、none/align、MTP3、请求取消、streaming session 代际、缓存重置和资源释放。实际安装在固定 candidate 入口。node93 专用入口默认同时开启卸载与 APC，使用原生 align 策略；通用入口仍按其配置读取 APC。
 
 最初提交时 MemCache 尚未部署；2026-11-10 用户已提供安装好的 SDK 和启动环境，并选择回滚至 `3d4fa54` 后仅对齐卸载启动参数。本地没有 NPU，且本轮明确禁止 agent 连接真机或测速。因此主机字节回归、原生调用链验证与真实本机 IPC 可记录为已运行；真实 SDK/NPU 传输、模型服务、图回放、质量与性能不能记录为通过。下面的设备与服务探针是可执行验收入口，不是已经取得的证据。
 
@@ -72,6 +72,8 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 
 相同 prefix 的并发写各自使用独立 payload generation。manifest 只有完整集合才可发布；SDK duplicate 返回必须读取并检查已有赢家，不能假定覆盖或 CAS。读取验证 manifest checksum、namespace、边界和完整 keys，防止跨 PT、跨 rank 或新旧 generation 混合。
 
+当前共享prefix只发布每个prompt最后的联合checkpoint，并不发布每一个中间chunk边界。2026-11-10主机审查复现：完整重复prompt可恢复，但共享较短中间前缀的请求在本地GDN页丢失后可能外部未命中；这是已知覆盖限制，不能据默认PC开关修正就保证与原生约70%的现场命中率相同。该限制不是用户本轮未开启PC时零命中的归因，未在此次启动修正中改动发布生命周期。
+
 普通 native prefix reset 不影响活跃或等待恢复的 swap。成功的 force reset 才撤销相应活动状态；失败/异常保持 ledger。外部 prefix reset 切换本服务的 prefix view，拒绝旧 view 的迟到发布，保留已分配的恢复计划及活动 swap；不删除其他服务仍使用的共享对象。
 
 ## 所有权、资源与成本
@@ -96,7 +98,7 @@ bash scripts/start_node93_oscar.sh
 
 本次回滚提交 `0e7af09` 的文件树与 `3d4fa54` 完全相同。此后新增的启动包装仅设置用户提供的卸载环境：`PYTHONHASHSEED=0`、`MMC_LOCAL_SERVICE_BACKEND_ID=1`、前四卡的 ASCEND/CUDA 可见列表，按 CANN→ATB→MemFabric→MemCache 顺序 source 已安装 SDK，指定 `/usr/local/memcache_hybrid/latest/config/mmc-meta.conf` 和 `mmc-local.conf`。它不创建配置、不启动或检查中央服务、不准备主机资源、不清理缓存。没有添加 `MMC_DIR_STORE_CONFIG_PATH`。
 
-入口随后执行既有 `install_serve.sh --variant candidate --kv-offload`；编译、旋转文件准备和推理流程保持原样。卸载环境标记 `OSCAR_OFFLOAD_SDK_SOURCE=installed` 使部署仅补装卸载所需的 pyzmq，不让 pip 解析 MemFabric/MemCache SDK。普通入口未设置该标记时保持原有依赖安装行为。缺少或无法加载 SDK 时仍报错停止。也可以在当前 Bash 中 `source scripts/env_node93_memcache.sh` 后运行固定 `bash scripts/install_serve.sh --variant candidate`。
+入口随后执行既有 `install_serve.sh --variant candidate --kv-offload --enable-prefix-caching`；编译、旋转文件准备和推理流程保持原样。卸载环境标记 `OSCAR_OFFLOAD_SDK_SOURCE=installed` 使部署仅补装卸载所需的 pyzmq，不让 pip 解析 MemFabric/MemCache SDK。普通入口未设置该标记时保持原有依赖安装行为。缺少或无法加载 SDK 时仍报错停止。也可以在当前 Bash 中 `source scripts/env_node93_memcache.sh` 后运行固定 `bash scripts/install_serve.sh --variant candidate`。
 
 | 用户基线的卸载设置 | OSCAR 对应行为 |
 | --- | --- |
@@ -105,9 +107,9 @@ bash scripts/start_node93_oscar.sh
 | `lookup_rpc_port="0"` | 复用原生 lookup IPC 路径函数的默认0，再追加 engine 标识隔离实例；它不是HTTP端口 |
 | `load_async="false"` | OSCAR 既有回载为同步完成。无需新增字段；JSON字符串 `"false"` 不等于布尔 `false`，不能据字符串推断原生版本已关闭异步 |
 
-这两个原生专用字段不直接加入 OSCAR 的严格选项集合，也不改变其同步回载与 IPC 行为。模型、token budget、HTTP端口、prefix cache、RoPE、MTP、图模式、统计和数值配置全部保持回滚版本：随库默认是16384、8989、APC关闭，不复制用户基线的4096、6969、APC开启和YaRN参数。显式已有参数仍可传给包装入口；前后卡模式会让两种设备可见变量保持一致。
+这两个原生专用字段不直接加入 OSCAR 的严格选项集合，也不改变其同步回载与 IPC 行为。模型、token budget、RoPE、MTP、图模式、统计和数值配置保持回滚版本；HTTP端口按用户2026-11-10要求改为7878，node93入口另按用户要求默认开启APC。通用配置仍为16384、7878、APC关闭；不复制用户基线的4096、6969和YaRN参数。显式已有参数仍可传给包装入口；前后卡模式会让两种设备可见变量保持一致。
 
-本次启动适配验证：111项卸载配置/传输/部署、固定argv和直启流程回归通过，另14项临时SDK stub的shell测试通过，覆盖source顺序、环境传递、失败停止及真实退出码。`configs/`、`csrc/`、`oscar_ascend/`、`tools/serving_variants.py`和`tools/install_serve.py`与3d4fa54逐文件一致；shell语法及diff检查通过。测试未加载真实SDK/NPU，不能作为本次现场链路、四卡启动或SSD回读验收。
+此前启动适配验证：111项卸载配置/传输/部署、固定argv和直启流程回归通过，另14项临时SDK stub的shell测试通过，覆盖source顺序、环境传递、失败停止及真实退出码。端口调整前，`configs/`、`csrc/`、`oscar_ascend/`、`tools/serving_variants.py`和`tools/install_serve.py`与3d4fa54逐文件一致；此次仅将target.json的port改为7878。shell语法及diff检查通过。测试未加载真实SDK/NPU，不能作为本次现场链路、四卡启动或SSD回读验收。
 
 ### 独立环境的配置生成（已有配置无需执行）
 
@@ -136,7 +138,7 @@ python3 -m tools.memcache_config serve-meta --config /absolute/path/oscar-memcac
 git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 ```
 
-需要 prefix cache 时显式追加 `--enable-prefix-caching`；后四卡继续追加 `--rear-cards`。默认预算 16384、设备 0–3、端口 8989、原生 async scheduler / MTP3 / FULL_DECODE_ONLY 均保持。显式 `--no-kv-offload` 可选择原有无卸载运行；它不是故障后的自动回退。配置/SDK/传输错误会中止，不会偷偷忽略卸载。
+上面的通用入口需要 prefix cache 时显式追加 `--enable-prefix-caching`；`start_node93_oscar.sh` 已默认添加，无需用户再传。显式 `--no-enable-prefix-caching` 可覆盖 node93 默认值。后四卡继续追加 `--rear-cards`。默认预算 16384、设备 0–3、端口 7878、原生 async scheduler / MTP3 / FULL_DECODE_ONLY 均保持。显式 `--no-kv-offload` 可选择原有无卸载运行；它不是故障后的自动回退。配置/SDK/传输错误会中止，不会偷偷忽略卸载。
 
 直启入口按原授权只安装、编译、准备 PT 和启动，不跑测试。完整探针入口：
 

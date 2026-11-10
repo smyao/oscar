@@ -45,7 +45,7 @@ def test_plan_has_six_paired_small_batches_and_is_read_only(tmp_path, monkeypatc
         {"variant": "candidate", "concurrency": 8, "modes": ["control", "profile"]}]
     assert result["prompt_tokens"] == 32768 and result["output_tokens"] == 256
     assert result["devices"] == ([4, 5, 6, 7] if rear else [0, 1, 2, 3])
-    assert result["port"] == (7878 if rear else 8989)
+    assert result["port"] == 7878
     argv = result["vllm_argv"]
     assert "--quantization" not in argv
     assert "--scheduler-cls" not in argv

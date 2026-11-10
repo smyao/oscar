@@ -5,6 +5,7 @@ model, public model name, activation dtype, weight quantization and the old
 checkpoint-specific YaRN override (official Qwen3.8 uses default RoPE).
 The 2026-11-09 user-authorized offload extension adds only the explicit
 KV-transfer argument for the active candidate. Native controls exclude it.
+The 2026-11-10 user authorization changes the default HTTP port to 7878.
 Every other native argument remains checked against the original fixture.
 """
 import json
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FROZEN = json.loads((ROOT / 'reports/stable_32k_64k_20261015/frozen_launch.json').read_text())
 AUTHORIZED_KV_OFFLOAD = {"enabled": True, "backend": "memcache",
                          "max_batch_objects": 256, "timeout_seconds": 60}
+AUTHORIZED_HTTP_PORT = 7878
 AUTHORIZED_KV_TRANSFER = {
     "kv_connector": "OscarAscendStoreConnector",
     "kv_connector_module_path": "oscar_ascend.offload.connector",
@@ -38,6 +40,7 @@ def without_authorized_kv_transfer(argv):
 
 def authorized_model_arguments(argv, *, offload=True):
     result = list(argv)
+    result[result.index('--port') + 1] = str(AUTHORIZED_HTTP_PORT)
     result[1] = '/softwarePlatform/models_directory/Qwen3.8-27B'
     result[result.index('--served-model-name') + 1] = 'qwen3.8'
     start = result.index('--quantization')
@@ -60,4 +63,4 @@ def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
     assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
     assert actual.get('target_devices', actual.get('devices')) == expected['devices']
     argv = actual['vllm_argv']
-    assert int(argv[argv.index('--port') + 1]) == expected['port']
+    assert int(argv[argv.index('--port') + 1]) == AUTHORIZED_HTTP_PORT

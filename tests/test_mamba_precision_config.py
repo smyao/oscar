@@ -210,7 +210,7 @@ def test_all_one_key_plans_use_model_state_precision_without_changing_launch_pol
     assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
     assert argv_option(argv, "max_num_batched_tokens") == "16384"
     assert argv_option(argv, "tensor_parallel_size") == "4"
-    assert argv_option(argv, "port") == "8989"
+    assert argv_option(argv, "port") == "7878"
     assert json.loads(argv[argv.index("--speculative_config") + 1]) == config["speculative_config"]
     assert json.loads(argv_option(argv, "compilation_config")) == config["compilation_config"]
     assert ("--enable-prefix-caching" if prefix else "--no-enable-prefix-caching") in argv

@@ -55,7 +55,7 @@ def test_plan_preserves_native_settings_and_only_schedules_one_candidate_request
         "warmup": {"requests": 1, "prompt_tokens": 128, "output_tokens": 16},
         "workload": {"requests": 1, "prompt_tokens": 32768, "output_tokens": 16}}]
     assert plan["devices"] == ([4, 5, 6, 7] if rear else [0, 1, 2, 3])
-    assert plan["port"] == (7878 if rear else 8989)
+    assert plan["port"] == 7878
     args = plan["vllm_argv"]
     assert "--quantization" not in args and "--scheduler-cls" not in args
     assert "--no-enable-prefix-caching" in args

@@ -96,6 +96,7 @@ def test_candidate_configuration_matches_accepted_performance_base(prefix):
     expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
     expected['enable_prefix_caching'] = prefix
     expected['kv_offload'] = AUTHORIZED_KV_OFFLOAD
+    expected['port'] = 7878  # User-authorized HTTP port change, 2026-11-10.
     assert candidate_config(prefix) == expected
 
 

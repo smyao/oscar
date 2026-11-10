@@ -24,7 +24,7 @@ def test_shared_target_argv_env_and_default_invariants(enabled):
     assert "--enable-prefix-caching" in argv
     assert "--max-num-batched-tokens" not in argv and "--scheduler-cls" not in argv
     assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
-    assert argv[argv.index("--port") + 1] == "8989"
+    assert argv[argv.index("--port") + 1] == "7878"
     assert json.loads(argv[argv.index("--speculative_config") + 1])["enforce_eager"] is True
 
 

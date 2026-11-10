@@ -43,7 +43,7 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
     assert plan["serve"][-1] == str(logs / "effective-target.json")
     assert plan["stages"][-1][1][-1] == plan["serve"][-1]
     assert plan["target_devices"] == ([4, 5, 6, 7] if rear_cards else [0, 1, 2, 3])
-    assert plan["port"] == (7878 if rear_cards else 8989)
+    assert plan["port"] == 7878
 
 
 @pytest.mark.parametrize("variant,original,enabled", [
@@ -56,7 +56,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     before = path.read_bytes()
     logs = tmp_path / "run"
     devices = [4, 5, 6, 7] if rear_cards else [0, 1, 2, 3]
-    port = 7878 if rear_cards else 8989
+    port = 7878
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "8,9,10,11")
     seen = []
     def run_phase(name, command, *, env, **kwargs):

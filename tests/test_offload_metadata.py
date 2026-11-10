@@ -1,6 +1,6 @@
 """Host manifest integrity/real local IPC tests; no NPU or SDK claim.
 
-Archive #37--49/#127/#128/#157/#163/#171: never publish or consume a mixed
+Archive #37--49/#127/#128/#157/#163/#171/#183: never publish or consume a mixed
 generation checkpoint, and never convert a metadata transport error to hit.
 """
 
@@ -124,6 +124,76 @@ def test_real_local_rpc_put_get_overwrite_and_missing(rpc):
     assert client.get("prefix") == body("first")
     client.put("prefix", body("second"))
     assert client.get("prefix") == body("second")
+
+
+def test_repeated_missing_indexes_skip_sdk_get_and_later_publication_is_visible(rpc, capsys):
+    store, transport, _, client = rpc
+    original_get = store.get
+    get_calls = []
+    def sdk_get(key):
+        get_calls.append(key)
+        if key not in store.objects:
+            print("SDK Get ERROR: object not found")
+        return original_get(key)
+    store.get = sdk_get
+    for index in range(32):
+        assert client.get(f"missing-prefix-{index}") is None
+    assert client.get("prefix") is None
+    assert get_calls == [], "ordinary cold prefix lookups must not call SDK Get"
+    assert "SDK Get ERROR" not in capsys.readouterr().out
+    assert not transport.failed
+    # A cold miss is not cached: the same key must be readable after publish.
+    client.put("prefix", body("first"))
+    assert client.get("prefix") == body("first")
+    assert get_calls == ["prefix"]
+    assert not transport.failed
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("existence SDK failure"), [2]])
+def test_host_lookup_existence_errors_are_not_missing_and_never_call_get(rpc, failure):
+    store, transport, _, client = rpc
+    get_calls = []
+    def exists(keys):
+        if isinstance(failure, Exception):
+            raise failure
+        return failure
+    store.batch_is_exist = exists
+    store.get = lambda key: get_calls.append(key) or b""
+    with pytest.raises(TransferError, match="batch_is_exist"):
+        client.get("prefix")
+    assert get_calls == []
+    assert transport.failed
+
+
+def test_host_lookup_evicted_between_exists_and_get_is_a_nonfatal_miss(rpc):
+    store, transport, _, client = rpc
+    store.objects["prefix"] = encode_manifest(body())
+    original_exists = store.batch_is_exist
+    calls = []
+    def exists(keys):
+        calls.append(("exists", tuple(keys)))
+        return original_exists(keys)
+    def evicted_get(key):
+        calls.append(("get", key))
+        del store.objects[key]
+        return b""
+    store.batch_is_exist, store.get = exists, evicted_get
+    assert client.get("prefix") is None
+    assert calls == [("exists", ("prefix",)), ("get", "prefix"), ("exists", ("prefix",))]
+    assert not transport.failed
+
+
+def test_host_lookup_get_exception_is_explicit_not_a_cache_miss(rpc):
+    store, transport, _, client = rpc
+    store.objects["prefix"] = encode_manifest(body())
+    error = RuntimeError("SDK Get transport failed")
+    def failed_get(key):
+        raise error
+    store.get = failed_get
+    with pytest.raises(TransferError, match="SDK Get transport failed"):
+        client.get("prefix")
+    assert transport.failed
+    assert transport._failure.__cause__ is error
 
 
 def test_real_rpc_checksum_error_is_explicit_and_not_missing(rpc):

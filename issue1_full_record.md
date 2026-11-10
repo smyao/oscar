@@ -28893,3 +28893,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **配置与调用链**：原node93包装只传candidate和kv-offload，target.json的enable_prefix_caching=false使最终argv显式关闭PC。prefix_checkpoint要求APC开启及原生align模式；无policy时OSCAR connector不发布共享prefix并直接返回外部命中0。这是本次已确认的启动默认配套遗漏，不只是统计字段缺失。原生分别统计本地Prefix cache与External prefix cache，不能把两项混作同一命中率。
 
 **修正与验证**：node93专用入口默认同时传`--kv-offload --enable-prefix-caching`，用户末尾显式`--no-enable-prefix-caching`仍可覆盖；其他入口继续读取原配置。55项相关主机测试通过，含真实shell传参、原生none/align选择、全TP发布及本地驱逐后重复prefix字节恢复；另直接核对包装实际参数进入install_serve后生成的vLLM argv，默认PC开启、卸载开启、前四卡和7878一致。仅修启动默认值，OSCAR数学/算子/图/PT/预算不变；没有连接真机、重新评测或取得现场70%命中率证据。
+
+
+## [183] 真机反馈（2026-11-10）· 查询未发布prefix索引时SDK Get反复打印info invalid
+
+**现场证据**：附件f91f8c5e（07:43）、3ef065dc（07:45–46）、2b952021（07:49）均来自同一服务EngineCore46561、rank0 worker46589。早期大量`mmcache_store.cpp:927 Get Failed to query key oscar-kv-index-v2:... info invalid`，同时仍有29952-token前缀发布；本地PC从2.3%升至9.4%，外部最初0%。补充日志已出现四rank同request/generation的31488-token私有swap保存与恢复。最新07:49片段明确出现多个29952-token PREFIX_HIT与四rank kind=prefix恢复，External prefix cache hit rate依次33.5%、36.6%、38.7%、40.6%；这属于现场原进程取得的证据，不是本轮尚未部署修复的效果，也不证明SSD层、模型精度或基线70%达标。
+
+**调用链与反例**：connector逐联合边界探测候选manifest，MetadataServer经host_get先调用SDK Get，只有返回空字节才查exists。模拟SDK按现场行为对缺失键打印ERROR后返回空，真实本机IPC的33次冷索引查询复现33次GET及报错。已有测试只断言最终missing而未约束读取不存在的对象，遗漏了该问题。现场没有逐键exists返回值，不能把所有info invalid均判为普通缺失；本轮只修已证明的冷miss调用顺序。
+
+**修复**：host_get先执行已有严格exists查询；不存在则直接返回MissingObjectsError，由现有RPC映射为正常missing，不发GET。存在才读取，保留空返回后的二次存在性检查，以区分并发驱逐与现存对象不可读。exists异常/非法状态、get异常/非bytes/超长、现存空数据及manifest校验失败仍明确报错；不屏蔽SDK日志、不加入negative cache、不改flags或发布协议。并发驱逐发生在预查之后时仍可能触发SDK日志，不能承诺此类错误永不出现。
+
+**验证**：新增冷miss不GET且后续同key发布可读、预查错误不转miss、读取期间驱逐及get异常保留cause等5项实例。metadata/transport/native bridge/native completion/reset共115项主机测试通过。首次本机沙箱禁止/tmp Unix socket绑定；获自动审批后单独重跑metadata文件40项通过，其他75项此前已通过，不将重复执行计为额外覆盖。原端口7878、PC/卸载入口、OSCAR数值、图地址及NPU数据传输不改；未连接真机、重启模型或测量性能。

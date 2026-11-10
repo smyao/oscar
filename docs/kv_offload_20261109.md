@@ -31,6 +31,8 @@ MemCache 的 MetaService/Config Store 管理分布式对象信息，worker 的 L
 
 SDK 调用要求完整返回状态数组，拒绝异常、部分成功、非法长度和尺寸不符。读取先检查完整对象集合及对象大小，避免缺页仍进入 attention。SDK 超时由独立进程 watchdog 终止持有 DMA 地址的 worker；不能让超时线程继续访问已回收页。普通 prefix 查找未命中是 cache miss；已经承诺恢复的快照丢失则明确失败，不静默重算或回退。
 
+前缀manifest读取也先检查存在性：未发布的候选索引直接返回miss，不调用会对缺失键打印ERROR的SDK Get。预查后读取为空仍再次确认是否被驱逐；对象仍存在却读空、SDK异常及校验失败继续报错。此顺序修正不缓存miss、不改变发布/查找范围，也不把所有SDK info invalid无条件吞掉。用户07:49日志已有外部命中40.6%及四rank前缀恢复；与本轮尚未部署的查询修复分开记录，详见档案#183。
+
 官方语义依据：[MemCache Python API](https://github.com/Ascend/memcache/blob/master/doc/memcache_python_api.md)、[MemFabric 文档](https://github.com/Ascend/memfabric_hybrid/blob/master/README.md)。本项目固定参考位置：`references/vllm-ascend/docs/source/user_guide/feature_guide/kv_pool.md`、`.../ascend_store/backend/memcache_backend.py`、`.../ascend_store/pool_worker.py` 及原生 V1 scheduler / runner。
 
 ## 主动抢占到恢复的状态机

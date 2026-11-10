@@ -2,6 +2,8 @@
 
 Archive: #34/#36 (fixed graph buffers), #37--49/#127/#128 (physical
 pages and complete window state), #157/#163/#171 (errors and joint state).
+Archive #183: probe missing prefix indexes before SDK Get, retaining read
+errors and the post-read eviction check rather than suppressing SDK logs.
 The native MemcacheBackend is used for initialization, never for its put/get
 wrappers: those wrappers can log a failure and return apparent completion.
 
@@ -433,6 +435,11 @@ class StrictMemcacheTransport:
             self._healthy()
             if self.scheduler:
                 raise TransferError("init_bm=False scheduler clients cannot read host data")
+            # Prefix lookup probes unpublished candidates routinely. SDK Get
+            # logs these ordinary misses as ERROR; query existence first.
+            # Keep the empty-read check below for eviction after this probe.
+            if not self.exists((key,))[0]:
+                raise MissingObjectsError((key,))
             value = self._call("get", key)
             if not isinstance(value, bytes):
                 self._fail(TransferError("host_get returned a non-bytes SDK result"))

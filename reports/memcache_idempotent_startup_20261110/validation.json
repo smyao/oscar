@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-10",
+  "archive": 177,
+  "branch": "oscar-new-7",
+  "base_commit": "829677d",
+  "scope": "idempotent node93 central MetaService launcher",
+  "host_validation": {
+    "command": ".venv/bin/python -m pytest -q tests/test_memcache_service.py tests/test_memcache_client_process.py tests/test_memcache_lock.py tests/test_memcache_node93.py tests/test_node93_startup.py tests/test_offload_deployment.py",
+    "passed": 121,
+    "failed": 0,
+    "elapsed_seconds": 5.40,
+    "coverage": [
+      "verified reuse skips host preparation, configuration writes and MetaService startup",
+      "partial endpoints, metadata errors and held locks stop before mutation",
+      "random read-only metadata query uses init_bm=False and flags=0 and closes client",
+      "independent SDK child exposes errors and is killed/reaped on timeout",
+      "real POSIX SDK lock inspection is read-only; stale files are not live services",
+      "real nonblocking launcher flock excludes a second process",
+      "cold-start failures and host command exit codes remain failures",
+      "existing node93 deployment settings remain covered"
+    ]
+  },
+  "checks": {
+    "bash_syntax": "passed",
+    "git_diff_check": "passed"
+  },
+  "evidence_limits": {
+    "sdk_module": "fake in child/process tests; installed private SDK not executed",
+    "lock_abi_executed": "Darwin host; Linux aarch64/x86_64 layouts implemented from native ABI, not exercised on node93",
+    "real_sdk_lock_contract": "public Ascend/memcache source, not a binary identity assertion for private installation",
+    "remote_machine_connection": false,
+    "npu_execution": false,
+    "ssd_io": false,
+    "model_quality": "not_run",
+    "benchmark": "not_run"
+  }
+}

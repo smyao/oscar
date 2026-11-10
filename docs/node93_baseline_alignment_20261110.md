@@ -1,6 +1,6 @@
 # node93：接续已完成的基线部署
 
-依据档案 #27/#29/#74/#75/#94/#125/#175/#176，以及用户提供的成功基线教程和 `vllm-ascend.0.23.0.patch`。用户确认已完成教程 2.2，且成功基线使用物理卡 0–3 和 `device_rdma`。后续复用这套环境，不重新安装 SDK、不重复应用原生补丁。
+依据档案 #27/#29/#74/#75/#94/#125/#175/#176/#177，以及用户提供的成功基线教程和 `vllm-ascend.0.23.0.patch`。用户确认已完成教程 2.2，且成功基线使用物理卡 0–3 和 `device_rdma`。后续复用这套环境，不重新安装 SDK、不重复应用原生补丁。
 
 ## 已核实的对应关系
 
@@ -9,7 +9,7 @@
 | SDK | 教程安装 MemFabric 1.2.1 与 MemCache 1.2.0 | node93 配置指定 `offload_sdk_source: installed`；部署只补 pyzmq，不再让 pip 解析两个通用 SDK 包 |
 | 环境 | CANN → ATB → MemFabric → MemCache 四个 `set_env.sh` | 复用 `env_node93_memcache.sh`，在同一 Bash 设置并继承到正式服务 |
 | 设备与端口 | 用户本轮指定 0–3、7878 | `benchmark_node93.json` 固定该组合；不用 `--rear-cards` |
-| 中央服务 | Meta 5000、Config Store 6000 | 既有 `MetaService.main()` 前台入口；模型 HTTP 端口独立 |
+| 中央服务 | Meta 5000、Config Store 6000 | 已运行时经 SDK 元数据查询确认后复用；未运行时 `MetaService.main()` 前台启动；模型 HTTP 端口独立 |
 | 内存及存储 | 每 LocalService 40GB、`device_rdma`、70/60 水位、DirStore | 既有配置准备只更新这些已给定值；不补造缺失的 `dir_store.conf` |
 | 初始化 | 原生 `MemcacheBackend` → `DistributedObjectStore.init(local_rank, init_bm=True)` | 保留同一调用线程和参数；scheduler 使用原生 `init_bm=False` 客户端 |
 | KV 状态 | 基线存原生 KV | 外部 connector 保存 OSCAR 的 packed KV、窗口、tags 以及原生 GDN 提交状态；不能把通用 connector 名称直接替换进 OSCAR 布局 |
@@ -36,15 +36,21 @@ OSCAR 直接调用 SDK，因而需要在自身 transport 接口透传该第二�
 
 ## 从教程 2.2 后接续
 
-在已准备好的同一容器内、更新后的 OSCAR 工程目录运行。如果中央 MetaService 已在运行，保留该服务，直接使用第二个终端的 OSCAR 命令，不重复启动同一端口的中央服务。
+在已准备好的同一容器内、更新后的 OSCAR 工程目录运行。中央服务入口可以重复执行：已有服务通过元数据查询后直接复用并返回，不再重复初始化 MetaService。
 
-终端一（教程 3.1 的主机准备和中央服务尚未执行时）：
+终端一：
 
 ```bash
 bash scripts/start_node93_memcache.sh --prepare-host
 ```
 
-`--prepare-host` 明确应用教程给出的 `nr_hugepages=200000`、`/dev/shm` remount 为 8G，并执行 `mkdir -p /home/kvcache`；随后设置 SDK 环境、准备既有 MMC 配置、前台启动 MetaService。任一步失败保留错误和退出码，不继续启动。它会修改容器可见的系统资源设置，按教程用于已经准备的运行环境；不会自动清空已有缓存。只查看这三个操作可用 `python3 -m tools.node93_host --plan`。主机准备已做过时，原命令 `bash scripts/start_node93_memcache.sh` 仍沿用原行为。
+入口先设置 SDK 环境并只读检查控制服务状态，再决定是否准备主机。已运行的服务通过 `init(0, init_bm=False)` 与单键 `batch_is_exist(..., 0)` 查询后，打印 `reusing existing MemCache MetaService` 并返回 0；即使带 `--prepare-host`，也不会修改 hugepages、重挂载 `/dev/shm`、写 SDK 配置或再次启动中央服务。查询在独立子进程中执行，最多 15 秒并关闭自己的客户端，不请求 LocalService、NPU 缓冲注册或数据传输；不能把这个结果当成 SSD/NPU 验收或现有服务运行参数核实。
+
+仅在控制端点均未监听、SDK 进程锁未持有且本入口获得启动互斥锁时，`--prepare-host` 才应用教程给出的 `nr_hugepages=200000`、`/dev/shm` remount 为 8G，并执行 `mkdir -p /home/kvcache`；随后准备既有 MMC 配置并前台启动 MetaService。主机准备已做过时可省略该参数。任一步失败保留错误和退出码，不继续启动，不自动清空已有缓存。只查看这三个主机操作可用 `python3 -m tools.node93_host --plan`。
+
+只有一个端点监听、SDK 元数据查询失败/超时、已有启动尚未就绪或锁状态无法读取时，入口在主机/配置变更之前明确停止。SDK 锁检查依据[官方 `CheckIsRunning` 实现](https://github.com/Ascend/memcache/blob/master/src/memcache/csrc/meta_service/mmc_meta_service_process.cpp)：只读 `F_GETLK` 查询 `/tmp/mmc_meta_service.lock`，残留文件本身不算运行，绝不删除或接管 SDK 锁。OSCAR 自己的非阻塞锁覆盖检查到前台服务退出，防止本入口并发准备；绕过入口的外部并发启动仍由 SDK 自己的最终进程锁裁决，其真实非零返回不会被吞掉。公开源码并不是现场私有 SDK 的逐位版本证明。
+
+这次幂等启动修正的本地主机回归为 **121 passed**，包含真实子进程/文件锁与超时回收，但 SDK 本体由模拟模块替代；未连接 node93 或运行 NPU/SSD 测试。详见[专项验证](../reports/memcache_idempotent_startup_20261110/validation.json)。
 
 终端二（中央服务成功启动后）：
 

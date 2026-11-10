@@ -1,4 +1,4 @@
-"""Archive #74/#75/#94/#125/#175/#176: exact host actions and visible launch failures.
+"""Archive #74/#75/#94/#125/#175/#176/#177: explicit host actions behind the lifecycle guard.
 
 Host changes are intercepted, and shell entrypoints run only against SDK/Python
 stubs. These tests never write /proc, mount filesystems, or initialize an SDK.
@@ -116,15 +116,11 @@ def test_oscar_entry_retains_formal_service_exit_code(launch_stubs):
 
 
 @pytest.mark.parametrize("prepare", [False, True])
-def test_meta_entry_host_preparation_is_explicit_and_before_sdk(launch_stubs, prepare):
+def test_meta_entry_delegates_preparation_to_guarded_lifecycle(launch_stubs, prepare):
     result, events = launch_stubs("start_node93_memcache.sh", ["--prepare-host"] if prepare else [])
-    expected = []
-    if prepare:
-        expected.append({"kind": "python", "sdk": None, "args": ["-m", "tools.node93_host"]})
-    expected += [{"kind": "source"},
-        {"kind": "python", "sdk": "installed", "args": ["-m", "tools.memcache_config", "prepare-node93"]},
-        {"kind": "python", "sdk": "installed", "args": ["-m", "tools.memcache_config", "serve-meta",
-                                                        "--config", "/sdk/config/mmc-meta.conf"]}]
+    expected = [{"kind": "source"},
+        {"kind": "python", "sdk": "installed", "args": ["-m", "tools.memcache_service", "node93",
+            "--config-dir", "/sdk/config", *(["--prepare-host"] if prepare else [])]}]
     assert result.returncode == 0 and events == expected
 
 
@@ -134,12 +130,11 @@ def test_source_failure_preserves_status_and_stops_launch(launch_stubs, script):
     assert result.returncode == 17 and events == [{"kind": "source"}]
 
 
-@pytest.mark.parametrize("stage,count", [("tools.node93_host", 1), ("prepare-node93", 3), ("serve-meta", 4)])
-def test_meta_failure_stops_at_failing_stage_with_real_code(launch_stubs, stage, count):
+def test_meta_lifecycle_failure_retains_real_code(launch_stubs):
     result, events = launch_stubs("start_node93_memcache.sh", ["--prepare-host"],
-        {"STUB_FAILURE_STAGE": stage, "STUB_FAILURE_RC": "23"})
-    assert result.returncode == 23 and len(events) == count
-    assert stage in events[-1]["args"]
+        {"STUB_FAILURE_STAGE": "tools.memcache_service", "STUB_FAILURE_RC": "23"})
+    assert result.returncode == 23 and len(events) == 2
+    assert "tools.memcache_service" in events[-1]["args"]
 
 
 @pytest.mark.parametrize("script", ["start_node93_oscar.sh", "start_node93_memcache.sh"])

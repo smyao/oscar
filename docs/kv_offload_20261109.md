@@ -122,13 +122,13 @@ python3 -m tools.memcache_config prepare-node93 --plan && \
 bash scripts/install_serve.sh --config configs/benchmark_node93.json --variant candidate --plan
 ```
 
-启动分两个终端。终端一先确保没有占用相同端口的现有 MetaService，再执行：
+启动分两个终端。终端一执行（允许重复调用，已有服务经 SDK 元数据查询确认后复用）：
 
 ```bash
 bash scripts/start_node93_memcache.sh
 ```
 
-该命令加载环境，校验匹配的 5000/6000 地址和已提供的 storage 开关，将 local 改为 40GB/device_rdma、meta 改为 error/70/60，保留其他有效键，随后调用实际 `memcache_hybrid.MetaService.main()` 前台运行。所有输出直接显示，失败停止；不会自动重启或终止已有服务。输入校验先于写入，但多文件更新不是事务，磁盘写入错误可能留下部分更新。修改文件不改变已启动服务的配置，须在启动前执行准备。
+该命令加载环境，校验匹配的 5000/6000 地址和已提供的 storage 开关。已有服务通过有界、独立子进程中的 SDK 元数据查询后直接复用，跳过主机准备、配置写入和重复启动；端口连通本身不算验证成功。无现有服务且无启动冲突时，才将 local 改为 40GB/device_rdma、meta 改为 error/70/60，保留其他有效键，随后调用实际 `memcache_hybrid.MetaService.main()` 前台运行。所有输出直接显示，失败停止；不会自动重启或终止已有服务。详见[幂等启动行为与边界](node93_baseline_alignment_20261110.md)。输入校验先于写入，但多文件更新不是事务，磁盘写入错误可能留下部分更新。修改文件不改变已启动服务的配置，复用也不证明其运行参数与文件相同。
 
 命令保留 `/home/kvcache` 中的已有对象，不执行示例中的递归删除；冷/暖缓存条件必须单独控制和记录。环境加载本身不改任何配置，也不清理目录。
 

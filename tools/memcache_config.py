@@ -1,4 +1,4 @@
-# 档案 #27/#29/#77/#94/#125：显式配置、当前环境、真实退出码；不继承旧设备、不隐式启动远程服务。
+# 档案 #27/#29/#77/#94/#125/#177：显式配置、当前环境、真实退出码；SDK启动失败不冒充复用成功。
 """Generate explicit MemCache deployment files, or run its foreground MetaService."""
 from __future__ import annotations
 
@@ -150,6 +150,18 @@ def generate(directory: Path, *, meta: str, config_store: str, dram_gib: int,
             "tp4_dram_gib": 4 * dram_gib, "service_started": False}
 
 
+def serve_meta(config: Path) -> int:
+    """Call the real foreground SDK entry; never turn a failure into reuse."""
+    path = config.resolve(strict=True)
+    os.environ["MMC_META_CONFIG_PATH"] = str(path)
+    from memcache_hybrid import MetaService
+    print(f"[oscar] MemCache MetaService foreground config={path}", flush=True)
+    result = MetaService.main()
+    if result is not None and result != 0:
+        raise RuntimeError(f"MemCache MetaService failed: {result!r}")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -176,13 +188,7 @@ def main(argv=None) -> int:
     elif args.command == "prepare-node93":
         print(json.dumps(prepare_node93(args.config_dir, plan=args.plan), indent=2))
     else:
-        path = args.config.resolve(strict=True)
-        os.environ["MMC_META_CONFIG_PATH"] = str(path)
-        from memcache_hybrid import MetaService
-        print(f"[oscar] MemCache MetaService foreground config={path}", flush=True)
-        result = MetaService.main()
-        if result is not None and result != 0:
-            raise RuntimeError(f"MemCache MetaService failed: {result!r}")
+        return serve_meta(args.config)
     return 0
 
 

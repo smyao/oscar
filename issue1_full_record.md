@@ -28909,3 +28909,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证边界**：transport主机回归45项通过，验证空AssertionError的上下文、原cause、原调用线程与单次初始化，以及既有transport/timeout行为；见本轮验证记录。没有agent连接真机或运行性能测试；网络故障已定位至物理3卡RoCE link down，但链路恢复和TP4服务复验仍未完成。
 
 **2026-11-10补充及处置范围修正**：用户提供当前物理3卡link DOWN、health Receive timeout、光模块present及LOS/LOL为零的查询结果，同时确认成功基线也使用0–3卡和device_rdma，已完成教程2.2的私有SDK安装及原生补丁。光功率阈值内不能证明整条链路正常，也不能据down单独定位损坏器件；成功基线事实不能被忽略，不把“先换硬件”当成继续适配的前提。教程明确分别安装MemFabric1.2.1与MemCache1.2.0，因此这两个不同组件的版本号并不构成错配证据。用户给出的补丁仅透传exists/batch_is_exist的flags参数，并让发送线程写前去重传1，不改变HCCL初始化；OSCAR既有读/发布完整性查询保持默认0，不臆测标志的SDK内部语义。部署接续复用现场SDK，按教程的统计关闭要求保留可核验的独立探针证据；详细对照见 `docs/node93_baseline_alignment_20261110.md`。这些接续改动不是本次初始化错误已修复或SSD/模型/性能已通过的证明。
+
+
+## [177] 真机条目（2026-11-10 用户回传）· 重复启动 MetaService 触发进程锁，且主机准备已先执行
+
+**现场事实**：用户执行 `bash scripts/start_node93_memcache.sh --prepare-host`，终端先打印 hugepages 写入、`/dev/shm` remount 和目录创建，再显示配置准备结果，最后 SDK 报 `process lock file is locked`、`meta service is already running`，`MetaService.main()` 返回 -1，外层抛出 RuntimeError。没有本次 worker、数据传输或模型执行证据，不把此前 #176 的 RoCE 故障作为本次错误解释。`dir_store_config_exists=false` 和 LD_PRELOAD 警告不是这段错误的直接原因；准备报告的 `service_started=false` 只描述准备函数没有启动服务，不能据此判断系统中不存在已运行的服务。本条只记录用户日志的脱敏摘要，不提交整段机器日志。
+
+**源码核实**：原入口无条件先准备主机、改配置，再调用 SDK 前台入口，没有识别已有服务。官方 MemCache `MmcMetaServiceProcess::CheckIsRunning` 使用 `/tmp/mmc_meta_service.lock` 与 POSIX `F_SETLK` 写锁；文件存在不等于持锁，文件打开或加锁失败也不能单独证明服务健康。依据是[官方实现](https://github.com/Ascend/memcache/blob/master/src/memcache/csrc/meta_service/mmc_meta_service_process.cpp)，不冒称现场私有 SDK 与公开版本逐字相同。原生 `references/vllm-ascend/.../backend/memcache_backend.py` 的 scheduler 客户端固定 `init(0, init_bm=False)`，提供无需启动 worker 存储的元数据查询接入方式。
+
+**修复**：node93 入口统一进入生命周期管理，任何主机/配置变更之前先检查两个配置端点。两端均存在时，隔离子进程以 metadata-only SDK 客户端执行随机单键 `batch_is_exist(..., 0)`，严格接受单项整数0/1并关闭自身客户端；15秒内通过才打印复用并返回0，跳过 host、配置写入和第二次 MetaService 初始化。仅一个端点存在、查询失败/超时、启动尚未就绪或锁读取不确定时，变更前明确失败。冷启动前只读 `F_GETLK` 检查官方 SDK 锁；残留空文件不拦启动，不创建/删除/接管 SDK 锁。另用 OSCAR 自己的非阻塞锁覆盖检查至前台服务结束，避免此入口并发准备。SDK 真实 -1/异常仍失败；外部绕过本入口并发启动的最终竞争仍由 SDK 锁裁决，不吞返回码、不杀现有服务。
+
+**验证边界**：本地验证使用模拟 SDK、真实主机子进程/文件锁及临时配置，覆盖重复调用零变更、冲突、并发、查询错误和冷启动失败。结果见 `reports/memcache_idempotent_startup_20261110/validation.json`。这些证据不构成现场私有 SDK、TP4、SSD I/O、图、模型质量或性能复验。OSCAR 执行逻辑、内核、PT、预算、MTP、卡号、协议、端口和水位没有改动。

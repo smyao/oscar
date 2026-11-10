@@ -3,6 +3,7 @@
 Actual connector/scheduler/transport methods move real CPU tensor bytes through
 an SDK-shaped memory store. Pinned native preemption and accepted-state copy
 functions execute unchanged; this is not real memcache/NPU/graph acceptance.
+User-supplied 2026-11-10 patch: complete-state read/publication queries use flag 0.
 """
 from dataclasses import dataclass
 import ctypes
@@ -27,11 +28,14 @@ class PointerStore:
     def __init__(self):
         self.objects = {}
         self.put_calls = 0
+        self.exists_flags = []
 
     def register_buffer(self, address, length):
         return 0
 
-    def batch_is_exist(self, keys):
+    def batch_is_exist(self, keys, flags):
+        assert type(flags) is int and flags == 0
+        self.exists_flags.append(flags)
         return [int(key in self.objects) for key in keys]
 
     def batch_get_key_info(self, keys):
@@ -275,6 +279,7 @@ def test_active_native_preemption_to_ack_to_remapped_resume(bridge_module, monke
         span = component.span(destination[1][logical])
         assert ctypes.string_at(span.address, span.length) == expected
     assert store.put_calls > 0 and snap.identity[0] == "r"
+    assert store.exists_flags and set(store.exists_flags) == {0}
 
 
 def test_chunked_prefix_publish_evict_match_allocate_load(bridge_module, monkeypatch):

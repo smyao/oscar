@@ -3,10 +3,12 @@
 Archive: #34/#36 (fixed graph buffers), #37--49/#127/#128 (physical
 pages and complete window state), #157/#163/#171 (errors and joint state).
 Archive #94/#125/#175/#176: report initialization failures without hiding SDK causes.
+User-supplied 2026-11-10 vLLM-Ascend patch: forward existence-query flags
+explicitly; its numeric flags do not establish an undocumented SDK policy.
 The native MemcacheBackend is used for initialization, never for its put/get
 wrappers: those wrappers can log a failure and return apparent completion.
 
-Only SDK calls present in references/vllm-ascend are used.  In particular this
+SDK calls follow references/vllm-ascend and the supplied patch. In particular this
 module does not assume a transactional manifest API. Host put/get additionally
 follow Ascend/memcache doc/memcache_python_api.md (official API, 2026-11-09).
 Calls are synchronous, have no automatic retries, and use bounded batches.
@@ -374,14 +376,17 @@ class StrictMemcacheTransport:
                 self._statuses((result,), (f"buffer@{region.address:#x}",), "register_buffer")
                 self._regions.append(region)
 
-    def exists(self, keys: Iterable[str]) -> tuple[bool, ...]:
+    def exists(self, keys: Iterable[str], flags: int = 0) -> tuple[bool, ...]:
+        """Forward the supplied patch's query flag without inferring its policy."""
+        if type(flags) is not int or flags not in (0, 1):
+            raise ValueError("existence flags must be integer 0 or 1")
         keys = _keys(keys)
         with self._lock:
             self._healthy()
             result: list[bool] = []
             for start in range(0, len(keys), self.max_batch_objects):
                 batch = keys[start : start + self.max_batch_objects]
-                codes = self._statuses(self._call("batch_is_exist", list(batch)), batch, "batch_is_exist", existence=True)
+                codes = self._statuses(self._call("batch_is_exist", list(batch), flags), batch, "batch_is_exist", existence=True)
                 result.extend(bool(code) for code in codes)
             return tuple(result)
 

@@ -88,7 +88,7 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 
 ### node93 本轮 benchmark 配置（用户已确认）
 
-`configs/benchmark_node93.json` 绑定物理卡 **0,1,2,3** 和模型 HTTP 端口 **7878**。相对 `configs/target.json` 仅改变端口与配置说明；模型、TP4/MTP3、16384 token budget、图模式和默认 APC 策略保持。**不要追加 `--rear-cards`**，该选项会切到 4–7 卡。通用 `target.json` 默认端口仍为 8989。
+`configs/benchmark_node93.json` 绑定物理卡 **0,1,2,3** 和模型 HTTP 端口 **7878**，复用现场已经安装的私有 SDK；后续基线教程适配见 [接续部署说明](node93_baseline_alignment_20261110.md)。模型、TP4/MTP3、16384 token budget、图模式和默认 APC 策略保持。**不要追加 `--rear-cards`**，该选项会切到 4–7 卡。通用 `target.json` 默认端口仍为 8989。
 
 | 现场配置项 | 用户提供的值 |
 | --- | --- |
@@ -181,7 +181,7 @@ python3 -c 'from memcache_hybrid import MetaService; MetaService.main()'
 /usr/local/Ascend/driver/tools/hccn_tool -i 3 -optical -g
 ```
 
-按状态修复该口及其对端交换机/线缆/光模块，确认链路UP后再以原前四卡、device_rdma、7878配置启动OSCAR。保留默认卸载；这不是关闭卸载、自动换协议或放宽超时的场景。命令和端口诊断依据：[官方故障诊断说明](https://www.hiascend.com/document/detail/en/mindcluster/2600/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag-toolkit/02_detail_function/01_diagnosis_logic.md)。
+2026-11-10 用户返回查询结果：link DOWN、health Receive timeout，光模块存在、所列光功率在阈值内、LOS/LOL 标志为零；同时明确成功基线使用同样前四卡和 `device_rdma`，并已按教程完成 SDK 安装及原生补丁。不能从当前 down 状态单独认定器件损坏，或让用户先换硬件来代替软件差异核对。本轮按 [成功基线配方](node93_baseline_alignment_20261110.md) 接续适配，保持原设备和协议；补丁没有修改初始化阶段，因此也不把查询参数适配写成此错误已修复。命令依据：[官方故障诊断说明](https://www.hiascend.com/document/detail/en/mindcluster/2600/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag-toolkit/02_detail_function/01_diagnosis_logic.md)。
 
 ### 通用部署配置生成
 

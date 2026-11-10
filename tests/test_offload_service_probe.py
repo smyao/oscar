@@ -175,22 +175,27 @@ def test_service_probe_requires_generated_token_ids_not_only_text(monkeypatch):
         _request(None, {"served_model_name": "model"}, [1, 2], output_tokens=16, label="proof", timeout=5)
 
 
-def test_service_workflow_sizes_pressure_after_observing_baseline_and_preserves_geometry(tmp_path, monkeypatch):
+@pytest.mark.parametrize("disabled_stats", [False, True])
+def test_service_workflow_sizes_pressure_after_observing_baseline_and_preserves_geometry(tmp_path, monkeypatch, disabled_stats):
     """Fake only external services; exercise actual evidence readers and orchestration."""
     from contextlib import contextmanager
     from types import SimpleNamespace
     import tools.probe_kv_offload_service as probe
 
     root = Path(__file__).resolve().parents[1]
-    config_path = root / "configs/target.json"
+    config_path = tmp_path / "input.json"
+    config_path.write_text(json.dumps(dict(json.loads((root / "configs/target.json").read_text()),
+                                          disable_log_stats=disabled_stats)))
     launches = []
     completed_serial = []
     monkeypatch.setattr(probe, "target_env", lambda config: {})
     monkeypatch.setattr(probe, "load_tokenizer", lambda model: SimpleNamespace(encode=lambda *a, **k: [4]))
     monkeypatch.setattr(probe, "exact_prompt", lambda tokenizer, length: [1] * length)
     monkeypatch.setattr(probe, "_http", lambda *a, **k: "")
-    monkeypatch.setattr(probe, "_metrics", lambda server, directory, name, timeout:
-                        f"{PREEMPTIONS} {int(name == 'after')}\n")
+    def metrics(server, directory, name, timeout):
+        assert not disabled_stats, "disabled stats must use host events"
+        return f"{PREEMPTIONS} {int(name == 'after')}\n"
+    monkeypatch.setattr(probe, "_metrics", metrics)
     monkeypatch.setattr(probe, "evaluate_mtp_metrics", lambda before, after: {"status": "passed"})
 
     @contextmanager
@@ -205,7 +210,11 @@ def test_service_workflow_sizes_pressure_after_observing_baseline_and_preserves_
         observed = dict(geometry(mode), num_blocks=config.get("offload_probe_num_gpu_blocks", 600))
         log.write_text("\n".join("KV_OFFLOAD_GEOMETRY " + json.dumps(dict(observed, rank=rank))
                                   for rank in range(4)) + "\n")
-        yield SimpleNamespace(log=log, base_url="http://unit-test.invalid")
+        lifecycle = {}
+        if disabled_stats:
+            from tools.probe_evidence import configure
+            configure({}, lifecycle, directory)
+        yield SimpleNamespace(log=log, base_url="http://unit-test.invalid", lifecycle=lifecycle)
 
     def request(server, config, tokens, *, output_tokens, label, timeout):
         events = []
@@ -215,6 +224,14 @@ def test_service_workflow_sizes_pressure_after_observing_baseline_and_preserves_
             completed_serial.append(label)
         elif "pressure" in label:
             events.append(swap_logs().replace("req-a", label))
+            if disabled_stats:
+                from oscar_ascend.probe_evidence import _emit
+                info = server.lifecycle["probe_evidence"]
+                scope = json.loads((Path(info["directory"]) / "active.json").read_text())
+                window = (Path(info["directory"]), info["run_id"], scope["window_id"])
+                _emit(window, "preempted", label, preemptions_before=0, preemptions_after=1)
+                _emit(window, "mtp_verified", label, scheduled_draft_slots=3,
+                      num_accepted_tokens=0, invalid_draft_slots=5)
         elif label == "prefix-first":
             events.append("KV_OFFLOAD_PREFIX_PUBLISHED request=prefix tokens=2304")
         elif label == "prefix-external":
@@ -236,3 +253,6 @@ def test_service_workflow_sizes_pressure_after_observing_baseline_and_preserves_
         assert pressure == baseline
         assert pressure["max_model_len"] == 16384
         assert report["arms"][mode]["pressure_plan"]["pre_cross_peak"] == 10
+        if disabled_stats:
+            assert report["arms"][mode]["pressure"]["mtp"]["source"] == "native_scheduler_probe_events"
+            assert report["arms"][mode]["pressure"]["swap_evidence"]["completed_preemptions"] == 2

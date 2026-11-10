@@ -2,6 +2,7 @@
 
 Archive #37--49/#127/#128/#157/#163/#171: never publish or consume a mixed
 generation checkpoint, and never convert a metadata transport error to hit.
+User-supplied 2026-11-10 patch: metadata existence queries explicitly use flag 0.
 """
 
 import base64
@@ -47,7 +48,8 @@ class MemoryStore:
             return self.get_override
         return self.objects.get(key, b"")
 
-    def batch_is_exist(self, keys):
+    def batch_is_exist(self, keys, flags):
+        assert type(flags) is int and flags == 0
         return [int(key in self.objects) for key in keys]
 
     def remove(self, key):

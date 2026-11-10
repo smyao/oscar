@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-10基线接续：用户确认教程2.2已完成、私有原生补丁已集成、成功基线为0–3/device_rdma。OSCAR复用安装好的SDK，直接SDK查询补齐flags透传；按教程关闭stats并保留独立短功能探针证据，390项主机组合回归通过，逐项对照见[基线接续说明](node93_baseline_alignment_20261110.md)。用户当前链路查询仍down与成功基线两组事实同时保留，不推定器件损坏或谎称初始化已修复；以下NPU/SSD/图/质量/性能验收不因此升级。
+
 2026-11-09现场#176：控制服务连接已恢复；三个worker实际完成40GB分配、DirStore启动和KV_OFFLOAD_READY。TP3/device3的HCCL建域ret19导致MemCache init失败，同次plog进一步明确物理3卡RoCE link down。外部适配补充空断言上下文，45项transport主机回归通过；链路恢复及TP4/SSD I/O/图/质量/性能仍未通过。
 
 2026-11-09新增现场故障 #175：用户日志确认 DirStore 被选择，但 Config Store `127.0.0.1:6000` 连接拒绝导致四worker初始化超时退出；当前生效DRAM仍32GB。已补齐 MetaService 先启动、同命名空间确认5000/6000后启动OSCAR的步骤；仅完成日志定位和部署说明修正，控制服务恢复及SSD/NPU/性能均未复验。

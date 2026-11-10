@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-10",
+  "base_commit": "91f22c9",
+  "scope": "Continue the user's completed tutorial section 2.2 using the installed SDK and native patch",
+  "host_regression": {
+    "passed": 390,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 27.36,
+    "command_prefix": "python -m pytest -q",
+    "files": [
+      "tests/test_offload_transport.py",
+      "tests/test_offload_metadata.py",
+      "tests/test_offload_native_bridge.py",
+      "tests/test_offload_cleanup.py",
+      "tests/test_offload_reset.py",
+      "tests/test_offload_config.py",
+      "tests/test_offload_deployment.py",
+      "tests/test_memcache_node93.py",
+      "tests/test_node93_startup.py",
+      "tests/test_install_serve.py",
+      "tests/test_deploy_bf16.py",
+      "tests/test_stable_launch_frozen.py",
+      "tests/test_plugin.py",
+      "tests/test_probe_native_evidence.py",
+      "tests/test_probe_evidence_workflow.py",
+      "tests/test_offload_service_probe.py",
+      "tests/test_service_workflow.py",
+      "tests/test_observe_serve.py"
+    ],
+    "transport_scope": "host buffers and local IPC; SDK contract doubles",
+    "service_scope": "local fake HTTP and unchanged native methods extracted from the allowed references",
+    "sandbox_note": "Initial metadata fixture bind was denied by the sandbox; final complete run was approved for local IPC/loopback sockets only"
+  },
+  "launch_plan": {
+    "devices": [0, 1, 2, 3],
+    "port": 7878,
+    "sdk_source": "installed",
+    "pip_sdk_packages": [],
+    "disable_log_stats": true,
+    "kv_connector": "OscarAscendStoreConnector",
+    "max_num_batched_tokens": 16384,
+    "enable_prefix_caching_default": false
+  },
+  "other_checks": {
+    "shell_syntax": "passed",
+    "diff_check": "passed",
+    "calibration_identity_preserved": true,
+    "rotation_pt_path_preserved": true,
+    "host_preparation_plan_executed": false,
+    "host_preparation_tests": "system writes and mount commands intercepted; shell SDK/Python stubs only"
+  },
+  "not_run": [
+    "remote connection",
+    "actual SDK/NPU transfers",
+    "TP4 model service",
+    "SSD write/read",
+    "NPU graph capture/replay",
+    "model quality",
+    "benchmark"
+  ],
+  "initialization_fault_repaired": "not_established",
+  "private_attachment_credentials_copied": false
+}

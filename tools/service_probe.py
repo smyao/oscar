@@ -40,7 +40,8 @@ from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_f
 from .phase import atomic_json, cleanup_group, live_log, terminal_line
 from .plog import OwnedProcessGroup, attach_plog
 from .prepare_rotations import model_geometry
-from .target_cli import ROOT, serve_argv, target_env, diagnose_guard_enabled
+from .target_cli import ROOT, serve_argv, target_env, diagnose_guard_enabled, log_stats_disabled
+from .probe_evidence import ProbeEvidence, configure as configure_probe_evidence, evaluate_mtp_events, stop_run
 
 PROMPT_SENTENCE = (
     "A small research team records river levels each morning. "
@@ -245,7 +246,7 @@ class Server:
 
 @contextmanager
 def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None, native=False,
-                   quiet=False):
+                   quiet=False, native_probe_evidence=False):
     """Launch one owned process group; cleanup also runs before failed startup.
 
     ``command`` is dependency injection for subprocess fault tests; the CLI
@@ -260,6 +261,12 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     trace_dir = log_dir / f"trace-{uuid.uuid4().hex}"
     trace_dir.mkdir()
     environment = target_env(config)
+    # #27/#176: explicit owned short-probe scope; a normal target_cli launch
+    # does not install this observer. Native baseline gets the same policy.
+    environment.pop("OSCAR_PROBE_EVIDENCE_DIR", None)
+    environment.pop("OSCAR_PROBE_RUN_ID", None)
+    if native_probe_evidence and log_stats_disabled(config):
+        configure_probe_evidence(environment, lifecycle, log_dir)
     environment["OSCAR_TRACE_DIR"] = str(trace_dir)
     environment["OSCAR_TARGET_CONFIG"] = str(Path(config_path).resolve())
     if not native and config.get("diagnostic_device_timing") is True:
@@ -338,6 +345,16 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
             stream.write("SERVICE_ERROR " + lifecycle["error"] + "\n")
             raise
         finally:
+            stop_error = None
+            if "probe_evidence" in lifecycle:
+                try:
+                    stop_run(lifecycle["probe_evidence"])
+                except BaseException as error:
+                    stop_error = error
+                    lifecycle["status"] = "failed"
+                    lifecycle["evidence_stop_error"] = f"{type(error).__name__}: {error}"
+                    # Defer file logging until after process cleanup: the
+                    # stop error itself may be a full/unwritable filesystem.
             print(f"[oscar] CLEANUP_START owned_server pid={None if process is None else process.pid} log={log}", flush=True)
             if ownership is not None:
                 ownership.refresh(force=True)
@@ -357,6 +374,8 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
             stream.write("SERVICE_RESULT " + json.dumps(lifecycle, allow_nan=False) + "\n")
             atomic_json(log_dir / "server_lifecycle.json", lifecycle)
             print(f"[oscar] CLEANUP_END owned_server complete={lifecycle['cleanup_complete']} exit={lifecycle['exit_code']}", flush=True)
+            if stop_error is not None and sys.exc_info()[0] is None:
+                raise ServiceProbeError("failed to close native probe evidence window") from stop_error
 
 
 def worker_progress(server):
@@ -931,10 +950,13 @@ def run_service(config_path, *, output, log_dir, serve=False, correctness_only=F
         managed_config = dict(config)
         managed_config["service_startup_timeout_seconds"] = _remaining(deadline,
             _positive_time(config, "service_startup_timeout_seconds", duration))
-        with managed_server(managed_config, config_path, log_dir=log_dir, lifecycle=report["server"], command=command) as server:
-            metrics_before_text = _http(server.base_url + "/metrics", timeout=_remaining(deadline, 10))
-            (log_dir / "metrics_before.prom").write_text(metrics_before_text)
-            metrics_before = parse_mtp_metrics(metrics_before_text)
+        with managed_server(managed_config, config_path, log_dir=log_dir, lifecycle=report["server"],
+                            command=command, native_probe_evidence=True) as server:
+            evidence = ProbeEvidence(server).start() if log_stats_disabled(config) else None
+            if evidence is None:
+                metrics_before_text = _http(server.base_url + "/metrics", timeout=_remaining(deadline, 10))
+                (log_dir / "metrics_before.prom").write_text(metrics_before_text)
+                metrics_before = parse_mtp_metrics(metrics_before_text)
             request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
             for length in lengths:
                 record = completion(server, config, tokenizer, length, label=f"serial-{length}",
@@ -960,13 +982,22 @@ def run_service(config_path, *, output, log_dir, serve=False, correctness_only=F
             # observes their publication and never changes numerical gates.
             metric_deadline = min(deadline, time.monotonic() + _positive_time(config, "mtp_metrics_timeout_seconds", 15))
             while True:
-                metrics_text = _http(server.base_url + "/metrics", timeout=_remaining(metric_deadline, 5))
-                (log_dir / "metrics_after.prom").write_text(metrics_text)
-                report["mtp"] = evaluate_mtp_metrics(metrics_before, parse_mtp_metrics(metrics_text))
+                if evidence is None:
+                    metrics_text = _http(server.base_url + "/metrics", timeout=_remaining(metric_deadline, 5))
+                    (log_dir / "metrics_after.prom").write_text(metrics_text)
+                    report["mtp"] = evaluate_mtp_metrics(metrics_before, parse_mtp_metrics(metrics_text))
+                else:
+                    native_records = evidence.read()
+                    atomic_json(log_dir / "native_scheduler_events.json", native_records)
+                    report["mtp"] = evaluate_mtp_events(native_records)
                 if report["mtp"]["status"] == "passed" or time.monotonic() + 0.2 >= metric_deadline:
                     break
                 server.check_alive()
                 time.sleep(0.2)
+            if evidence is not None:
+                # --serve keeps this same process after the acceptance window;
+                # stop collecting before handing it to the user's traffic.
+                evidence.stop()
             records = read_telemetry(server.trace_dir)
             report["telemetry"] = evaluate_telemetry(records, tensor_parallel_size=4, expected_layers=expected_layers)
             atomic_json(log_dir / "telemetry_records.json", records)
@@ -987,6 +1018,17 @@ def run_service(config_path, *, output, log_dir, serve=False, correctness_only=F
             report["status"] = "serving" if serve else "requests_passed_cleanup_pending"
             atomic_json(output, report)
             if serve:
+                if log_stats_disabled(config):
+                    # #176 baseline explicitly disables the counters required
+                    # by passive.observe. Missing metrics must not terminate
+                    # a successfully validated formal service.
+                    report["external_observation"] = {"status": "unavailable",
+                        "reason": "disabled_by_config", "scope": "native periodic stats and passive metrics disabled"}
+                    atomic_json(output, report)
+                    print(f"[oscar] validated server ready {server.base_url}; native stats disabled; report={output}", flush=True)
+                    while True:
+                        server.check_alive()
+                        time.sleep(0.2)
                 from benchmarks.passive import observe
                 observer_stop = threading.Event()
                 observer_ready = threading.Event()

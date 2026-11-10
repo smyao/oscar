@@ -13,6 +13,14 @@ from .model_config import add_model_arguments, apply_model_options, resolve_mamb
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def log_stats_disabled(config: dict) -> bool:
+    """Explicit node93 launch policy; never silently coerce strings or integers."""
+    value = config.get("disable_log_stats", False)
+    if type(value) is not bool:
+        raise ValueError("disable_log_stats must be an explicit boolean")
+    return value
+
+
 def diagnose_guard_enabled(config: dict) -> bool:
     """Explicit #157-159 fault attribution; never a performance setting."""
     enabled = config.get("diagnose_guard", False)
@@ -38,6 +46,8 @@ def serve_argv(config: dict) -> list[str]:
     if not native_budget and (type(budget) is not int or budget <= 0):
         raise ValueError("explicit token budget must be a positive integer")
     args = ["serve", config["model"]]
+    if log_stats_disabled(config):
+        args.append("--disable-log-stats")
     if not native_budget:
         args += ["--max-num-batched-tokens", str(budget)]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
@@ -163,6 +173,9 @@ def _run_service(config: dict, config_path: Path, command: list[str], *, native:
               "bug_fixed=not_established", flush=True)
     if native:
         os.environ["OSCAR_ENABLED"]="0"
+        if os.environ.get("OSCAR_PROBE_EVIDENCE_DIR"):
+            from oscar_ascend.probe_evidence import register as register_probe_evidence
+            register_probe_evidence()
         if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL") or os.environ.get("OSCAR_TIMER_CONTROL"):
             # Passive runner/graph timing only; platform/cache routing stays
             # native and no OSCAR runtime is installed.

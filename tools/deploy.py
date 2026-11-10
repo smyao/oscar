@@ -13,6 +13,7 @@ import sys
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env, serve_argv
 from .model_config import add_model_arguments, apply_model_options
+from .offload_dependencies import offload_install_dependencies
 from .serving_variants import variant_config
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,10 +24,8 @@ def plan(config_path: Path, log_dir: Path, config=None) -> list[tuple[str, list[
     cfg = str(config_path.resolve())
     if config is None:
         config = json.loads(config_path.read_text())
-    from oscar_ascend.offload.config import offload_options
     dependencies = ["setuptools>=69", "wheel", "pybind11>=3", "cmake>=3.26", "ninja", "pytest"]
-    if offload_options(config) is not None:
-        dependencies += ["memfabric-hybrid", "memcache-hybrid", "pyzmq"]
+    dependencies += offload_install_dependencies(config)
     return [
         ("build-dependencies", [python,"-m","pip","install", *dependencies]),
         ("install-plugin", [python, "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(ROOT)]),

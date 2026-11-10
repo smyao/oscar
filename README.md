@@ -2,7 +2,7 @@
 
 固定优化交付入口：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。每轮实现均须同步编译、候选配置和实际算子路由；直启与probe共用`tools/serving_variants.py`候选预设。该直启命令仍不运行测试/probe/AISBench，后四卡只需追加`--rear-cards`。
 
-2026-11-09：当前 candidate 默认接入 AscendStore/MemCache KV 卸载，启动前须部署 MemCache 并设置 `MMC_LOCAL_CONFIG_PATH`。完整机制、地址/容量配置生成、prefix cache / chunked prefill / 抢占恢复及验收命令见 [KV 卸载说明](docs/kv_offload_20261109.md)。默认仍为原版 Qwen3.8-27B、APC 关闭、预算 16384、原生 MTP3 和图模式；显式 `--no-kv-offload` 可运行无卸载配置。node93 独立配置为 `configs/benchmark_node93.json`，前四卡 0–3、端口 7878。默认开启卸载要求先在同一推理容器启动中央 MetaService 并确认 5000/6000 监听，再启动 OSCAR；环境脚本本身不启动中央服务。`scripts/start_node93_memcache.sh` 按用户最新设置准备每 LocalService 40GB、device_rdma、70/60 水位，并前台启动 MetaService；不会补造缺失的 `dir_store.conf`，最新用户日志已确认选择 DirStore，但初始化完成及 SSD I/O 尚未验证。本次无真机、质量或性能通过结论；下方旧版本实验记录不作为本轮验收。
+2026-11-10：当前 candidate 默认接入 AscendStore/MemCache KV 卸载。node93 已按基线教程完成 SDK 安装及原生补丁，接续使用 [基线环境启动说明](docs/node93_baseline_alignment_20261110.md)：中央服务未启动时先运行 `bash scripts/start_node93_memcache.sh --prepare-host`，另一个终端运行 `bash scripts/start_node93_oscar.sh`。已运行的中央服务直接复用，不重复启动。该配置保留物理卡0–3、HTTP 7878、每LocalService 40GB、device_rdma、70/60水位，使用已安装的私有SDK及教程要求的 `--disable-log-stats`。默认仍为原版Qwen3.8-27B、APC关闭、16384预算、原生MTP3和图模式。完整机制、prefix cache/chunked prefill/抢占恢复及探针见 [KV卸载说明](docs/kv_offload_20261109.md)。已有用户日志证明三个rank的DirStore初始化；TP4完整服务、SSD I/O、图、质量和性能仍须真实验收，不以下方历史实验或本地主机测试替代。
 
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 

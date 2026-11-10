@@ -1,16 +1,15 @@
-# 档案 #94/#125/#175/#177：先识别已有控制服务，再准备主机/配置；失败不得冒充复用成功。
+# 档案 #94/#125/#175/#177/#178：先只读观察监听，避免裸TCP探测污染SDK协议；失败不得冒充复用成功。
 """Idempotent node93 MetaService startup using a bounded SDK metadata query."""
 from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager
-import errno
 import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
-import socket
+import re
 import stat
 import subprocess
 import sys
@@ -22,18 +21,58 @@ from tools.memcache_config import _settings, endpoint, prepare_node93, serve_met
 from tools.memcache_lock import sdk_lock_held
 
 METADATA_TIMEOUT_SECONDS = 15
+TCP4_TABLE = Path("/proc/net/tcp")
+TCP6_TABLE = Path("/proc/net/tcp6")
+
+
+def _read_tcp_listeners(path: Path, address_digits: int, *,
+                        optional_missing: bool = False) -> list[tuple[int, int]]:
+    """Read this process's network namespace without opening a connection."""
+    try:
+        lines = path.read_text(encoding="ascii").splitlines()
+    except FileNotFoundError as exc:
+        if optional_missing:
+            return []
+        raise RuntimeError(f"Cannot read MemCache listener table: {path}: {exc}") from exc
+    except (OSError, UnicodeError) as exc:
+        raise RuntimeError(f"Cannot read MemCache listener table: {path}: {exc}") from exc
+    header = lines[0].split() if lines else []
+    if (len(header) < 4 or header[:2] != ["sl", "local_address"]
+            or header[2] not in {"rem_address", "remote_address"} or header[3] != "st"):
+        raise RuntimeError(f"Invalid TCP table header: {path}")
+    address_pattern = rf"[0-9a-fA-F]{{{address_digits}}}:[0-9a-fA-F]{{4}}"
+    listeners = []
+    for number, line in enumerate(lines[1:], 2):
+        if not line.strip():
+            continue
+        fields = line.split()
+        if (len(fields) < 4 or not re.fullmatch(r"[0-9]+:", fields[0])
+                or not re.fullmatch(address_pattern, fields[1])
+                or not re.fullmatch(address_pattern, fields[2])
+                or not re.fullmatch(r"[0-9a-fA-F]{2}", fields[3])):
+            raise RuntimeError(f"Invalid TCP table row: {path}:{number}")
+        if int(fields[3], 16) == 0x0A:  # TCP_LISTEN
+            local, port = fields[1].split(":")
+            listeners.append((int(local, 16), int(port, 16)))
+    return listeners
 
 
 def endpoint_is_listening(url: str) -> bool:
-    """A refusal means absent; a timeout/permission error is indeterminate."""
+    """Observe node93's fixed IPv4 loopback endpoint; never send SDK traffic."""
     address = urlsplit(endpoint(url))
-    try:
-        with socket.create_connection((address.hostname, address.port), timeout=1):
-            return True
-    except OSError as exc:
-        if exc.errno == errno.ECONNREFUSED:
-            return False
-        raise RuntimeError(f"Cannot determine MemCache endpoint state: {url}: {exc}") from exc
+    if address.hostname != "127.0.0.1":
+        raise RuntimeError("Read-only MemCache listener detection requires node93's IPv4 loopback endpoint")
+    ipv4 = _read_tcp_listeners(TCP4_TABLE, 8)
+    # /proc renders each IPv4 address as a native-order u32 hexadecimal value.
+    loopback = int.from_bytes(bytes((127, 0, 0, 1)), sys.byteorder)
+    if any(port == address.port and host in {0, loopback} for host, port in ipv4):
+        return True
+    # /proc does not expose IPV6_V6ONLY. A same-port IPv6 listener must not
+    # become a false "absent" result that permits a second MetaService start.
+    ipv6 = _read_tcp_listeners(TCP6_TABLE, 32, optional_missing=True)
+    if any(port == address.port for _, port in ipv6):
+        raise RuntimeError(f"Indeterminate IPv6/dual-stack listener for MemCache endpoint: {url}")
+    return False
 
 
 def metadata_query(local_config: Path) -> None:
@@ -116,6 +155,8 @@ def start_node93(config_dir: Path, *, prepare_host: bool = False) -> int:
             print("[oscar] reusing existing MemCache MetaService: metadata query passed; "
                   "host preparation, configuration writes and duplicate startup skipped", flush=True)
             print("[oscar] existing service runtime settings and SSD/NPU I/O are not verified here", flush=True)
+            print("[oscar] existing MetaService remains owned by its original launcher; "
+                  "keep that process running while OSCAR uses offload", flush=True)
             print("[oscar] next: bash scripts/start_node93_oscar.sh", flush=True)
             return 0
         if any(listening):

@@ -1,8 +1,9 @@
-# 档案 #27/#29/#77/#94/#125/#177：显式配置、当前环境、真实退出码；SDK启动失败不冒充复用成功。
+# 档案 #27/#29/#77/#94/#125/#177/#178：显式配置、当前环境、真实退出码；记录中央服务返回，不掩盖退出。
 """Generate explicit MemCache deployment files, or run its foreground MetaService."""
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import ipaddress
 import json
 import os
@@ -155,8 +156,11 @@ def serve_meta(config: Path) -> int:
     path = config.resolve(strict=True)
     os.environ["MMC_META_CONFIG_PATH"] = str(path)
     from memcache_hybrid import MetaService
-    print(f"[oscar] MemCache MetaService foreground config={path}", flush=True)
+    print(f"[oscar] MemCache MetaService foreground pid={os.getpid()} config={path}; "
+          "keep this process running while OSCAR uses offload", flush=True)
     result = MetaService.main()
+    print(f"[oscar] MEMCACHE_META_EXIT time={datetime.now(timezone.utc).isoformat()} "
+          f"pid={os.getpid()} result={result!r}; this foreground service has returned", flush=True)
     if result is not None and result != 0:
         raise RuntimeError(f"MemCache MetaService failed: {result!r}")
     return 0

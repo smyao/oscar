@@ -1,12 +1,12 @@
-"""Archive #94/#125/#175/#176/#177: idempotent startup must precede every mutation.
+"""Archive #94/#125/#175/#176/#177/#178: startup and nonconnecting observation.
 
-Only temporary configuration/lock files are real. Socket probes, host changes,
+Only temporary configuration/lock files and listener tables are real. Host changes,
 SDK calls, and MetaService are isolated or replaced; no NPU/service is started.
 """
 from contextlib import contextmanager
-import errno
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 from types import SimpleNamespace as NS
@@ -106,7 +106,7 @@ def unchanged(state):
 
 @pytest.mark.parametrize("acquired", [False, True])
 @pytest.mark.parametrize("prepare_host", [False, True])
-def test_existing_service_query_reuses_without_host_config_or_start(lifecycle, acquired, prepare_host):
+def test_existing_service_query_reuses_without_host_config_or_start(lifecycle, acquired, prepare_host, capsys):
     lifecycle.listeners = {META: True, STORE: True}
     lifecycle.acquired = acquired
     lifecycle.sdk_held = True
@@ -114,6 +114,9 @@ def test_existing_service_query_reuses_without_host_config_or_start(lifecycle, a
     unchanged(lifecycle)
     assert lifecycle.events.count("query") == 1
     assert lifecycle.events[0] == "plan" and lifecycle.events[-1] == "lock-exit"
+    output = capsys.readouterr().out
+    assert "owned by its original launcher" in output
+    assert "keep that process running while OSCAR uses offload" in output
 
 
 @pytest.mark.parametrize("prepare_host", [False, True])
@@ -184,35 +187,136 @@ def test_sdk_main_failure_after_cold_start_is_never_converted_to_reuse(lifecycle
     assert lifecycle.events[-1] == "lock-exit"
 
 
-def test_tcp_success_only_proves_listening_and_closes_socket(monkeypatch):
-    seen = []
-    class Connection:
-        def close(self):
-            seen.append("closed")
-        def __enter__(self):
-            return self
-        def __exit__(self, *exc):
-            self.close()
-    def connect(address, *args, **kwargs):
-        seen.append(address)
-        return Connection()
-    monkeypatch.setattr(service.socket, "create_connection", connect)
+TCP_HEADER = "  sl  local_address rem_address st tx_queue rx_queue tr tm->when retrnsmt uid timeout inode\n"
+
+
+def tcp_row(address_hex, port=5000, state="0A"):
+    return (f"0: {address_hex}:{port:04X} {'0' * len(address_hex)}:0000 {state} "
+            "00000000:00000000 00:00000000 00000000 0 0 1234 1 0000000000000000\n")
+
+
+def ipv4_hex(address):
+    return f"{int.from_bytes(bytes(map(int, address.split('.'))), sys.byteorder):08X}"
+
+
+@pytest.fixture
+def tcp_tables(monkeypatch, tmp_path):
+    paths = tmp_path / "tcp", tmp_path / "tcp6"
+    for path in paths:
+        path.write_text(TCP_HEADER)
+    monkeypatch.setattr(service, "TCP4_TABLE", paths[0])
+    monkeypatch.setattr(service, "TCP6_TABLE", paths[1])
+    def forbidden(*args, **kwargs):
+        pytest.fail("listener observation must not connect, bind, or launch ss")
+    monkeypatch.setattr(socket, "create_connection", forbidden)
+    monkeypatch.setattr(socket, "socket", forbidden)
+    monkeypatch.setattr(service.subprocess, "run", forbidden)
+    return paths
+
+
+@pytest.mark.parametrize("host,port,state,expected", [
+    ("127.0.0.1", 5000, "0A", True), ("0.0.0.0", 5000, "0A", True),
+    ("127.0.0.2", 5000, "0A", False), ("192.0.2.1", 5000, "0A", False),
+    ("127.0.0.1", 6000, "0A", False), ("127.0.0.1", 5000, "01", False),
+    ("127.0.0.1", 5000, "06", False),
+])
+def test_readonly_ipv4_check_requires_matching_listen_address_and_port(tcp_tables, host, port, state, expected):
+    tcp_tables[0].write_text(TCP_HEADER + tcp_row(ipv4_hex(host), port, state))
+    assert service.endpoint_is_listening(META) is expected
+
+
+def test_empty_valid_listener_tables_mean_absent_without_network_calls(tcp_tables):
+    assert service.endpoint_is_listening(META) is False
+
+
+@pytest.mark.parametrize("address", ["0" * 32, "0" * 24 + "01000000", "0" * 16 + "FFFF00000100007F"])
+def test_same_port_ipv6_is_indeterminate_instead_of_permitting_cold_start(tcp_tables, address):
+    tcp_tables[1].write_text(TCP_HEADER.replace("rem_address", "remote_address") + tcp_row(address))
+    with pytest.raises(RuntimeError):
+        service.endpoint_is_listening(META)
+
+
+def test_ipv6_other_port_does_not_hide_absent_ipv4_endpoint(tcp_tables):
+    tcp_tables[1].write_text(TCP_HEADER + tcp_row("0" * 32, port=6000))
+    assert service.endpoint_is_listening(META) is False
+
+
+def test_explicit_ipv4_listener_remains_proof_when_ipv6_shares_port(tcp_tables):
+    tcp_tables[0].write_text(TCP_HEADER + tcp_row(ipv4_hex("127.0.0.1")))
+    tcp_tables[1].write_text(TCP_HEADER + tcp_row("0" * 32))
     assert service.endpoint_is_listening(META) is True
-    assert seen == [("127.0.0.1", 5000), "closed"]
 
 
-@pytest.mark.parametrize("code", [errno.ECONNREFUSED, errno.ETIMEDOUT, errno.EACCES, errno.ENETUNREACH])
-def test_only_connection_refused_means_absent(monkeypatch, code):
-    error = OSError(code, "socket test failure")
-    def failed(*args, **kwargs):
-        raise error
-    monkeypatch.setattr(service.socket, "create_connection", failed)
-    if code == errno.ECONNREFUSED:
-        assert service.endpoint_is_listening(META) is False
+def test_missing_ipv4_table_is_indeterminate(tcp_tables):
+    tcp_tables[0].unlink()
+    with pytest.raises(RuntimeError) as caught:
+        service.endpoint_is_listening(META)
+    assert isinstance(caught.value.__cause__, FileNotFoundError)
+
+
+def test_missing_ipv6_table_is_normal_when_ipv6_is_disabled(tcp_tables):
+    tcp_tables[1].unlink()
+    assert service.endpoint_is_listening(META) is False
+
+
+@pytest.mark.parametrize("bad", ["", "unrecognized header\n", TCP_HEADER + "bad row\n",
+    TCP_HEADER + tcp_row("0100007F").replace(":1388", ":ZZZZ", 1),
+    TCP_HEADER + tcp_row("0100007F", state="GG"),
+    TCP_HEADER + "0: 0100007F:1388 00000000:0000\n",
+])
+def test_malformed_tcp_table_never_becomes_absent(tcp_tables, bad):
+    tcp_tables[0].write_text(bad)
+    with pytest.raises(RuntimeError):
+        service.endpoint_is_listening(META)
+
+
+@pytest.mark.parametrize("missing", [False, True])
+def test_matching_ipv4_does_not_depend_on_ipv6_table(tcp_tables, missing):
+    tcp_tables[0].write_text(TCP_HEADER + tcp_row(ipv4_hex("127.0.0.1")))
+    if missing:
+        tcp_tables[1].unlink()
     else:
-        with pytest.raises(RuntimeError) as caught:
-            service.endpoint_is_listening(META)
-        assert caught.value.__cause__ is error
+        tcp_tables[1].write_text(TCP_HEADER + "bad IPv6 row\n")
+    assert service.endpoint_is_listening(META) is True
+
+
+def test_malformed_ipv6_table_without_ipv4_match_is_indeterminate(tcp_tables):
+    tcp_tables[1].write_text(TCP_HEADER + "bad IPv6 row\n")
+    with pytest.raises(RuntimeError):
+        service.endpoint_is_listening(META)
+
+
+@pytest.mark.parametrize("tail", ["", " kernel-specific queue/timer columns"])
+def test_listener_matching_does_not_validate_unrelated_columns(tcp_tables, tail):
+    row = f"0: {ipv4_hex('127.0.0.1')}:1388 00000000:0000 0A{tail}\n"
+    tcp_tables[0].write_text(TCP_HEADER + row)
+    assert service.endpoint_is_listening(META) is True
+
+
+def test_listener_table_permission_failure_preserves_cause(tcp_tables, monkeypatch):
+    error = PermissionError("listener table inaccessible")
+    original = Path.read_text
+    def read(path, *args, **kwargs):
+        if path == tcp_tables[1]:
+            raise error
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(Path, "read_text", read)
+    with pytest.raises(RuntimeError) as caught:
+        service.endpoint_is_listening(META)
+    assert caught.value.__cause__ is error
+
+
+def test_listener_table_invalid_encoding_fails_closed(tcp_tables):
+    tcp_tables[0].write_bytes(b"\xff")
+    with pytest.raises(RuntimeError) as caught:
+        service.endpoint_is_listening(META)
+    assert isinstance(caught.value.__cause__, UnicodeError)
+
+
+@pytest.mark.parametrize("url", ["tcp://localhost:5000", "tcp://192.0.2.1:5000", "tcp://[::1]:5000"])
+def test_non_node93_address_is_explicitly_unsupported(tcp_tables, url):
+    with pytest.raises(RuntimeError):
+        service.endpoint_is_listening(url)
 
 
 @pytest.fixture

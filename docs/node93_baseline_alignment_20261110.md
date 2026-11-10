@@ -1,6 +1,6 @@
 # node93：接续已完成的基线部署
 
-依据档案 #27/#29/#74/#75/#94/#125/#175/#176/#177，以及用户提供的成功基线教程和 `vllm-ascend.0.23.0.patch`。用户确认已完成教程 2.2，且成功基线使用物理卡 0–3 和 `device_rdma`。后续复用这套环境，不重新安装 SDK、不重复应用原生补丁。
+依据档案 #27/#29/#74/#75/#94/#125/#175/#176/#177/#178，以及用户提供的成功基线教程和 `vllm-ascend.0.23.0.patch`。用户确认已完成教程 2.2，且成功基线使用物理卡 0–3 和 `device_rdma`。后续复用这套环境，不重新安装 SDK、不重复应用原生补丁。
 
 ## 已核实的对应关系
 
@@ -44,7 +44,9 @@ OSCAR 直接调用 SDK，因而需要在自身 transport 接口透传该第二�
 bash scripts/start_node93_memcache.sh --prepare-host
 ```
 
-入口先设置 SDK 环境并只读检查控制服务状态，再决定是否准备主机。已运行的服务通过 `init(0, init_bm=False)` 与单键 `batch_is_exist(..., 0)` 查询后，打印 `reusing existing MemCache MetaService` 并返回 0；即使带 `--prepare-host`，也不会修改 hugepages、重挂载 `/dev/shm`、写 SDK 配置或再次启动中央服务。查询在独立子进程中执行，最多 15 秒并关闭自己的客户端，不请求 LocalService、NPU 缓冲注册或数据传输；不能把这个结果当成 SSD/NPU 验收或现有服务运行参数核实。
+入口先设置 SDK 环境并只读检查控制服务状态，再决定是否准备主机。监听检查读取当前网络命名空间的 `/proc/net/tcp`、`tcp6`，不依赖 `ss`、不发送裸 TCP 连接或伪造 SDK 报文，避免在服务端制造 `Failed to read header`；读取失败或 IPv6 双栈状态有歧义时明确停止。已运行的服务通过 `init(0, init_bm=False)` 与单键 `batch_is_exist(..., 0)` 查询后，打印 `reusing existing MemCache MetaService` 并返回 0；即使带 `--prepare-host`，也不会修改 hugepages、重挂载 `/dev/shm`、写 SDK 配置或再次启动中央服务。查询在独立子进程中执行，最多 15 秒并关闭自己的客户端，不请求 LocalService、NPU 缓冲注册或数据传输；不能把这个结果当成 SSD/NPU 验收或现有服务运行参数核实。
+
+`reusing` 表示复用检查当时通过，本次命令没有接管、后台化或守护已有中央服务。最早真正运行 `python start_meta.py` 或打印 `MemCache MetaService foreground` 后持续占用前台的窗口，才是中央服务窗口；其进程须在 OSCAR 启动及运行期间保持。启动前中央服务已经停止时，在独立终端重新执行上面的脚本；主机资源已准备好可省略 `--prepare-host`。冷启动会打印服务 PID，SDK 主函数返回时打印 `MEMCACHE_META_EXIT` 的时间、PID 与返回值，便于区分检查命令返回和中央服务返回；这不是守护或自动重启。
 
 仅在控制端点均未监听、SDK 进程锁未持有且本入口获得启动互斥锁时，`--prepare-host` 才应用教程给出的 `nr_hugepages=200000`、`/dev/shm` remount 为 8G，并执行 `mkdir -p /home/kvcache`；随后准备既有 MMC 配置并前台启动 MetaService。主机准备已做过时可省略该参数。任一步失败保留错误和退出码，不继续启动，不自动清空已有缓存。只查看这三个主机操作可用 `python3 -m tools.node93_host --plan`。
 
@@ -80,6 +82,8 @@ bash scripts/install_probe_serve.sh --config configs/benchmark_node93.json
 完整探针通过后复用进程进入正式服务时，统计关闭的配置不再启动依赖这些指标的被动观察器，报告明确标记为 `unavailable / disabled_by_config`。仍检查服务存活并保留退出/清理；窗口结束后停止探针记录及持续文件轮询。
 
 ## 故障证据与验收边界
+
+2026-11-10 01:31 的用户日志已确认 #177 的既有 MetaService 查询及复用成功。随后中央日志显示 01:31:54–55 的 5000、6000、8000 监听依次关闭；01:51 开始的 TP4 启动因此在 6000 连接拒绝后超时。复用成功不保证中央服务未来持续存活。当前缺少关闭触发者证据，不能断言用户 Ctrl+C、SDK 客户端关闭或探测触发了整体退出；公开 AccLink 实现遇到空报头只关闭该次连接并返回。#178 修正已证实的裸 TCP 探测日志副作用并明确前台生命周期，不宣称中央退出原因已经修复。
 
 用户最新 `hccn_tool` 输出确认查询当时物理卡 3 link DOWN、health Receive timeout；光模块存在，所列光功率在给出的阈值内，LOS/LOL 标志为零。这些信息不能单独定位为光模块、线缆或交换机故障，也不能否定用户在同卡同协议下成功运行基线的事实。
 

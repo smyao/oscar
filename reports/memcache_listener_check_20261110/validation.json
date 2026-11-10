@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-10",
+  "archive": 178,
+  "branch": "oscar-new-7",
+  "base_commit": "27cb777",
+  "scope": "remove raw TCP listener probes and clarify foreground MetaService lifetime",
+  "host_validation": {
+    "command": ".venv/bin/python -m pytest -q tests/test_memcache_service.py tests/test_memcache_client_process.py tests/test_memcache_lock.py tests/test_memcache_node93.py tests/test_node93_startup.py tests/test_offload_deployment.py",
+    "passed": 147,
+    "failed": 0,
+    "elapsed_seconds": 2.56,
+    "coverage": [
+      "Linux IPv4 LISTEN exact address, wildcard, port and state matching",
+      "no socket creation, connection, binding or ss command for listener observation",
+      "IPv6 ambiguity rejected; optional tcp6 absence allowed",
+      "unreadable or malformed relevant proc fields fail closed",
+      "verified reuse remains free of host/configuration/startup mutations",
+      "existing real child/lock/timeout and simulated SDK lifecycle checks",
+      "deployment settings and SDK failure behavior preserved"
+    ]
+  },
+  "checks": {"git_diff_check": "passed", "bash_syntax": "passed"},
+  "evidence_limits": {
+    "proc_tables": "Linux-format temporary fixtures on development host; node93 not accessed",
+    "sdk": "simulated in tests; public sources used for code analysis",
+    "central_service_shutdown_trigger": "unknown; not claimed fixed",
+    "node93_metadata_reuse": "confirmed by user-provided 01:31 log for previous commit",
+    "node93_service_restored": "not_verified",
+    "npu_or_ssd_io": "not_run",
+    "benchmark": "not_run"
+  }
+}

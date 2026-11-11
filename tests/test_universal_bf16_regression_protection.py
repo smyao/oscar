@@ -21,7 +21,7 @@ from oscar_ascend.ops.cv_dispatch import OFFICIAL_CV_MAP, select_cv_op
 from tools import generate_official_attention as generated
 from tools import install_serve, observe_serve
 from tools.serving_variants import variant_config
-from offload_frozen_contract import before_authorized_offload_extension
+from offload_frozen_contract import before_authorized_offload_extension, before_forward_metadata_reuse
 from test_stable_launch_frozen import AUTHORIZED_KV_OFFLOAD
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,10 +49,14 @@ def digest(data):
 
 @pytest.mark.parametrize("path,expected", sorted(BASE_232B_SHA256.items()))
 def test_restored_and_unchanged_production_bytes_match_232b(path, expected):
-    if path in {"oscar_ascend/runtime.py", "tools/target_cli.py", "configs/target.json"}:
+    if path == "oscar_ascend/integration/impl.py":
+        # Only the explicitly authorized forward-local metadata reuse seam
+        # may differ; retain the original SHA for the full numerical route.
+        assert digest(before_forward_metadata_reuse((ROOT / path).read_text())) == expected
+    elif path in {"oscar_ascend/runtime.py", "tools/target_cli.py", "configs/target.json"}:
         # The user explicitly authorized offload and its bounded service probe.
         # Remove only the exact reviewed seams, retaining the original SHA for
-        # every other byte. CANN and attention routes keep unconditional hashes.
+        # every other byte. All CANN files keep unconditional original hashes.
         original = before_authorized_offload_extension(path, (ROOT / path).read_text())
         assert digest(original) == expected
     else:

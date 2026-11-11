@@ -65,6 +65,11 @@ _NATIVE_CONTROL = '''    if args.native:
         config = dict(config)
         config.pop("kv_offload", None)
 '''
+_VISIBLE_DEVICES = '''    if offload_options(config) is not None:
+        # User's MemCache launch binds both names to the same selected cards,
+        # including an explicit rear-cards override applied by install_serve.
+        env["CUDA_VISIBLE_DEVICES"] = env["ASCEND_RT_VISIBLE_DEVICES"]
+'''
 _VARIANT_EXTENSION = '''    # #127/#128: explicit transport selection never forces none -> align,
     # changes the token budget, or substitutes the native scheduler.
     from oscar_ascend.offload.config import offload_options
@@ -87,10 +92,51 @@ def before_authorized_offload_extension(path, text):
         "oscar_ascend/runtime.py": (
             (_RUNTIME_GATE, _ORIGINAL_RUNTIME_GATE), (_ALLOCATION, _ORIGINAL_ALLOCATION),
             (_LOADED_IDENTITY, "")),
-        "tools/target_cli.py": ((_CLI_EXTENSIONS, ""), (_NATIVE_CONTROL, ""), (_HASH_SEED, "")),
+        # Existing 2026-11-10 user-authorized SDK environment alignment;
+        # include its exact seam instead of relaxing the original argv SHA.
+        "tools/target_cli.py": ((_CLI_EXTENSIONS, ""), (_NATIVE_CONTROL, ""),
+                                (_HASH_SEED, ""), (_VISIBLE_DEVICES, "")),
         "tools/serving_variants.py": ((_VARIANT_EXTENSION, ""),),
     }.get(path, ())
     for current, previous in changes:
         assert text.count(current) == 1, f"{path}: authorized offload seam changed or duplicated"
+        text = text.replace(current, previous, 1)
+    return text
+
+
+def before_forward_metadata_reuse(text):
+    """Reverse the user-authorized 2026-11-11 metadata-only call-site seam.
+
+    Keep the accepted whole-impl SHA for every other byte, including all
+    arithmetic, operator selection and per-layer guards. No kernel exemption.
+    """
+    changes = (
+        ("            from .mixed_decode_split import (plan_mixed_decode, plan_mixed_decode_for_forward,\n"
+         "                                             dispatch_mixed_decode)\n",
+         "            from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode\n"),
+        ('''            metadata_lease = None
+            if reuse_mixed:
+                mixed_plan, metadata_lease = plan_mixed_decode_for_forward(
+                    attn_metadata, n, layer_name=layer.layer_name, query_heads=h, kv_heads=hk,
+                    head_size=d, geometry=state.workspace.geometry,
+                    layout=(expected_format, state.spec.block_size, state.spec.conv_bytes,
+                            state.spec.ssm_bytes, state.num_blocks),
+                    flags=(striped_cache, aligned_math, official_math,
+                           self.provider.config.get("experimental_current_only", False),
+                           self.provider.config.get("experimental_request_windows", False)),
+                    prepare_reuse=True)
+            else:
+                mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk,
+                                               immutable_starts=False)
+''', '''            mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk,
+                                           immutable_starts=reuse_mixed)
+'''),
+        ('''                                                 attn_metadata, output, mixed_plan,prepare_reuse=reuse_mixed,
+                                                 metadata_lease=metadata_lease)
+''', '''                                                 attn_metadata, output, mixed_plan,prepare_reuse=reuse_mixed)
+'''),
+    )
+    for current, previous in changes:
+        assert text.count(current) == 1, "authorized forward metadata seam changed or duplicated"
         text = text.replace(current, previous, 1)
     return text

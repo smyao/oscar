@@ -224,6 +224,7 @@ def test_legacy_v3_16k_mixed_forward_selects_aligned_decode_and_c16_with_prepare
     f = _fixture(monkeypatch, True, tokens=probe.TOKENS, dim=256, data_device='meta')
     config = variant_config(json.loads((probe.ROOT/'configs/target.json').read_text()), 'candidate')
     config['experimental_official_math'] = False  # This regression pins the retained v3 route.
+    config['oscar_dequant_policy'] = 'native_phase'  # v3 cannot use official-only FP32 metadata.
     f.impl.provider.config = config
     f.workspace.geometry = WorkspaceGeometry(probe.TOKENS, 6, 1, 256, cube_cores=20,
                                              history_cluster_size=16, c16_l1_reuse=True)

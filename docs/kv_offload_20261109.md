@@ -33,6 +33,20 @@ SDK 调用要求完整返回状态数组，拒绝异常、部分成功、非法�
 
 前缀manifest读取也先检查存在性：未发布的候选索引直接返回miss，不调用会对缺失键打印ERROR的SDK Get。预查后读取为空仍再次确认是否被驱逐；对象仍存在却读空、SDK异常及校验失败继续报错。此顺序修正不缓存miss、不改变发布/查找范围，也不把所有SDK info invalid无条件吞掉。用户07:49日志已有外部命中40.6%及四rank前缀恢复；与本轮尚未部署的查询修复分开记录，详见档案#183。
 
+### 2026-11-11：三个主机路径优化，不改变数值链
+
+本轮在 `b18f7e0` 基底上实现用户选定的前三项，入口和开关保持现状，`bash scripts/start_node93_oscar.sh` 自动使用：
+
+1. **同一步相同 prefix 只保存一次。** 调度端按 namespace、prefix view、原生内容 hash、提交位置和 epoch 去重，保留原顺序首个 writer。沿用完整联合 FULL/GDN checkpoint，绝不拼接不同请求的数据。集合只活在本 step；未发布不能当命中，也不能跳过以后步骤的保存。全 TP ACK、严格传输、首个完整 manifest 发布和私有 swap 流程保持。主机 TP2 对照中两条相同前缀的 PUT 从4次降为2次、字节从1088降为544，发布和异址恢复内容逐字节一致。
+2. **同次 forward 复用 mixed 派生 metadata。** 只在已有 prepare-reuse 允许的主模型 eager prefill 范围，复用 plan 和两个 child metadata。所有权由原生 ForwardContext、父 metadata、不可变边界元组、stream、geometry、layout 和 flags 共同限定；重复 layer 或新 context 重建。普通 decode、capture、dummy、draft 保留原路径。逐层 workspace/boundary/slot/status 校验与两段 attention/store 仍执行；两个 child 成功执行后才发布派生对象。16层主机对照的 plan 构建16→1、切片32→2，输出和有效任务/写入数据相同。
+3. **checkpoint 复用计数缓冲区和不变页表快照。** counter slab 由所有引用它的请求 record 共同持有，全部释放才能回收；free 缓存跨布局总共最多2份。保留每步原 dtype 的 counter 复制与独立完成 event，不复用仍被旧请求引用的槽。异流未完成的槽跳过，完成后才允许异流复用并登记 allocator stream；不新增常态 host synchronize。页表仍每步完整按值比较，仅内建 int/bool 页号走快路，不按 id/长度推测版本；变化的组照原转换和负页校验重新冻结，保持独立副本。这里省去 Python 逐元素转换和 tuple 重建，仍有 O(页数) 的 C 层类型/值扫描，不宣称零遍历。
+
+三个改动不修改 quant/dequant、PT/clip/旋转、CANN、BF16舍入、GDN/MTP状态选择、调度策略、图地址、timer 或 argv。保存仍同步完成后才交回页所有权，异步回载仍等待全 TP 完成。实现与功能回归不代表真机精度或吞吐验收；本轮没有连接真机或测速。
+
+联合主机回归 **790 passed**，覆盖全套卸载、prefix、none/align、MTP、取消/reset、异步生命周期、本机IPC，以及三个新增专项和mixed/prepare/源码保护。40步固定布局测试中none计数buffer仅分配4个、align分配6个，仍各执行40个独立event及每步必要复制；长期保留旧请求与跨stream未完成producer的测试确认不会覆盖旧值。非法输入仍先执行全部int转换、再校验负页，保持原异常优先级。
+
+源码保护继续校验原232b SHA：只精确反向移除本轮metadata调用接缝；另补上之前遗漏的、用户已授权的CUDA可见设备环境接缝。expected SHA和全部CANN哈希均未改。旧legacy v3测试显式设置它需要的`native_phase`，避免继承candidate的互斥`fp32_metadata`；生产策略保持。[本轮机器可读记录](../reports/host_optimization_20261111/validation.json)。
+
 ### 2026-11-11：减少恢复路径的重复工作
 
 依据档案#37–49/#127/#128/#157/#163/#171/#182/#183，在已实现的异步回载上进一步减少查询、描述符构造和锁等待；默认入口直接生效，无需增加参数。

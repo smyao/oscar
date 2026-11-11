@@ -470,8 +470,21 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                     complete[identity] = self._read_complete_prefix(key, plan) is not None
             # This is cache-write deduplication, not a promised restore. A later
             # lookup revalidates every TP payload if the retained set is evicted.
-            prefixes = [plan for key, plan in indexed
-                        if not complete.get((key, plan.committed_tokens), False)]
+            prefixes = []
+            selected = set()
+            for key, plan in indexed:
+                if complete.get((key, plan.committed_tokens), False):
+                    continue
+                # Archive #127/#128/#163/#171: select one complete joint
+                # checkpoint, never combine FULL/GDN bytes from different
+                # requests. The index binds namespace, reset view and native
+                # salted/LoRA/multimodal content hash. Preserve the original
+                # first writer and scope this set to this step only: an
+                # unacknowledged save is not a cache hit or a later-step skip.
+                identity = (key, plan.committed_tokens, plan.epoch)
+                if identity not in selected:
+                    selected.add(identity)
+                    prefixes.append(plan)
         preemptions = state.drain_preemptions()
         for snapshot in preemptions:
             if snapshot.identity in self._swap_payloads:

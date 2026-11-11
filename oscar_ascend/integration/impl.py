@@ -122,19 +122,33 @@ class OscarAttentionImpl(AttentionImpl):
         if official_math:
             native_current = False
         if self.provider.config.get("experimental_mixed_decode_split", False):
-            from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode
+            from .mixed_decode_split import (plan_mixed_decode, plan_mixed_decode_for_forward,
+                                             dispatch_mixed_decode)
             reuse_mixed = mixed_prepare_eligible(
                 attn_metadata, layer.layer_name,
                 enabled=self.provider.config.get("experimental_prepare_reuse", False),
                 native_current=native_prefill_stage)
-            mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk,
-                                           immutable_starts=reuse_mixed)
+            metadata_lease = None
+            if reuse_mixed:
+                mixed_plan, metadata_lease = plan_mixed_decode_for_forward(
+                    attn_metadata, n, layer_name=layer.layer_name, query_heads=h, kv_heads=hk,
+                    head_size=d, geometry=state.workspace.geometry,
+                    layout=(expected_format, state.spec.block_size, state.spec.conv_bytes,
+                            state.spec.ssm_bytes, state.num_blocks),
+                    flags=(striped_cache, aligned_math, official_math,
+                           self.provider.config.get("experimental_current_only", False),
+                           self.provider.config.get("experimental_request_windows", False)),
+                    prepare_reuse=True)
+            else:
+                mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk,
+                                               immutable_starts=False)
             if mixed_plan is not None:
                 if not reuse_mixed:
                     invalidate_prepare_reuse(state.workspace)
                 try:
                     return dispatch_mixed_decode(self, layer, query, key, value, kv_cache,
-                                                 attn_metadata, output, mixed_plan,prepare_reuse=reuse_mixed)
+                                                 attn_metadata, output, mixed_plan,prepare_reuse=reuse_mixed,
+                                                 metadata_lease=metadata_lease)
                 except BaseException:
                     invalidate_prepare_reuse(state.workspace)
                     raise

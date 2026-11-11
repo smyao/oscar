@@ -31,6 +31,12 @@ class PointerStore:
     def register_buffer(self, address, length):
         return 0
 
+    def unregister_buffer(self, address, length):
+        return 0
+
+    def close(self):
+        pass
+
     def batch_is_exist(self, keys):
         return [int(key in self.objects) for key in keys]
 
@@ -142,6 +148,8 @@ def connector_pair(bridge_module, monkeypatch, mode):
         instance._load_acks = []
         instance._transfer_session = None
         instance._prefix_producer_event = None
+        instance._init_load_state(False)
+        instance._setup_load_device = lambda: None
         instance._record_producer_event = lambda: NS(synchronize=lambda: None)
         instance.metadata_server = None
         def remove_swap(plan):
@@ -156,7 +164,7 @@ def connector_pair(bridge_module, monkeypatch, mode):
         instance._group_for_layer = {"full": 0, "gdn": 1}
         instance.tracker = WorkerCheckpointTracker()
         instance.transport = StrictMemcacheTransport(store, scheduler=scheduler_role,
-            registration_alignment=1, _watchdog=NS(run=lambda operation, call: call()))
+            registration_alignment=1, _watchdog=NS(run=lambda operation, call: call(), close=lambda: None))
         instance._synchronize = lambda: None
         instance._zero_tail = torch.zeros(128, dtype=torch.uint8)
         if not scheduler_role:

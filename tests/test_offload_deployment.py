@@ -1,4 +1,4 @@
-"""Archive #27/#77/#94/#125/#148: explicit deploy configuration and fail-closed gates."""
+"""Archive #27/#77/#94/#125/#148/#182/#183: explicit deploy configuration and fail-closed gates."""
 import json
 from pathlib import Path
 import subprocess
@@ -66,11 +66,49 @@ def test_sourced_sdk_launch_preserves_full_service_argv(tmp_path, monkeypatch, c
                                    "--log-dir", str(tmp_path / "unused")]) == 0
         plans.append(json.loads(capsys.readouterr().out))
     assert plans[0]["vllm_argv"] == plans[1]["vllm_argv"]
+    argv = plans[1]["vllm_argv"]
+    transfer = json.loads(argv[argv.index("--kv-transfer-config") + 1])
+    assert transfer["kv_connector_extra_config"]["load_async"] is True
     for index, source in enumerate(("pip", "installed")):
         command = dict(plans[index]["stages"])["build-dependencies"]
         assert "pyzmq" in command
         for sdk in ("memfabric-hybrid", "memcache-hybrid"):
             assert (sdk in command) is (source == "pip")
+    assert not (tmp_path / "unused").exists()
+
+
+@pytest.mark.parametrize("entry", [install_serve.main, observe_serve.main], ids=["direct", "observe"])
+@pytest.mark.parametrize("prefix", [False, True], ids=["target-pc-policy", "node93-pc-policy"])
+def test_async_default_and_explicit_sync_change_only_transfer_mode(tmp_path, capsys, entry, prefix):
+    # Previously generated targets lack this field. Both entrypoints must
+    # still activate async loads, while an explicit false remains usable.
+    config = json.loads((deploy.ROOT / "configs/target.json").read_text())
+    assert config["kv_offload"]["load_async"] is True
+    config["kv_offload"].pop("load_async")
+    path = tmp_path / "target.json"
+    options = ["--config", str(path), "--variant", "candidate", "--plan",
+               "--log-dir", str(tmp_path / "unused")]
+    if entry is install_serve.main:
+        options.append("--kv-offload")
+    if prefix:
+        options.append("--enable-prefix-caching")
+    results = []
+    for expected in (True, False):
+        if not expected:
+            config["kv_offload"]["load_async"] = False
+        original = json.dumps(config)
+        path.write_text(original)
+        assert entry(options) == 0
+        report = json.loads(capsys.readouterr().out)
+        argv = report["vllm_argv"]
+        index = argv.index("--kv-transfer-config")
+        transfer = json.loads(argv[index + 1])
+        assert transfer["kv_connector_extra_config"].pop("load_async") is expected
+        assert ("--enable-prefix-caching" in argv) is prefix
+        results.append((argv[:index] + argv[index + 2:], transfer,
+                        report.get("target_devices", report.get("devices"))))
+        assert path.read_text() == original
+    assert results[0] == results[1]
     assert not (tmp_path / "unused").exists()
 
 

@@ -33,6 +33,21 @@ SDK 调用要求完整返回状态数组，拒绝异常、部分成功、非法�
 
 前缀manifest读取也先检查存在性：未发布的候选索引直接返回miss，不调用会对缺失键打印ERROR的SDK Get。预查后读取为空仍再次确认是否被驱逐；对象仍存在却读空、SDK异常及校验失败继续报错。此顺序修正不缓存miss、不改变发布/查找范围，也不把所有SDK info invalid无条件吞掉。用户07:49日志已有外部命中40.6%及四rank前缀恢复；与本轮尚未部署的查询修复分开记录，详见档案#183。
 
+### 2026-11-11：默认启用异步回载
+
+`kv_offload.load_async` 默认是 JSON 布尔值 `true`，启动时传入 `kv_connector_extra_config.load_async=true`。旧 target 未写这个字段时也使用 true；显式布尔 `false` 保留同步路径，字符串 `"true"` / `"false"` 均拒绝。node93 入口直接执行 `bash scripts/start_node93_oscar.sh`，无需追加参数。启动 `KV_OFFLOAD_READY` 和实际完成的 `KV_OFFLOAD_RESTORE` 日志均标明 `load_async=true`。
+
+这次同时实现后台读取和原生调度回执，不只是增加配置字段：
+
+- 外部 prefix 命中或私有 swap 可恢复时，connector 向原生调度器返回异步加载标记。原生分配目标页、进入 `WAITING_FOR_REMOTE_KVS`，该请求暂不参与模型计算。
+- worker 在原生新页清零之后记录 NPU event。每 rank 的单独 I/O 线程设置设备、等待该 event、执行原有严格 MemCache 检查和字节回载；主模型线程继续处理其他就绪请求。空模型步骤同样派发/轮询加载。
+- SDK 成功返回后，每 rank 仅上报一次 `finished_recving`。原生收齐全 TP 完成才允许请求实际调度；待 `_update_states` 创建 input-batch 行后、`preprocess_mamba` 之前恢复 GDN/MTP 游标。全部 packed/window/tags/GDN 字节格式和图地址保持。
+- 取消中的目标页由原生延迟释放，后台工作仍返回完成通知；私有源对象等全 TP load receipt 后回收。关闭时先排空 I/O 线程再注销 buffer。读取失败继续明确终止，不将失败当作 miss 或提前报告完成。
+
+保存仍沿用原来的提交屏障；manifest 查询、全 TP/尺寸校验和 SDK 线程安全锁也保留。因此这是让回载与其他请求计算有机会重叠，不承诺消除全部卸载成本或已经提高吞吐。未连接真机、未运行性能测试。
+
+本轮最终主机专项 **580 passed**：包含后台队列、实际原生空步/跨 TP 聚合/取消释放、none/align 字节恢复、部分本地 prefix 命中、同 ID 新代际、错误/关闭、streaming/reset、现有 PC/MTP 接缝、启动参数及本机真实 IPC。另独立运行冻结保护为43通过、1条已有 `tools/target_cli.py` 摘要断言失败；该文件与本轮修改前HEAD逐字节相同，两侧规范化SHA均为 `7b573587bacd6eddfecbc14576ad7a3ca4ac6fbe28e81932f0db97c12b359b44`，未更改或放宽这个断言。CANN/PT/timer与计算源码未修改，以上不等于真机或性能验收。
+
 ### 2026-11-10：参照原生实现减少查询与重复保存
 
 依据档案#127/#128/#157/#163/#171/#182/#183，以及只读原生 `LookupKeyClient`、发送线程的存在性过滤，本轮在原有协议内优化控制路径：
@@ -94,9 +109,10 @@ sequenceDiagram
     S->>W: restore plan
     W->>W: 等待原生页初始化完成
     M-->>W: 读入固定池中的新物理页
-    W->>W: 重置恢复游标，继续原生 GDN copy / forward
-    W-->>S: 每 rank LoadReceipt
+    W-->>S: 每 rank LoadReceipt 和 finished_recving
     S->>M: 全 TP 读完后回收该私有 generation
+    S->>W: 全 TP 完成后实际调度
+    W->>W: 原生创建请求行后重置游标，继续 GDN copy / forward
 ```
 
 原生 preempt 的释放和重新分配不被替换，也不 pin 全部被抢占页阻止调度器回收。worker 保存时机在 native `_update_states` 复用旧页之前；读取在其清零完成之后、forward 和图回放之前。不同 rank 的异步返回必须全部完成，不能以 rank0 成功代表 TP4 完成。
@@ -123,7 +139,7 @@ streaming session 分叉传递旧/新代际和保留前缀的摘要；只有 wor
 
 所有注册 tensor 在服务期间保持存储地址；为 SDK 注册分配额外 2MiB 对齐余量，另有一个固定 canonical 零尾缓冲。它们计入真实 NPU 占用，不能假称零额外 HBM。图绑定地址不因卸载更换，传输发生在图之外。
 
-本实现以同步完成作为页所有权屏障。卸载/恢复会产生真实的流等待、网络和 DRAM 传输成本；不宣称隐藏了这些成本，也不以 INT2 压缩倍率代替吞吐收益。稳态 forward 没有新增全历史浮点恢复，worker 每步只保留小规模提交位置元数据，实际 D2H 元数据读取发生在需要快照时。
+保存以同步完成作为页所有权屏障；异步回载以全 TP receive completion 作为准入屏障。卸载/恢复会产生真实的流等待、网络和 DRAM 传输成本；不宣称隐藏了全部成本，也不以 INT2 压缩倍率代替吞吐收益。稳态 forward 没有新增全历史浮点恢复，worker 每步只保留小规模提交位置元数据，实际 D2H 元数据读取发生在需要快照时。
 
 私有 swap 使用本服务 session / 请求代际 / 版本隔离。恢复全 TP 完成、取消、分叉、成功强制重置、或有效本地 APC 已覆盖时触发清理。迟到保存 ACK 仍参与回收；删除只允许服务端根据当前 scope 的结构化 plan 派生私有 keys，不接受任意删除列表。共享 prefix payload 是缓存对象，独立于私有 swap 生命周期。进程崩溃后的对象驻留及存储服务自身故障属于存储端运维边界，不能把 MemCache 当成持久化数据库。
 
@@ -148,9 +164,9 @@ bash scripts/start_node93_oscar.sh
 | `backend=memcache`、`kv_role=kv_both` | 原有生成配置已包含这两项 |
 | `AscendStoreConnector` | 保留 `OscarAscendStoreConnector` 外部适配，才能传输完整 packed/window/tags/GDN；底层复用原生 MemCache backend |
 | `lookup_rpc_port="0"` | 复用原生 lookup IPC 路径函数的默认0，再追加 engine 标识隔离实例；它不是HTTP端口 |
-| `load_async="false"` | OSCAR 既有回载为同步完成。无需新增字段；JSON字符串 `"false"` 不等于布尔 `false`，不能据字符串推断原生版本已关闭异步 |
+| `load_async` | 按用户2026-11-11要求默认使用布尔 `true`，完整异步回载见上文；显式布尔 `false` 保留同步路径，不接受字符串值 |
 
-这两个原生专用字段不直接加入 OSCAR 的严格选项集合，也不改变其同步回载与 IPC 行为。模型、token budget、RoPE、MTP、图模式、统计和数值配置保持回滚版本；HTTP端口按用户2026-11-10要求改为7878，node93入口另按用户要求默认开启APC。通用配置仍为16384、7878、APC关闭；不复制用户基线的4096、6969和YaRN参数。显式已有参数仍可传给包装入口；前后卡模式会让两种设备可见变量保持一致。
+`lookup_rpc_port` 继续由原有 IPC 路径管理；`load_async` 已加入 OSCAR 严格布尔选项。模型、token budget、RoPE、MTP、图模式、统计和数值配置保持回滚版本；HTTP端口按用户2026-11-10要求改为7878，node93入口另按用户要求默认开启APC。通用配置仍为16384、7878、APC关闭；不复制用户基线的4096、6969和YaRN参数。显式已有参数仍可传给包装入口；前后卡模式会让两种设备可见变量保持一致。
 
 此前启动适配验证：111项卸载配置/传输/部署、固定argv和直启流程回归通过，另14项临时SDK stub的shell测试通过，覆盖source顺序、环境传递、失败停止及真实退出码。端口调整前，`configs/`、`csrc/`、`oscar_ascend/`、`tools/serving_variants.py`和`tools/install_serve.py`与3d4fa54逐文件一致；此次仅将target.json的port改为7878。shell语法及diff检查通过。测试未加载真实SDK/NPU，不能作为本次现场链路、四卡启动或SSD回读验收。
 
@@ -207,6 +223,7 @@ python3 -m tools.probe_kv_offload_service \
 | `oscar_ascend/offload/layout.py`、`identity.py` | 真实物理布局、注册区域、加载 PT 绑定和远端 namespace |
 | `scheduler.py`、`state.py`、`hooks.py` | 原生调度生命周期、异步提交、GDN canonical 与恢复游标 |
 | `connector.py`、`plans.py` | V1/HMA 接缝、全 TP 发布/恢复、对象身份与回收 |
+| `async_load.py` | 单线程后台回载、非等待完成轮询、错误传播与排空关闭 |
 | `transport.py`、`metadata.py` | 严格 SDK 状态、watchdog、rank0 IPC、manifest 一致性 |
 | `tools/memcache_config.py` | 显式部署配置与前台 MetaService |
 | `tools/probe_kv_offload*.py` | 真实设备字节与模型服务验收入口 |

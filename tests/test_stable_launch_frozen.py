@@ -6,6 +6,7 @@ checkpoint-specific YaRN override (official Qwen3.8 uses default RoPE).
 The 2026-11-09 user-authorized offload extension adds only the explicit
 KV-transfer argument for the active candidate. Native controls exclude it.
 The 2026-11-10 user authorization changes the default HTTP port to 7878.
+The 2026-11-11 user authorization enables asynchronous KV loads by default.
 Every other native argument remains checked against the original fixture.
 """
 import json
@@ -17,14 +18,14 @@ from tools import install_serve, observe_serve
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN = json.loads((ROOT / 'reports/stable_32k_64k_20261015/frozen_launch.json').read_text())
 AUTHORIZED_KV_OFFLOAD = {"enabled": True, "backend": "memcache",
-                         "max_batch_objects": 256, "timeout_seconds": 60}
+                         "load_async": True, "max_batch_objects": 256, "timeout_seconds": 60}
 AUTHORIZED_HTTP_PORT = 7878
 AUTHORIZED_KV_TRANSFER = {
     "kv_connector": "OscarAscendStoreConnector",
     "kv_connector_module_path": "oscar_ascend.offload.connector",
     "kv_role": "kv_both", "kv_load_failure_policy": "fail",
     "kv_connector_extra_config": {"enabled": True, "backend": "memcache", "use_layerwise": False,
-                                   "max_batch_objects": 256, "timeout_seconds": 60},
+                                   "load_async": True, "max_batch_objects": 256, "timeout_seconds": 60},
 }
 
 

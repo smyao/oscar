@@ -39,6 +39,7 @@ class Metadata:
 
 def lookup_case(bridge_module, candidates=3):
     sender = bridge_module.OscarAscendStoreConnector.__new__(bridge_module.OscarAscendStoreConnector)
+    sender._init_load_state(False)
     sender.namespace = "native-salted-model-layout"
     sender.world_size = 2
     sender.geometry = (

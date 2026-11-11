@@ -1,4 +1,4 @@
-"""Archive #34/#36/#77/#78/#127/#128/#157/#163/#171: offload launch seams.
+"""Archive #34/#36/#77/#78/#94/#125/#127/#128/#157/#163/#171: offload launch seams.
 
 The explicitly requested KV-transfer argument is the only extension to the
 qualified native argv. Native none/align, model/PT/math, placement and timer
@@ -78,6 +78,7 @@ def test_connector_config_is_dedicated_complete_and_does_not_mutate_input():
     assert transfer["kv_role"] == "kv_both"
     assert transfer["kv_load_failure_policy"] == "fail"
     assert transfer["kv_connector_extra_config"]["use_layerwise"] is False
+    assert transfer["kv_connector_extra_config"]["load_async"] is True
     assert transfer == AUTHORIZED_KV_TRANSFER
     validate_transfer_config(SimpleNamespace(**transfer))
     for field, value in (("kv_connector", "AscendStoreConnector"),
@@ -106,6 +107,30 @@ def test_connector_config_is_dedicated_complete_and_does_not_mutate_input():
 def test_invalid_offload_configuration_fails_before_model_import(options):
     with pytest.raises(ValueError):
         offload_options({"kv_offload": options})
+
+
+@pytest.mark.parametrize("selection", [None, True, False], ids=["old-config-default", "async", "sync"])
+def test_load_async_selection_survives_canonical_transfer_validation(selection):
+    target = enabled_target()
+    if selection is not None:
+        target["kv_offload"]["load_async"] = selection
+    previous = deepcopy(target)
+    transfer = transfer_config(target)
+    expected = True if selection is None else selection
+    assert transfer["kv_connector_extra_config"]["load_async"] is expected
+    validate_transfer_config(SimpleNamespace(**transfer))
+    assert target == previous
+
+
+@pytest.mark.parametrize("invalid", [None, "true", "false", 0, 1, {}, []])
+def test_load_async_rejects_non_boolean_values_without_coercion(invalid):
+    for enabled in (False, True):
+        with pytest.raises(ValueError, match="load_async.*boolean"):
+            offload_options({"kv_offload": {"enabled": enabled, "load_async": invalid}})
+    transfer = transfer_config(enabled_target())
+    transfer["kv_connector_extra_config"]["load_async"] = invalid
+    with pytest.raises(ValueError, match="load_async.*boolean"):
+        validate_transfer_config(SimpleNamespace(**transfer))
 
 
 @pytest.mark.parametrize("prefix", [False, True])
@@ -308,6 +333,7 @@ def test_fixed_default_candidate_command_enables_offload(capsys):
     report = json.loads(capsys.readouterr().out)
     _, transfer = remove_transfer(report["vllm_argv"])
     assert transfer["kv_connector"] == CONNECTOR
+    assert transfer["kv_connector_extra_config"]["load_async"] is True
 
 
 def test_explicit_disabled_config_stays_disabled():

@@ -4,7 +4,8 @@ Archive #27/#34/#36/#37-49/#127/#128/#157/#163/#171: external hooks retain
 native scheduling, committed MTP/GDN semantics and captured pool addresses.
 The native AscendStore SDK bootstrap is reused. Its lossy exception wrappers,
 proportional partial-page slicing and align-only scheduler are not reused.
-Transfers are synchronous ownership barriers, not claimed asynchronous overlap.
+Saves retain synchronous ownership barriers. Optional background reads use
+native WAITING_FOR_REMOTE_KVS and all-TP receive completion before admission.
 Archive #182/#183: batch cold prefix-index probes while retaining descending
 complete-checkpoint selection, explicit errors and native salted identities.
 """
@@ -30,6 +31,7 @@ from .scheduler import (OffloadSchedulerState, RequestSnapshot, SnapshotAck,
                         OffloadLifecycleError, freeze_block_ids, token_digest)
 from .state import WorkerCheckpointTracker, reset_restored_cursor
 from .transport import ByteSegment, TransferObject, StrictMemcacheTransport, TransferError
+from .async_load import AsyncLoadQueue
 
 
 @dataclass
@@ -42,6 +44,7 @@ class OscarOffloadMetadata(KVConnectorMetadata):
     prefixes: tuple[PayloadPlan, ...] = ()
     branches: tuple = ()
     prefix_view: str = "shared"
+    retired_loads: tuple = ()
 
 
 @dataclass
@@ -147,6 +150,7 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                     raise OffloadLifecycleError("cache layer appears in multiple physical groups")
                 self._group_for_layer[name] = gid
         extra = vllm_config.kv_transfer_config.kv_connector_extra_config
+        self._init_load_state(extra["load_async"])
         self.transport = StrictMemcacheTransport.from_vllm_config(
             vllm_config, scheduler=role == KVConnectorRole.SCHEDULER,
             max_batch_objects=extra.get("max_batch_objects", 256),
@@ -161,6 +165,19 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
             self.metadata_server = MetadataServer(self.transport, endpoint,
                 timeout_seconds=extra.get("timeout_seconds", 60))
             self.metadata_server.start()
+
+    def _init_load_state(self, load_async):
+        self.load_async = load_async
+        self._load_queue = None
+        self._async_loads = {}
+        self._cancelled_loads = set()
+        self._restored_cursors = {}
+        self._scheduled_loads = {}
+        self._retired_loads = set()
+
+    def _setup_load_device(self):
+        # Same thread-local device selection as the native receiving thread.
+        self.transport.backend.set_device()
 
     def bind_scheduler(self, scheduler):
         if self.scheduler_state is not None:
@@ -181,12 +198,19 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         # A queued restore can be cancelled before dispatch. Once metadata
         # leaves the scheduler, every rank must report completion even if the
         # request is cancelled: another rank may still be checking all keys.
-        self._restores[:] = [plan for plan in self._restores
-                            if (plan.request_id, plan.generation) != (request_id, generation)]
+        self._retired_loads.update(key for key in self._scheduled_loads
+                                   if key[:2] == (request_id, generation))
+        # Native already holds async destination pages until finished_recving,
+        # including cancellation before this metadata frame is dispatched.
+        # Keep these loads queued so every rank emits that final receipt.
+        if not self.load_async:
+            self._restores[:] = [plan for plan in self._restores
+                                if (plan.request_id, plan.generation) != (request_id, generation)]
         for identity, record in tuple(self._swap_payloads.items()):
             if identity[:2] == (request_id, generation):
                 record.discarded = True
-                record.restore_queued = False
+                if not self.load_async:
+                    record.restore_queued = False
                 self._collect_swap(identity)
 
     def _collect_swap(self, identity):
@@ -280,7 +304,8 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         self._synchronize()
         print(f"[oscar] KV_OFFLOAD_READY backend=memcache namespace={self.namespace} "
               f"rank={self.rank} groups={len(self.cache_config.kv_cache_groups)} "
-              "layout=packed+windows+tags+gdn graph_addresses=fixed", flush=True)
+              "layout=packed+windows+tags+gdn graph_addresses=fixed "
+              f"load_async={str(self.load_async).lower()}", flush=True)
         groups = []
         for gid, group in enumerate(self.cache_config.kv_cache_groups):
             spec = group.kv_cache_spec
@@ -341,7 +366,8 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         self._require_scheduler()
         resume = self.scheduler_state.match_resume(request, num_computed_tokens)
         if resume is not None:
-            return resume
+            count, _ = resume
+            return count, self.load_async and count is not None and count > 0
         self._prefix_matches.pop(request.request_id, None)
         policy = self._prefix_policy()
         if policy is None:
@@ -364,7 +390,7 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         if plan is not None:
             self._prefix_matches[request.request_id] = plan
             print(f"[oscar] KV_OFFLOAD_PREFIX_HIT request={request.request_id} tokens={plan.committed_tokens}", flush=True)
-            return plan.committed_tokens - num_computed_tokens, False
+            return plan.committed_tokens - num_computed_tokens, self.load_async
         counts = counts[1:]
         for start in range(0, len(counts), 256):
             candidates = tuple((count, self._prefix_index_key(prefix_identity(
@@ -381,7 +407,7 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                 if plan is not None:
                     self._prefix_matches[request.request_id] = plan
                     print(f"[oscar] KV_OFFLOAD_PREFIX_HIT request={request.request_id} tokens={count}", flush=True)
-                    return count - num_computed_tokens, False
+                    return count - num_computed_tokens, self.load_async
         return 0, False
 
     def update_state_after_alloc(self, request, blocks, num_external_tokens):
@@ -401,6 +427,10 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         else:
             plan = self._prefix_matches.pop(request.request_id)
             self._restores.append(replace(plan, block_ids=freeze_block_ids(blocks)))
+        if self.load_async:
+            plan = self._restores[-1]
+            key = (plan.request_id, plan.generation, plan.version, plan.epoch)
+            self._scheduled_loads[key] = plan
 
     def build_connector_meta(self, scheduler_output):
         scheduler = self._require_scheduler()
@@ -453,11 +483,17 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                 record.restore_dispatched = True
         result = OscarOffloadMetadata(self.session, step_id, generations,
                                      preemptions, tuple(self._restores),
-                                     tuple(prefixes), state.drain_branches(), self._prefix_view)
+                                     tuple(prefixes), state.drain_branches(), self._prefix_view,
+                                     tuple(sorted(self._retired_loads)))
         self._restores.clear()
+        self._retired_loads.clear()
         return result
 
     def update_connector_output(self, connector_output):
+        received = getattr(connector_output, "finished_recving", None) or ()
+        for key in tuple(self._scheduled_loads):
+            if key[0] in received:
+                del self._scheduled_loads[key]
         metadata = connector_output.kv_connector_worker_meta
         if metadata is not None:
             if not isinstance(metadata, OscarOffloadWorkerMetadata):
@@ -511,7 +547,8 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
     def request_finished_all_groups(self, request, block_ids):
         self.scheduler_state.finish(request.request_id)
         self._prefix_matches.pop(request.request_id, None)
-        # Every save finishes before the next execution may recycle its pages.
+        # Saves are complete here. Native WAITING_FOR_REMOTE_KVS cancellation
+        # independently delays destination free until all receive receipts.
         return False, None
 
     def _objects(self, plan, *, loading=False, canonical=()):
@@ -606,28 +643,71 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
             self.tracker.forget(snapshot.request_id)
 
     def after_native_update_states(self, runner, scheduler_output):
-        for plan in scheduler_output.kv_connector_metadata.restores:
-            reset_restored_cursor(runner, plan.request_id)
+        metadata = scheduler_output.kv_connector_metadata
+        if not self.load_async:
+            for plan in metadata.restores:
+                reset_restored_cursor(runner, plan.request_id)
+            return
+        scheduled = scheduler_output.num_scheduled_tokens
+        if any(plan.request_id in scheduled for plan in
+               (*metadata.restores, *self._async_loads.values())):
+            raise OffloadLifecycleError("native admitted a request before its async load receipt")
+        # Async allocation has no input-batch row. Reset only when native has
+        # received all TP completions and actually admits this request. This
+        # must precede preprocess_mamba, not run in the later forward context.
+        for rid in scheduler_output.finished_req_ids:
+            self._restored_cursors.pop(rid, None)
+        for rid in scheduled:
+            plan = self._restored_cursors.pop(rid, None)
+            if plan is not None:
+                if metadata.generations.get(rid) != plan.generation:
+                    raise OffloadLifecycleError("async restore admission generation changed")
+                reset_restored_cursor(runner, rid)
+
+    def _load_payload(self, plan, keys, objects, producer_event=None):
+        if producer_event is not None:
+            # Recorded by the model thread AFTER native new-page zeroing.
+            # Waiting on this event on the I/O thread avoids a model-thread
+            # stream sync while still protecting every destination byte.
+            producer_event.synchronize()
+        if not all(self.transport.exists(keys)):
+            raise TransferError("advertised joint checkpoint was evicted before restore")
+        self.transport.get(objects)
+        return plan
+
+    def _record_restored(self, plan):
+        if plan.version:
+            self._load_acks.append(LoadReceipt(plan.request_id, plan.generation,
+                plan.version, plan.epoch, plan.committed_tokens, self.rank, plan.base_key))
+        print(f"[oscar] KV_OFFLOAD_RESTORE request={plan.request_id} "
+              f"tokens={plan.committed_tokens} rank={self.rank} "
+              f"kind={'swap' if plan.version else 'prefix'} generation={plan.generation} "
+              f"version={plan.version} load_async={str(self.load_async).lower()}", flush=True)
 
     def start_load_kv(self, forward_context, **kwargs):
         metadata = self._get_connector_metadata()
-        if metadata.restores:
+        if metadata.restores and not self.load_async:
             # SDK copy streams must not race the native new-page zeroing.
             self._synchronize()
         for plan in metadata.restores:
             # Check the joint snapshot before touching a destination. An
             # eviction after scheduling is an explicit transfer failure.
             keys = expected_keys(self.namespace, self.world_size, plan, self.geometry)
-            if not all(self.transport.exists(keys)):
-                raise TransferError("advertised joint checkpoint was evicted before restore")
-            self.transport.get(self._objects(plan, loading=True))
-            if plan.version:
-                self._load_acks.append(LoadReceipt(plan.request_id, plan.generation,
-                    plan.version, plan.epoch, plan.committed_tokens, self.rank, plan.base_key))
-            print(f"[oscar] KV_OFFLOAD_RESTORE request={plan.request_id} "
-                  f"tokens={plan.committed_tokens} rank={self.rank} "
-                  f"kind={'swap' if plan.version else 'prefix'} generation={plan.generation} "
-                  f"version={plan.version}", flush=True)
+            objects = self._objects(plan, loading=True)
+            if self.load_async:
+                key = (plan.request_id, plan.generation, plan.version, plan.epoch)
+                if (any(p.request_id == plan.request_id for p in self._async_loads.values())
+                        or plan.request_id in self._restored_cursors):
+                    raise OffloadLifecycleError("duplicate asynchronous restore dispatch")
+                if self._load_queue is None:
+                    self._load_queue = AsyncLoadQueue(self._setup_load_device)
+                event = self._record_producer_event()
+                self._load_queue.submit(key, lambda p=plan, k=keys, o=objects, e=event:
+                                        self._load_payload(p, k, o, e))
+                self._async_loads[key] = plan
+            else:
+                self._load_payload(plan, keys, objects)
+                self._record_restored(plan)
         # This hook also runs before FULL graph replay, and before native
         # pending GDN block copies; no Python per-layer hook is required.
 
@@ -686,7 +766,27 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
     def get_finished(self, finished_req_ids):
         for rid in finished_req_ids:
             self.tracker.forget(rid)
-        return set(), set()
+            self._restored_cursors.pop(rid, None)
+        # finished_req_ids can refer to an old request ID resubmitted in this
+        # same frame. Scheduler retirement identities distinguish its old DMA
+        # from the new generation's read (including pre-dispatch cancellation).
+        if self.load_async:
+            self._cancelled_loads.update(key for key in self._get_connector_metadata().retired_loads
+                                         if key in self._async_loads)
+        received = set()
+        if self._load_queue is not None:
+            for key, plan in self._load_queue.poll():
+                if self._async_loads.pop(key, None) != plan:
+                    raise OffloadLifecycleError("unexpected async load completion identity")
+                self._record_restored(plan)
+                if key not in self._cancelled_loads:
+                    self._restored_cursors[plan.request_id] = plan
+                self._cancelled_loads.discard(key)
+                # Exactly one receive receipt per rank, also after cancel.
+                # Native frees cancelled destinations only after all TP ranks
+                # finish; sending a second finished_sending would double free.
+                received.add(plan.request_id)
+        return set(), received
 
     def build_connector_worker_meta(self):
         result = OscarOffloadWorkerMetadata(tuple(self._acks), tuple(self._prefix_acks),
@@ -697,9 +797,17 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         return result
 
     def shutdown(self):
-        self.tracker.clear()
-        if self.metadata_server is not None:
-            self.metadata_server.close()
-        if self.metadata_client is not None:
-            self.metadata_client.close()
-        self.transport.close()
+        try:
+            if self._load_queue is not None:
+                self._load_queue.shutdown()
+        finally:
+            # SDK failure is raised after draining, but interruption of join
+            # need not have drained. Keep owners in that case; a later close
+            # can join again. Never unregister a still-running DMA's buffer.
+            if self._load_queue is None or self._load_queue.drained:
+                self.tracker.clear()
+                if self.metadata_server is not None:
+                    self.metadata_server.close()
+                if self.metadata_client is not None:
+                    self.metadata_client.close()
+                self.transport.close()

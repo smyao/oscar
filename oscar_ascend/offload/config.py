@@ -17,12 +17,15 @@ def offload_options(config: dict) -> dict | None:
         return None
     if not isinstance(value, dict):
         raise ValueError("kv_offload must be an object")
-    allowed = {"enabled", "backend", "max_batch_objects", "timeout_seconds"}
+    allowed = {"enabled", "backend", "load_async", "max_batch_objects", "timeout_seconds"}
     unknown = set(value) - allowed
     if unknown:
         raise ValueError(f"unknown kv_offload options: {sorted(unknown)}")
     if type(value.get("enabled", False)) is not bool:
         raise ValueError("kv_offload.enabled must be a boolean")
+    load_async = value.get("load_async", True)
+    if type(load_async) is not bool:
+        raise ValueError("kv_offload.load_async must be a boolean")
     if not value.get("enabled", False):
         return None
     if value.get("backend", "memcache") != "memcache":
@@ -36,7 +39,7 @@ def offload_options(config: dict) -> dict | None:
     if config.get("experimental_request_windows", False):
         raise ValueError("offload requires the production physical-page windows")
     return {"enabled": True, "backend": "memcache", "use_layerwise": False,
-            "max_batch_objects": batch, "timeout_seconds": timeout}
+            "load_async": load_async, "max_batch_objects": batch, "timeout_seconds": timeout}
 
 
 def transfer_config(config: dict) -> dict | None:

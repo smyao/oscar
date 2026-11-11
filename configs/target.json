@@ -20,6 +20,7 @@
   "kv_offload": {
     "enabled": true,
     "backend": "memcache",
+    "load_async": true,
     "max_batch_objects": 256,
     "timeout_seconds": 60
   },

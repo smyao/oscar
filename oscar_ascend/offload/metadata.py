@@ -290,7 +290,6 @@ class MetadataServer:
                 return {"status": "ok", "payload": base64.b64encode(payload).decode("ascii")}
             if operation == "put" and set(request) == {"op", "key", "payload"}:
                 payload = _unbase64(request["payload"])
-                decode_manifest(payload)
                 self.publish(key, payload)
                 return {"status": "ok"}
             raise ValueError("unsupported metadata RPC operation or fields")

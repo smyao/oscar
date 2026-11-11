@@ -6,10 +6,12 @@ physical/window/GDN bytes, all-participant completion, and strict errors.
 
 from dataclasses import dataclass
 import json
+import pickle
 import signal
 import subprocess
 import sys
 import textwrap
+from threading import Event, Lock, Thread
 from types import SimpleNamespace
 
 import pytest
@@ -110,6 +112,75 @@ def obj(key="key", offset=0, length=16):
     return TransferObject(key, (ByteSegment(BASE + offset, length),))
 
 
+class InlineSerialWatchdog:
+    """Host callbacks only; assert the production SDK-call serialization."""
+
+    def __init__(self):
+        self.guard = Lock()
+        self.close_calls = 0
+
+    def run(self, operation, function):
+        assert self.guard.acquire(blocking=False), f"concurrent SDK call: {operation}"
+        try:
+            return function()
+        finally:
+            self.guard.release()
+
+    def close(self):
+        self.close_calls += 1
+
+
+class ThreadCall:
+    def __init__(self, function):
+        self.result = None
+        self.errors = []
+
+        def run():
+            try:
+                self.result = function()
+            except Exception as exc:
+                self.errors.append(exc)
+
+        self.thread = Thread(target=run, daemon=True)
+        self.thread.start()
+
+    def join(self):
+        self.thread.join(timeout=5)
+        assert not self.thread.is_alive(), "host callback did not finish"
+
+
+def pause_between_batches(monkeypatch, transport, keys):
+    """Pause outside the SDK call, without relying on lock scheduling fairness."""
+    entered, release = Event(), Event()
+    original = transport._batches
+
+    def gated(objects):
+        target = tuple(item.key for item in objects) == tuple(keys)
+        for index, batch in enumerate(original(objects)):
+            yield batch
+            if target and index == 0:
+                entered.set()
+                assert release.wait(5), "host test did not release the next batch"
+
+    monkeypatch.setattr(transport, "_batches", gated)
+    return entered, release
+
+
+def observe_close_wait(monkeypatch, transport, *, count=1):
+    waiting = Event()
+    original = transport._read_condition.wait
+    calls = []
+
+    def observed_wait(*args, **kwargs):
+        calls.append(True)
+        if len(calls) == count:
+            waiting.set()
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(transport._read_condition, "wait", observed_wait)
+    return waiting
+
+
 def test_full_components_and_gdn_roundtrip_without_token_proportional_copy():
     store, transport = setup_transport()
     # Variable-size packed, wk, wv, tags and GDN state.  Every complete
@@ -164,6 +235,8 @@ def test_missing_is_distinct_and_does_not_modify_destination_or_poison():
     assert not transport.failed
     assert bytes(store.memory) == before
     assert all(call[0] != "get" for call in store.calls)
+    assert transport._active_reads == 0
+    assert transport._read_owner is None
     transport.put([obj("present")])
     transport.get([obj("present")])
 
@@ -177,6 +250,258 @@ def test_size_mismatch_fails_before_any_dma():
     assert bytes(store.memory) == before
     assert all(call[0] != "get" for call in store.calls)
     assert transport.failed
+
+
+def test_present_payload_checks_sizes_once_without_existence_queries():
+    store, transport = setup_transport(max_batch_objects=2, max_batch_bytes=24)
+    objects = [obj(str(i), offset=i * 16, length=8) for i in range(5)]
+    for item in objects:
+        store.objects[item.key] = item.key.encode() * 8
+    store.calls.clear()
+    try:
+        receipt = transport.get(objects)
+        assert receipt.keys == tuple(str(i) for i in range(5))
+        assert [call[0] for call in store.calls] == ["info"] * 3 + ["get"] * 3
+        assert [call[1] for call in store.calls[:3]] == [("0", "1"), ("2", "3"), ("4",)]
+        for i in range(5):
+            assert bytes(store.memory[i * 16:i * 16 + 8]) == str(i).encode() * 8
+    finally:
+        transport.close()
+
+
+def test_metadata_batching_does_not_inherit_payload_byte_limit():
+    store, transport = setup_transport(max_batch_objects=2, max_batch_bytes=8)
+    objects = [obj(str(i), offset=i * 16, length=8) for i in range(3)]
+    for item in objects:
+        store.objects[item.key] = b"abcdefgh"
+    store.calls.clear()
+    try:
+        transport.get(objects)
+        assert [call[0] for call in store.calls] == ["info"] * 2 + ["get"] * 3
+    finally:
+        transport.close()
+
+
+def test_zero_sizes_probe_only_ambiguous_keys_and_preserve_missing():
+    store, transport = setup_transport(max_batch_objects=2)
+    store.objects["present"] = b"x" * 16
+    store.calls.clear()
+    before = bytes(store.memory)
+    try:
+        with pytest.raises(MissingObjectsError) as error:
+            transport.get([obj("present"), obj("missing", offset=32)])
+        assert error.value.keys == ("missing",)
+        assert store.calls == [("info", ("present", "missing")), ("exists", ("missing",))]
+        assert bytes(store.memory) == before and not transport.failed
+    finally:
+        transport.close()
+
+
+def test_zero_size_for_existing_object_is_failure_not_miss():
+    store, transport = setup_transport()
+    store.objects["key"] = b"x" * 16
+    store.overrides["info"] = [KeyInfo(0)]
+    before = bytes(store.memory)
+    try:
+        with pytest.raises(ObjectSizeError, match="zero|empty|size"):
+            transport.get([obj()])
+        assert transport.failed
+        assert bytes(store.memory) == before
+        assert not any(call[0] == "get" for call in store.calls)
+    finally:
+        transport.close()
+
+
+def test_zero_size_probe_error_stays_error():
+    store, transport = setup_transport()
+    cause = TimeoutError("existence unavailable")
+    store.overrides["exists"] = cause
+    try:
+        with pytest.raises(TransferError, match="existence unavailable") as error:
+            transport.get([obj("missing")])
+        assert error.value.__cause__ is cause
+        assert transport.failed and not any(call[0] == "get" for call in store.calls)
+    finally:
+        transport.close()
+
+
+@pytest.mark.parametrize("info", [None, [], [KeyInfo(16), KeyInfo(16)], [object()],
+                                   [KeyInfo(True)], [KeyInfo(-1)], [KeyInfo("16")]])
+def test_invalid_key_info_is_never_a_miss_or_permission_to_copy(info):
+    store, transport = setup_transport()
+    store.objects["key"] = b"x" * 16
+    store.overrides["info"] = info
+    try:
+        with pytest.raises(TransferError):
+            transport.get([obj()])
+        assert transport.failed
+        assert not any(call[0] in {"exists", "get"} for call in store.calls)
+    finally:
+        transport.close()
+
+
+def test_late_batch_bad_size_prevents_all_payload_dma():
+    store, transport = setup_transport(max_batch_objects=2)
+    objects = [obj(str(i), offset=i * 32) for i in range(3)]
+    store.objects.update({"0": b"a" * 16, "1": b"b" * 16, "2": b"wrong"})
+    before = bytes(store.memory)
+    try:
+        with pytest.raises(ObjectSizeError):
+            transport.get(objects)
+        assert sum(call[0] == "info" for call in store.calls) == 2
+        assert not any(call[0] == "get" for call in store.calls)
+        assert bytes(store.memory) == before
+        assert transport._active_reads == 0
+        assert transport._read_owner is None
+    finally:
+        transport.close()
+
+
+def test_eviction_after_size_check_is_failed_read_not_completion():
+    store, transport = setup_transport()
+    store.objects["key"] = b"x" * 16
+    info = store.batch_get_key_info
+
+    def evict_after_info(keys):
+        result = info(keys)
+        store.objects.clear()
+        return result
+
+    store.batch_get_key_info = evict_after_info
+    try:
+        with pytest.raises(TransferError) as error:
+            transport.get([obj()])
+        assert isinstance(error.value.__cause__, KeyError)
+        assert transport.failed
+    finally:
+        transport.close()
+
+
+def test_transfer_object_size_cache_preserves_constructor_and_serialization(monkeypatch):
+    from dataclasses import asdict, fields, replace
+    from oscar_ascend.offload import transport as module
+
+    item = TransferObject("key", (ByteSegment(BASE, 7), ByteSegment(BASE + 16, 9)))
+    assert tuple(field.name for field in fields(item)) == ("key", "segments")
+    assert set(asdict(item)) == {"key", "segments"}
+    assert item.__getstate__() == {"key": item.key, "segments": item.segments}
+    restored = pickle.loads(pickle.dumps(item))
+    assert restored == item and restored.nbytes == 16
+    changed = replace(item, segments=(ByteSegment(BASE, 3),))
+    assert changed.nbytes == 3
+
+    def unexpected_sum(*args, **kwargs):
+        pytest.fail("frozen object size was recomputed")
+
+    monkeypatch.setattr(module, "sum", unexpected_sum, raising=False)
+    assert item.nbytes == restored.nbytes == 16
+    assert changed.nbytes == 3
+
+
+def test_contiguous_window_components_coalesce_only_in_sdk_vectors():
+    store, transport = setup_transport()
+    segments = tuple(ByteSegment(BASE + start, size) for start, size in
+                     ((0, 13), (64, 14), (78, 18), (96, 8)))
+    item = TransferObject("packed+window-k+window-v+tags", segments)
+    expected = bytes(store.memory[:13] + store.memory[64:104])
+    try:
+        transport.put([item])
+        assert store.objects[item.key] == expected
+        put = next(call for call in store.calls if call[0] == "put")
+        assert put[2:4] == ([[BASE, BASE + 64]], [[13, 40]])
+        assert item.segments == segments and len(item.segments) == 4
+        store.memory[:] = b"\xff" * len(store.memory)
+        transport.get([item])
+        get = next(call for call in store.calls if call[0] == "get")
+        assert get[2:4] == put[2:4]
+        assert bytes(store.memory[:13] + store.memory[64:104]) == expected
+        assert store.memory[13:64] == b"\xff" * 51
+        assert store.memory[104:] == b"\xff" * (len(store.memory) - 104)
+    finally:
+        transport.close()
+
+
+def test_coalescing_does_not_cross_adjacent_registration_owners():
+    store = FakeStore()
+    transport = StrictMemcacheTransport(store, registration_alignment=1)
+    transport.register_buffers([(BASE + 16, 32), (BASE, 16)])
+    item = TransferObject("key", (ByteSegment(BASE, 16), ByteSegment(BASE + 16, 7),
+                                  ByteSegment(BASE + 23, 9)))
+    try:
+        transport.put([item])
+        put = next(call for call in store.calls if call[0] == "put")
+        assert put[2:4] == ([[BASE, BASE + 16]], [[16, 16]])
+        expected = bytes(store.memory[:32])
+        store.memory[:] = b"\xff" * len(store.memory)
+        transport.get([item])
+        assert bytes(store.memory[:32]) == expected
+        assert store.memory[32:] == b"\xff" * (len(store.memory) - 32)
+    finally:
+        transport.close()
+
+
+@pytest.mark.parametrize("parts,expected", [
+    (((0, 7), (12, 3), (15, 2)), ((0, 7), (12, 5))),
+    (((8, 3), (0, 8)), ((8, 3), (0, 8))),
+    (((0, 8), (4, 8)), ((0, 8), (4, 8))),
+    (((0, 7), (7, 2)), ((0, 9),)),
+])
+def test_coalescing_preserves_payload_order_gaps_overlap_and_short_tails(parts, expected):
+    store, transport = setup_transport()
+    item = TransferObject("key", tuple(ByteSegment(BASE + start, size) for start, size in parts))
+    payload = b"".join(bytes(store.memory[start:start + size]) for start, size in parts)
+    try:
+        transport.put([item])
+        put = next(call for call in store.calls if call[0] == "put")
+        assert put[2] == [[BASE + start for start, _ in expected]]
+        assert put[3] == [[size for _, size in expected]]
+        assert store.objects["key"] == payload
+        store.memory[:] = b"\xff" * len(store.memory)
+        transport.get([item])
+        assert b"".join(bytes(store.memory[start:start + size]) for start, size in parts) == payload
+        touched = {index for start, size in parts for index in range(start, start + size)}
+        assert all(value == 255 for index, value in enumerate(store.memory) if index not in touched)
+    finally:
+        transport.close()
+
+
+def test_contiguous_objects_are_never_coalesced_across_keys():
+    store, transport = setup_transport()
+    try:
+        transport.put([obj("one", length=8), obj("two", offset=8, length=8)])
+        put = next(call for call in store.calls if call[0] == "put")
+        assert put[1:4] == (("one", "two"), [[BASE], [BASE + 8]], [[8], [8]])
+        assert store.objects["one"] == bytes(store.memory[:8])
+        assert store.objects["two"] == bytes(store.memory[8:16])
+    finally:
+        transport.close()
+
+
+def test_registration_index_refreshes_for_new_owner_and_partial_cleanup():
+    store = FakeStore()
+    transport = StrictMemcacheTransport(store, registration_alignment=1)
+    transport.register_buffers([(BASE + 128, 16)])
+    transport.register_buffers([(BASE, 16)])
+    try:
+        transport.put([obj("new-owner")])
+        assert store.objects["new-owner"] == bytes(store.memory[:16])
+        assert transport._region_starts == (BASE, BASE + 128)
+        unregister = store.unregister_buffer
+
+        def fail_one(address, length):
+            unregister(address, length)
+            return -7 if address == BASE + 128 else 0
+
+        store.unregister_buffer = fail_one
+        with pytest.raises(TransferError, match="cleanup failed"):
+            transport.close()
+        assert transport.registered_regions == (ByteSegment(BASE + 128, 16),)
+        assert transport._region_starts == (BASE + 128,)
+        assert transport._region_index == transport.registered_regions
+        with pytest.raises(TransferError, match="closed"):
+            transport.get([obj("new-owner")])
+    finally:
+        transport.close()
 
 
 def test_load_failure_is_not_completion_even_if_sdk_modified_bytes():
@@ -507,3 +832,185 @@ def test_probe_remote_cleanup_cannot_report_success_after_failed_deletion(failur
     with pytest.raises((TransferError, RuntimeError)):
         _cleanup_remote_objects(transport, prefix=prefix, rank=0, world_size=1)
     transport.close()
+
+
+def test_get_allows_metadata_and_put_between_serial_sdk_batches(monkeypatch):
+    watchdog = InlineSerialWatchdog()
+    store, transport = setup_transport(max_batch_objects=1, _watchdog=watchdog)
+    items = [obj("read-a"), obj("read-b", offset=32)]
+    store.objects.update({"read-a": b"a" * 16, "read-b": b"b" * 16})
+    expected_saved = bytes(store.memory[64:80])
+    entered, release = pause_between_batches(monkeypatch, transport, [item.key for item in items])
+    reader = ThreadCall(lambda: transport.get(items))
+    control = None
+    try:
+        assert entered.wait(5)
+        assert transport._active_reads == 1
+        # This finishes while the read is paused. No timing/fairness claim:
+        # the gate explicitly makes the point between data batches available.
+        control = ThreadCall(lambda: (transport.exists(["read-a"]), transport.put([obj("saved", offset=64)])))
+        control.join()
+        assert control.errors == []
+        assert control.result[0] == (True,)
+        assert store.objects["saved"] == expected_saved
+        assert [call[0] for call in store.calls] == ["register", "info", "info", "get", "exists", "put"]
+    finally:
+        release.set()
+        reader.join()
+        if control is not None:
+            control.join()
+        transport.close()
+    assert reader.errors == []
+    assert reader.result.keys == ("read-a", "read-b")
+    assert store.memory[:16] == b"a" * 16
+    assert store.memory[32:48] == b"b" * 16
+    assert transport._active_reads == 0
+    assert transport._read_owner is None
+    assert watchdog.close_calls == 1
+
+
+@pytest.mark.parametrize("closer_count", [1, 2])
+def test_close_waits_for_read_lease_and_rejects_new_reads_and_registration(monkeypatch, closer_count):
+    watchdog = InlineSerialWatchdog()
+    store, transport = setup_transport(max_batch_objects=1, _watchdog=watchdog)
+    items = [obj("a"), obj("b", offset=32)]
+    store.objects.update({"a": b"a" * 16, "b": b"b" * 16})
+    entered, release = pause_between_batches(monkeypatch, transport, ["a", "b"])
+    waiting = observe_close_wait(monkeypatch, transport, count=closer_count)
+    reader = ThreadCall(lambda: transport.get(items))
+    closers, queued = [], None
+    try:
+        assert entered.wait(5)
+        closers = [ThreadCall(transport.close) for _ in range(closer_count)]
+        assert waiting.wait(5)
+        with transport._lock:
+            assert transport._closing
+            assert transport._active_reads == 1
+            assert not transport._closed
+            assert not any(call[0] in ("unregister", "close") for call in store.calls)
+        owners = list(transport._owners)
+        with pytest.raises(TransferError, match="closing"):
+            transport.register_buffers([(BASE * 2, 16)], owners=[object()])
+        assert transport._owners == owners
+        queued = ThreadCall(lambda: transport.get([obj("a")]))
+    finally:
+        release.set()
+        reader.join()
+        for closer in closers:
+            closer.join()
+        if queued is not None:
+            queued.join()
+        transport.close()
+    assert reader.errors == []
+    assert all(not closer.errors for closer in closers)
+    assert len(queued.errors) == 1
+    assert isinstance(queued.errors[0], TransferError)
+    assert "clos" in str(queued.errors[0])
+    assert [call[0] for call in store.calls] == ["register", "info", "info", "get", "get", "unregister", "close"]
+    assert watchdog.close_calls == 1
+    assert transport._active_reads == 0
+
+
+@pytest.mark.parametrize("reentrant_operation", ["close", "get"])
+def test_read_thread_reentrant_close_or_get_fails_without_deadlock(monkeypatch, reentrant_operation):
+    store, transport = setup_transport(_watchdog=InlineSerialWatchdog())
+    store.objects["a"] = b"a" * 16
+
+    def reenter(*args):
+        if reentrant_operation == "close":
+            transport.close()
+        else:
+            transport.get([obj("a")])
+        pytest.fail("reentrant operation unexpectedly returned")
+
+    monkeypatch.setattr(store, "batch_get_into_layers", reenter)
+    reader = ThreadCall(lambda: transport.get([obj("a")]))
+    reader.join()
+    assert len(reader.errors) == 1
+    assert isinstance(reader.errors[0], TransferError)
+    assert "active read thread" in str(reader.errors[0])
+    assert isinstance(reader.errors[0].__cause__, TransferError)
+    assert not transport._closing
+    assert transport.failed
+    assert transport._active_reads == 0
+    assert transport._read_owner is None
+    assert not any(call[0] == "unregister" for call in store.calls)
+    transport.close()
+
+
+@pytest.mark.parametrize("failure", ["second_get", "interleaved_metadata"])
+def test_failed_late_read_releases_lease_before_close_and_never_returns_receipt(monkeypatch, failure):
+    store, transport = setup_transport(max_batch_objects=1, _watchdog=InlineSerialWatchdog())
+    items = [obj("a"), obj("b", offset=32)]
+    store.objects.update({"a": b"a" * 16, "b": b"b" * 16})
+    entered, release = pause_between_batches(monkeypatch, transport, ["a", "b"])
+    waiting = observe_close_wait(monkeypatch, transport)
+    reader = ThreadCall(lambda: transport.get(items))
+    closer = None
+    try:
+        assert entered.wait(5)
+        if failure == "second_get":
+            store.overrides["get"] = [-1]
+        else:
+            store.overrides["exists"] = [-1]
+            with pytest.raises(TransferError, match="invalid/failed"):
+                transport.exists(["a"])
+        closer = ThreadCall(transport.close)
+        assert waiting.wait(5)
+        assert not any(call[0] == "unregister" for call in store.calls)
+    finally:
+        release.set()
+        reader.join()
+        if closer is not None:
+            closer.join()
+        transport.close()
+    assert reader.result is None
+    assert len(reader.errors) == 1
+    assert isinstance(reader.errors[0], TransferError)
+    assert transport.failed
+    assert transport._active_reads == 0
+    assert transport._read_owner is None
+    assert closer.errors == []
+    assert [call[0] for call in store.calls][-2:] == ["unregister", "close"]
+    assert sum(call[0] == "get" for call in store.calls) == (2 if failure == "second_get" else 1)
+
+
+def test_two_gets_are_serialized_for_their_entire_reads(monkeypatch):
+    store, transport = setup_transport(max_batch_objects=1, _watchdog=InlineSerialWatchdog())
+    store.objects.update({key: key.encode() * 16 for key in ("a", "b", "c")})
+    entered, release = pause_between_batches(monkeypatch, transport, ["a", "b"])
+    reader = ThreadCall(lambda: transport.get([obj("a"), obj("b", offset=32)]))
+    second = None
+    try:
+        assert entered.wait(5)
+        assert not transport._read_lock.acquire(blocking=False)
+        second = ThreadCall(lambda: transport.get([obj("c", offset=64)]))
+    finally:
+        release.set()
+        reader.join()
+        if second is not None:
+            second.join()
+        transport.close()
+    assert reader.errors == second.errors == []
+    assert [call[:2] for call in store.calls if call[0] in ("info", "get")] == [
+        ("info", ("a",)), ("info", ("b",)), ("get", ("a",)), ("get", ("b",)),
+        ("info", ("c",)), ("get", ("c",)),
+    ]
+
+
+def test_put_keeps_operation_lock_across_batches(monkeypatch):
+    store, transport = setup_transport(max_batch_objects=1, _watchdog=InlineSerialWatchdog())
+    entered, release = pause_between_batches(monkeypatch, transport, ["a", "b"])
+    writer = ThreadCall(lambda: transport.put([obj("a"), obj("b", offset=32)]))
+    try:
+        assert entered.wait(5)
+        acquired = transport._lock.acquire(blocking=False)
+        if acquired:
+            transport._lock.release()
+        assert not acquired
+        assert transport._active_reads == 0
+    finally:
+        release.set()
+        writer.join()
+        transport.close()
+    assert writer.errors == []

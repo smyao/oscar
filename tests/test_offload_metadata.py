@@ -17,6 +17,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from oscar_ascend.offload import metadata as metadata_module
 from oscar_ascend.offload.metadata import (
     ManifestIntegrityError,
     MetadataClient,
@@ -27,6 +28,7 @@ from oscar_ascend.offload.metadata import (
 )
 from oscar_ascend.offload.transport import MAX_HOST_OBJECT_BYTES, MissingObjectsError, StrictMemcacheTransport, TransferError
 from oscar_ascend.offload.plans import PayloadPlan, expected_keys, snapshot_key
+from test_offload_native_bridge import bridge_module  # noqa: F401
 
 
 class MemoryStore:
@@ -68,6 +70,19 @@ def body(generation="a"):
     return {"namespace": "math+pt", "base_key": "prefix/data/" + generation,
             "committed_tokens": 4096, "index_key": "prefix",
             "keys": [generation + "/full", generation + "/gdn"]}
+
+
+@pytest.fixture
+def decoded_payloads(monkeypatch):
+    calls = []
+    original = metadata_module.decode_manifest
+
+    def decode(payload):
+        calls.append(payload)
+        return original(payload)
+
+    monkeypatch.setattr(metadata_module, "decode_manifest", decode)
+    return calls
 
 
 @pytest.fixture
@@ -221,6 +236,28 @@ def test_malformed_put_does_not_call_host_sdk(rpc):
     response = server.dispatch({"op": "put", "key": "prefix", "payload": base64.b64encode(b"partial").decode()})
     assert response["status"] == "error"
     assert store.objects == before
+
+
+@pytest.mark.parametrize("mutation", ["checksum", "duplicate-json-key"])
+def test_rpc_put_rejects_corrupt_manifest_before_any_sdk_call(rpc, decoded_payloads, mutation):
+    store, _, _, client = rpc
+    payload = encode_manifest(body("first"))
+    if mutation == "checksum":
+        record = json.loads(payload)
+        record["checksum"] = "0" * 64
+        payload = json.dumps(record).encode()
+    else:
+        payload = payload.replace(b'"body":{', b'"body":{},"body":{')
+    before = dict(store.objects)
+    sdk_calls = []
+    original_exists = store.batch_is_exist
+    original_put = store.put
+    store.batch_is_exist = lambda keys: (sdk_calls.append("exists"), original_exists(keys))[1]
+    store.put = lambda key, value: (sdk_calls.append("put"), original_put(key, value))[1]
+    with pytest.raises(TransferError, match="ManifestIntegrityError"):
+        client._rpc({"op": "put", "key": "prefix", "payload": base64.b64encode(payload).decode()})
+    assert decoded_payloads == [payload]
+    assert sdk_calls == [] and store.objects == before
 
 
 def test_multiple_rpc_clients_receive_one_verified_generation(rpc):
@@ -504,11 +541,15 @@ def test_rpc_endpoints_are_shared_within_engine_and_isolated_between_engines(mon
     assert rpc_endpoint(config("a")) != rpc_endpoint(config("b"))
 
 
-def test_immutable_sdk_retains_complete_first_writer_without_error(rpc):
+def test_immutable_sdk_retains_complete_first_writer_without_error(rpc, decoded_payloads):
     store, transport, _, client = rpc
     store.immutable = True
     client.put("prefix", body("first"))
+    assert decoded_payloads == [encode_manifest(body("first"))]
+    decoded_payloads.clear()
     client.put("prefix", body("second"))
+    # Validate the incoming bytes once and independently verify the winner.
+    assert decoded_payloads == [encode_manifest(body("second")), encode_manifest(body("first"))]
     assert client.get("prefix") == body("first")
     assert not transport.failed
 
@@ -522,7 +563,7 @@ def test_immutable_sdk_replaces_stale_index_with_complete_new_generation(rpc):
     assert client.get("prefix") == body("second")
 
 
-def test_concurrent_replacement_winner_is_verified_instead_of_overwritten(rpc):
+def test_concurrent_replacement_winner_is_verified_instead_of_overwritten(rpc, decoded_payloads):
     store, transport, _, client = rpc
     store.immutable = True
     client.put("prefix", body("first"))
@@ -534,7 +575,9 @@ def test_concurrent_replacement_winner_is_verified_instead_of_overwritten(rpc):
         store.objects[key] = encode_manifest(body("new"))
         return result
     store.remove = racing_remove
+    decoded_payloads.clear()
     client.put("prefix", body("second"))
+    assert decoded_payloads == [encode_manifest(body(name)) for name in ("second", "first", "new")]
     assert client.get("prefix") == body("new")
     assert not transport.failed
 
@@ -566,6 +609,61 @@ def test_manifest_is_not_published_until_every_payload_exists(rpc):
     with pytest.raises(TransferError, match="before every payload"):
         client.put("prefix", body("first"))
     assert "prefix" not in store.objects
+
+
+@pytest.mark.parametrize("outcome", ["complete", "missing-payload", "sdk-error"])
+def test_connector_all_tp_receipts_publish_through_rpc_with_one_payload_check(
+        rpc, bridge_module, outcome):
+    store, transport, _, client = rpc
+    sender = bridge_module.OscarAscendStoreConnector.__new__(bridge_module.OscarAscendStoreConnector)
+    sender.namespace = "joint-model-geometry"
+    sender.world_size = 2
+    sender.geometry = (
+        {"layer_name": "full", "cache_family": "oscar_full", "storage_block_size": 4},
+        {"layer_name": "gdn", "cache_family": "gdn", "components": [{}, {}]},
+    )
+    sender._scheduled_loads = {}
+    sender._prefix_publications = {}
+    sender._prefix_view = "shared"
+    # Both paths point at the same SDK counter: a duplicated scheduler-side
+    # check cannot hide behind a separate fake transport.
+    sender.transport = transport
+    sender.metadata_client = client
+    plan = PayloadPlan("request", 1, 0, 0, 8, (), "prefix/data/checkpoint")
+    keys = expected_keys(sender.namespace, sender.world_size, plan, sender.geometry)
+    store.objects.update({key: b"payload" for key in keys})
+    if outcome == "missing-payload":
+        del store.objects[keys[-1]]
+    calls = []
+    original_exists = store.batch_is_exist
+
+    def exists(batch):
+        calls.append(tuple(batch))
+        if outcome == "sdk-error":
+            raise RuntimeError("SDK unavailable")
+        return original_exists(batch)
+
+    store.batch_is_exist = exists
+
+    def output(rank):
+        receipt = bridge_module.PrefixReceipt("prefix", plan, rank, sender._prefix_view)
+        metadata = bridge_module.OscarOffloadWorkerMetadata(prefixes=(receipt,))
+        return SimpleNamespace(kv_connector_worker_meta=metadata)
+
+    sender.update_connector_output(output(0))
+    assert calls == [] and "prefix" not in store.objects
+    if outcome == "complete":
+        sender.update_connector_output(output(1))
+        manifest = decode_manifest(store.objects["prefix"])
+        assert manifest["keys"] == list(keys)
+        assert manifest["namespace"] == sender.namespace
+        assert not sender._prefix_publications
+    else:
+        message = "before every payload" if outcome == "missing-payload" else "SDK unavailable"
+        with pytest.raises(TransferError, match=message):
+            sender.update_connector_output(output(1))
+        assert "prefix" not in store.objects
+    assert calls == [keys]
 
 
 def test_duplicate_manifest_with_foreign_identity_is_never_retained(rpc):

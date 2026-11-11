@@ -33,6 +33,33 @@ SDK 调用要求完整返回状态数组，拒绝异常、部分成功、非法�
 
 前缀manifest读取也先检查存在性：未发布的候选索引直接返回miss，不调用会对缺失键打印ERROR的SDK Get。预查后读取为空仍再次确认是否被驱逐；对象仍存在却读空、SDK异常及校验失败继续报错。此顺序修正不缓存miss、不改变发布/查找范围，也不把所有SDK info invalid无条件吞掉。用户07:49日志已有外部命中40.6%及四rank前缀恢复；与本轮尚未部署的查询修复分开记录，详见档案#183。
 
+### 2026-11-11：减少恢复路径的重复工作
+
+依据档案#37–49/#127/#128/#157/#163/#171/#182/#183，在已实现的异步回载上进一步减少查询、描述符构造和锁等待；默认入口直接生效，无需增加参数。
+
+- **异步 worker 只检查本卡实际需要恢复的对象。** 调度端查找时仍验证完整联合 checkpoint；各卡随后独立校验全部目标对象的尺寸和实际 GET 结果，原生仍收齐全部 TP 完成才准入。删除每卡重复生成并查询全 TP keys 的步骤，也不会因已在本地命中的 FULL 页之外部副本后来被驱逐而错误拒绝剩余恢复。显式同步模式仍保留原来的全 TP 预查。
+- **正常 payload 读取由 size→GET 完成。** 完整、正数且精确匹配的 key-info 已提供本次存在性证据，不再先做同一批 exists。全部对象尺寸仍须在任何 DMA 前通过；零尺寸只对对应 keys 补查 exists，区分缺失与非法已存对象。读取期间被驱逐、尺寸异常、部分成功和 SDK 错误仍失败。未缓存远端存在性或大小；manifest 冷查仍保留#183 的先 exists 后 host GET，避免重新引入缺失索引 ERROR。
+- **描述符构造移到 I/O 线程。** 只使用不可变计划及已注册的固定地址，不读取运行中的 input-batch 或 tensor 内容。同一调度帧的恢复共用一个在 native 清零之后记录的 producer event，仍在 DMA 前等待；重复下发按请求 ID 集合检查。
+- **缩短传输向量。** 同一个对象内部、同一个注册 owner 内相邻的字节段合并为一个 SDK 向量；连续的 window K/V/tags 可由三段合为一段，packed 仍独立。keys、字节顺序、总长度和公开 segments 均不变，旧缓存仍可读。跨 owner、间隙、逆序与重叠段不合并。注册区间索引只在注册/注销时重建，对象总字节数只在创建时计算，不在每次传输重复排序或求和。
+- **共享索引发布只执行一次完整 payload 预查。** scheduler 收齐全部保存回执后，由 `MetadataServer.publish` 在写入前统一验证完整 keys，删除 scheduler 的同一轮重复查询；IPC put 复用 publish 的 manifest 解码与校验，不再连续解码两次。并发赢家与 checksum 校验保留。
+- **SDK 锁按数据批次释放。** 后台回载不再从尺寸检查到全部 GET 结束始终占住 SDK 锁，rank0 的 manifest 查询可在数据批次之间进入。每次 SDK 调用、watchdog 与状态检查仍串行，保存和回滚仍保持整次操作的锁。独立读取锁串行化多个 get，活跃读取计数跨全部批次保住注册 owner；关闭拒绝新读和新注册，等已准入读取结束后才注销。后续批次仍检查已有错误，不在部分读取后返回成功。
+
+向量合并依据官方 [MemCache C++ API](https://github.com/Ascend/memcache/blob/master/doc/memcache_c%2B%2B_api.md)：多段写入形成单个逻辑对象，读取按调用方给出的地址和尺寸散布。主机字节回归同时覆盖旧四段写入→新两段读取、反向读取及非连续布局；这里没有把主机 stub 结果当作现场 SDK/NPU 验收。
+
+确定的工作量变化：仅 transport 层的五对象、每批两对象用例，正常 SDK 调用由三批 exists＋三批 size＋三批 GET，共9次，降为三批 size＋三批 GET，共6次；异步 connector 还省去每个 worker 的全 TP exists，另行保留调度端完整性验证。这是调用次数变化，不是耗时或吞吐提升比例。实际数据传输、完整尺寸校验、producer event 和全 TP 完成屏障仍是必要成本；本轮不改 CANN、精度、PC/chunked prefill/MTP 策略、timer 或启动参数。
+
+分批解锁提供交错执行机会，不保证锁公平性；单次 SDK 调用和全量尺寸预检仍不可抢占。manifest RPC 本身仍同步，不能将这次改动表述为调度线程完全无等待。真正异步的 prefix 查询还需要原生排队、取消/重置/迟到结果和代际检查的独立协议，本次不把它混入数据恢复优化。
+
+最终主机专项 **624 passed**，命令如下。包含真实本机 IPC、none/align/MTP、部分本地命中、旧缓存字节兼容、查询/DMA 调用顺序、全 TP 失败隔离、取消和同 ID 重用，以及批间查询/保存、关闭等待读取、双关闭、同线程重入和后批失败的确定性并发回归。未连接真机或测速；不能据此给出恢复毫秒数或吞吐收益。
+
+```bash
+.venv/bin/python -m pytest -q tests/test_offload_*.py tests/test_prefix_checkpoint_*.py \
+  tests/test_prefix_cache_request_logging.py tests/test_pd_step_stats.py \
+  tests/test_stable_launch_frozen.py tests/test_memcache_launch.py \
+  tests/test_align_prefill_state_contract.py tests/test_prefill_state_contract_hooks.py \
+  tests/test_plugin.py --tb=short
+```
+
 ### 2026-11-11：默认启用异步回载
 
 `kv_offload.load_async` 默认是 JSON 布尔值 `true`，启动时传入 `kv_connector_extra_config.load_async=true`。旧 target 未写这个字段时也使用 true；显式布尔 `false` 保留同步路径，字符串 `"true"` / `"false"` 均拒绝。node93 入口直接执行 `bash scripts/start_node93_oscar.sh`，无需追加参数。启动 `KV_OFFLOAD_READY` 和实际完成的 `KV_OFFLOAD_RESTORE` 日志均标明 `load_async=true`。

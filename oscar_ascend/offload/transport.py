@@ -4,6 +4,10 @@ Archive: #34/#36 (fixed graph buffers), #37--49/#127/#128 (physical
 pages and complete window state), #157/#163/#171 (errors and joint state).
 Archive #183: probe missing prefix indexes before SDK Get, retaining read
 errors and the post-read eviction check rather than suppressing SDK logs.
+Archive #37--49/#171: payload key-info must validate every complete object
+before DMA. Native pool_worker._prepare_load_gvas consumes key_info.size();
+nonzero exact sizes avoid a duplicate payload existence query, but zero sizes
+need an existence check to distinguish missing data from invalid metadata.
 The native MemcacheBackend is used for initialization, never for its put/get
 wrappers: those wrappers can log a failure and return apparent completion.
 
@@ -26,7 +30,7 @@ import os
 import signal
 import subprocess
 import sys
-from threading import RLock
+from threading import Condition, Lock, RLock, get_ident
 import time
 from typing import Any, Callable, Iterable, Sequence
 
@@ -206,10 +210,21 @@ class TransferObject:
         if not segments:
             raise ValueError("a transfer object requires at least one byte segment")
         object.__setattr__(self, "segments", segments)
+        object.__setattr__(self, "_nbytes", sum(segment.length for segment in segments))
 
     @property
     def nbytes(self) -> int:
-        return sum(segment.length for segment in self.segments)
+        return self._nbytes
+
+    def __getstate__(self):
+        # Keep the original serialized state/constructor ABI. This derived
+        # value is not a dataclass field and never becomes external metadata.
+        return {"key": self.key, "segments": self.segments}
+
+    def __setstate__(self, state):
+        object.__setattr__(self, "key", state["key"])
+        object.__setattr__(self, "segments", state["segments"])
+        self.__post_init__()
 
 
 @dataclass(frozen=True)
@@ -255,12 +270,22 @@ class StrictMemcacheTransport:
         self.timeout_seconds = _timeout(timeout_seconds)
         self._watchdog = _watchdog
         self._regions: list[ByteSegment] = []
+        self._region_index: tuple[ByteSegment, ...] = ()
+        self._region_starts: tuple[int, ...] = ()
         self._registration_attempts: list[ByteSegment] = []
         self._owners: list[Any] = []
         self._failure: TransferError | None = None
         self._closed = False
         self._last_write_keys: frozenset[str] = frozenset()
         self._lock = RLock()
+        # Reads keep their registered destinations alive across SDK batches,
+        # while allowing metadata/save calls between those batches. The lock
+        # order is always _read_lock -> _lock; close never takes _read_lock.
+        self._read_lock = Lock()
+        self._read_condition = Condition(self._lock)
+        self._active_reads = 0
+        self._read_owner: int | None = None
+        self._closing = False
 
     @classmethod
     def from_backend(cls, backend: Any, *, scheduler: bool = False, **kwargs: Any) -> StrictMemcacheTransport:
@@ -347,6 +372,8 @@ class StrictMemcacheTransport:
         regions = tuple(_segment(region) for region in regions)
         with self._lock:
             self._healthy()
+            if self._closing:
+                raise TransferError("memcache transport is closing; cannot register buffers")
             if self.scheduler:
                 raise TransferError("scheduler metadata clients must not register NPU buffers")
             # Retain owners even if a later registration fails: a partial SDK
@@ -365,6 +392,12 @@ class StrictMemcacheTransport:
                 # SDK is proven otherwise, None is NOT evidence of success.
                 self._statuses((result,), (f"buffer@{region.address:#x}",), "register_buffer")
                 self._regions.append(region)
+                self._rebuild_region_index()
+
+    def _rebuild_region_index(self) -> None:
+        # Called only while holding _lock after registration ownership changes.
+        self._region_index = tuple(sorted(self._regions, key=lambda region: region.address))
+        self._region_starts = tuple(region.address for region in self._region_index)
 
     def exists(self, keys: Iterable[str]) -> tuple[bool, ...]:
         keys = _keys(keys)
@@ -453,7 +486,7 @@ class StrictMemcacheTransport:
             return value
 
     def object_sizes(self, keys: Iterable[str]) -> tuple[int, ...]:
-        """Return zero for missing objects; reject malformed SDK metadata."""
+        """Read SDK sizes strictly; zero alone is not proof of object absence."""
         keys = _keys(keys)
         with self._lock:
             self._healthy()
@@ -482,15 +515,13 @@ class StrictMemcacheTransport:
         # Registered owners never overlap. Search their ordered boundaries
         # rather than rescanning every owner for every layer/page component.
         # Adjacent owners remain separate: a span may not straddle either.
-        regions = sorted(self._regions, key=lambda region: region.address)
-        starts = [region.address for region in regions]
         for obj in objects:
             if obj.nbytes > self.max_batch_bytes:
                 raise ValueError(f"object {obj.key!r} exceeds max_batch_bytes; split at a schema object boundary")
             for segment in obj.segments:
-                index = bisect_right(starts, segment.address) - 1
+                index = bisect_right(self._region_starts, segment.address) - 1
                 if (index < 0 or segment.address + segment.length
-                        > regions[index].address + regions[index].length):
+                        > self._region_index[index].address + self._region_index[index].length):
                     raise ValueError(f"object {obj.key!r} references an unregistered byte range")
         return objects
 
@@ -506,14 +537,39 @@ class StrictMemcacheTransport:
         if batch:
             yield tuple(batch)
 
+    def _copy_vectors(self, obj: TransferObject) -> tuple[list[int], list[int]]:
+        """Coalesce payload-adjacent bytes inside one registered owner only.
+
+        FULL window K/V/tags can be contiguous even though their typed views
+        differ. Keep the object's public segments and their byte order intact;
+        never bridge padding, reverse an address, or merge adjacent owners.
+        """
+        addresses: list[int] = []
+        lengths: list[int] = []
+        for segment in obj.segments:
+            if addresses and addresses[-1] + lengths[-1] == segment.address:
+                index = bisect_right(self._region_starts, addresses[-1]) - 1
+                if (index >= 0 and segment.address + segment.length
+                        <= self._region_index[index].address + self._region_index[index].length):
+                    lengths[-1] += segment.length
+                    continue
+            addresses.append(segment.address)
+            lengths.append(segment.length)
+        return addresses, lengths
+
     def _transfer(self, objects: Sequence[TransferObject], *, load: bool) -> TransferReceipt:
         method = "batch_get_into_layers" if load else "batch_put_from_layers"
         for batch in self._batches(objects):
-            keys = [obj.key for obj in batch]
-            addresses = [[segment.address for segment in obj.segments] for obj in batch]
-            lengths = [[segment.length for segment in obj.segments] for obj in batch]
-            result = self._call(method, keys, addresses, lengths, COPY_G2L if load else COPY_L2G)
-            self._statuses(result, keys, method)
+            # SDK/watchdog use stays serial. put retains its outer operation
+            # lock; get instead holds a read lease until every batch finishes.
+            with self._lock:
+                self._healthy()
+                keys = [obj.key for obj in batch]
+                vectors = [self._copy_vectors(obj) for obj in batch]
+                addresses = [item[0] for item in vectors]
+                lengths = [item[1] for item in vectors]
+                result = self._call(method, keys, addresses, lengths, COPY_G2L if load else COPY_L2G)
+                self._statuses(result, keys, method)
         return TransferReceipt(tuple(obj.key for obj in objects), tuple(obj.nbytes for obj in objects))
 
     def put(self, objects: Iterable[TransferObject]) -> TransferReceipt:
@@ -559,6 +615,26 @@ class StrictMemcacheTransport:
                 removed.extend(int(code) == 0 for code in values)
             return tuple(removed)
 
+    def _checked_sizes(self, objects: Sequence[TransferObject]) -> None:
+        """Validate the entire read before any DMA; caller holds _lock.
+
+        Metadata batches use only the object-count bound, not the payload byte
+        bound. An exact positive size supplies the normal existence evidence.
+        No result survives this operation or substitutes for SDK GET success.
+        """
+        keys = tuple(obj.key for obj in objects)
+        sizes = self.object_sizes(keys)
+        zero_keys = tuple(key for key, size in zip(keys, sizes) if size == 0)
+        if zero_keys:
+            present = self.exists(zero_keys)
+            invalid = tuple(key for key, found in zip(zero_keys, present) if found)
+            if invalid:
+                self._fail(ObjectSizeError(f"existing objects have invalid zero size: {invalid!r}"))
+            raise MissingObjectsError(zero_keys)
+        mismatch = [(obj.key, size, obj.nbytes) for obj, size in zip(objects, sizes) if size != obj.nbytes]
+        if mismatch:
+            self._fail(ObjectSizeError(f"stored/requested byte counts differ: {mismatch!r}"))
+
     def get(self, objects: Iterable[TransferObject]) -> TransferReceipt:
         """Load exact-size objects, or fail before attention can consume them.
 
@@ -566,22 +642,28 @@ class StrictMemcacheTransport:
         object disappears during get, its nonzero SDK result is a hard error.
         No partially written destination may be submitted to a graph.
         """
-        with self._lock:
-            self._healthy()
-            objects = self._objects(objects)
-            keys = tuple(obj.key for obj in objects)
-            present = self.exists(keys)
-            missing = tuple(key for key, found in zip(keys, present) if not found)
-            if missing:
-                raise MissingObjectsError(missing)
-            sizes = self.object_sizes(keys)
-            missing = tuple(key for key, size in zip(keys, sizes) if not size)
-            if missing:
-                raise MissingObjectsError(missing)
-            mismatch = [(obj.key, size, obj.nbytes) for obj, size in zip(objects, sizes) if size != obj.nbytes]
-            if mismatch:
-                self._fail(ObjectSizeError(f"stored/requested byte counts differ: {mismatch!r}"))
-            return self._transfer(objects, load=True)
+        if self._read_owner == get_ident():
+            raise TransferError("cannot reenter memcache get from its active read thread")
+        with self._read_lock:
+            with self._read_condition:
+                self._healthy()
+                if self._closing:
+                    raise TransferError("memcache transport is closing; cannot start a read")
+                self._active_reads += 1
+                self._read_owner = get_ident()
+            try:
+                with self._lock:
+                    objects = self._objects(objects)
+                    # Validate ALL objects before the first DMA, not once per
+                    # data batch. The lease prevents close unregistering their
+                    # owners after this check or between subsequent batches.
+                    self._checked_sizes(objects)
+                return self._transfer(objects, load=True)
+            finally:
+                with self._read_condition:
+                    self._active_reads -= 1
+                    self._read_owner = None
+                    self._read_condition.notify_all()
 
     def close(self) -> None:
         """Unregister while owners are alive, close the SDK, then its watchdog.
@@ -590,7 +672,16 @@ class StrictMemcacheTransport:
         cleanup error is reported. Failed unregistrations retain their owners
         until process teardown; closed transports can never be used again.
         """
-        with self._lock:
+        with self._read_condition:
+            if self._closed:
+                return
+            if self._read_owner == get_ident():
+                raise TransferError("cannot close memcache transport from its active read thread")
+            self._closing = True
+            while self._active_reads:
+                self._read_condition.wait()
+            # Another closer may have completed cleanup while this one was
+            # waiting for the same read lease. Never unregister/close twice.
             if self._closed:
                 return
             errors = []
@@ -615,6 +706,7 @@ class StrictMemcacheTransport:
                         failed_regions.append(region)
                 self._regions = list(failed_regions)
                 self._registration_attempts = list(failed_regions)
+                self._rebuild_region_index()
                 if not failed_regions:
                     self._owners.clear()
                 try:

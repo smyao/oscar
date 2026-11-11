@@ -170,6 +170,7 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         self.load_async = load_async
         self._load_queue = None
         self._async_loads = {}
+        self._loading_request_ids = set()
         self._cancelled_loads = set()
         self._restored_cursors = {}
         self._scheduled_loads = {}
@@ -519,8 +520,9 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                 if len(pending) == self.world_size:
                     plan = receipt.plan
                     keys = expected_keys(self.namespace, self.world_size, plan, self.geometry)
-                    if not all(self.transport.exists(keys)):
-                        raise TransferError("prefix payload was evicted before publication")
+                    # MetadataServer.publish performs the complete payload
+                    # check immediately before its checked host write. Repeating
+                    # the same all-TP SDK query here adds no eviction lease.
                     self.metadata_client.put(receipt.index_key,
                         {"namespace": self.namespace, "committed_tokens": plan.committed_tokens,
                          "base_key": plan.base_key, "index_key": receipt.index_key,
@@ -649,8 +651,8 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                 reset_restored_cursor(runner, plan.request_id)
             return
         scheduled = scheduler_output.num_scheduled_tokens
-        if any(plan.request_id in scheduled for plan in
-               (*metadata.restores, *self._async_loads.values())):
+        if (self._loading_request_ids.intersection(scheduled)
+                or any(plan.request_id in scheduled for plan in metadata.restores)):
             raise OffloadLifecycleError("native admitted a request before its async load receipt")
         # Async allocation has no input-batch row. Reset only when native has
         # received all TP completions and actually admits this request. This
@@ -664,14 +666,25 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                     raise OffloadLifecycleError("async restore admission generation changed")
                 reset_restored_cursor(runner, rid)
 
-    def _load_payload(self, plan, keys, objects, producer_event=None):
+    def _load_payload(self, plan, producer_event=None):
+        # The plan and registered export geometry contain only immutable page
+        # IDs/addresses. Build descriptors on the I/O thread while native page
+        # initialization can still be running; never read runner/batch state.
+        objects = self._objects(plan, loading=True)
         if producer_event is not None:
             # Recorded by the model thread AFTER native new-page zeroing.
             # Waiting on this event on the I/O thread avoids a model-thread
             # stream sync while still protecting every destination byte.
             producer_event.synchronize()
-        if not all(self.transport.exists(keys)):
-            raise TransferError("advertised joint checkpoint was evicted before restore")
+        if not self.load_async:
+            # The explicit synchronous mode has no deferred all-TP admission.
+            keys = expected_keys(self.namespace, self.world_size, plan, self.geometry)
+            if not all(self.transport.exists(keys)):
+                raise TransferError("advertised joint checkpoint was evicted before restore")
+        # Async: every rank must size-check and finish its own required data;
+        # native finished_recving joins ALL ranks before admission. Rechecking
+        # every rank's full payload on each worker duplicates that protection
+        # and unnecessarily requires external copies of already-local pages.
         self.transport.get(objects)
         return plan
 
@@ -689,24 +702,22 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         if metadata.restores and not self.load_async:
             # SDK copy streams must not race the native new-page zeroing.
             self._synchronize()
+        # All restores in this frame follow the same native page-zero stream
+        # boundary. One recorded event can be waited by every queued reader.
+        event = self._record_producer_event() if metadata.restores and self.load_async else None
         for plan in metadata.restores:
-            # Check the joint snapshot before touching a destination. An
-            # eviction after scheduling is an explicit transfer failure.
-            keys = expected_keys(self.namespace, self.world_size, plan, self.geometry)
-            objects = self._objects(plan, loading=True)
             if self.load_async:
                 key = (plan.request_id, plan.generation, plan.version, plan.epoch)
-                if (any(p.request_id == plan.request_id for p in self._async_loads.values())
+                if (plan.request_id in self._loading_request_ids
                         or plan.request_id in self._restored_cursors):
                     raise OffloadLifecycleError("duplicate asynchronous restore dispatch")
                 if self._load_queue is None:
                     self._load_queue = AsyncLoadQueue(self._setup_load_device)
-                event = self._record_producer_event()
-                self._load_queue.submit(key, lambda p=plan, k=keys, o=objects, e=event:
-                                        self._load_payload(p, k, o, e))
+                self._load_queue.submit(key, lambda p=plan, e=event: self._load_payload(p, e))
                 self._async_loads[key] = plan
+                self._loading_request_ids.add(plan.request_id)
             else:
-                self._load_payload(plan, keys, objects)
+                self._load_payload(plan)
                 self._record_restored(plan)
         # This hook also runs before FULL graph replay, and before native
         # pending GDN block copies; no Python per-layer hook is required.
@@ -778,6 +789,7 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
             for key, plan in self._load_queue.poll():
                 if self._async_loads.pop(key, None) != plan:
                     raise OffloadLifecycleError("unexpected async load completion identity")
+                self._loading_request_ids.remove(plan.request_id)
                 self._record_restored(plan)
                 if key not in self._cancelled_loads:
                     self._restored_cursors[plan.request_id] = plan

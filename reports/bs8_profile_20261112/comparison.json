@@ -1,0 +1,446 @@
+{
+  "date": "2026-11-12",
+  "kind": "user_device_operator_duration_summary_not_wall_timeline",
+  "provenance": {
+    "oscar_attachment": "/Users/loki.yao/.codex/attachments/37618d9d-858e-402b-a065-6c321d0bfc3d/已粘贴的文本.txt",
+    "oscar_attachment_sha256": "9ed626d7a5aef80d3a4efce5db3bbceff0e8ccf152734c7215c1eb136f1e86c8",
+    "oscar_tsv_note": "Original nine-column lines; trailing Chinese description excluded.",
+    "base_tsv_note": "Transcribed from user message; all nine columns retained.",
+    "user_workload_statement": {
+      "requests": 11,
+      "input": "32k",
+      "output_tokens": 50,
+      "max_batch_size": 8,
+      "same_dataset": true,
+      "end_to_end_completed": true,
+      "num_speculative_tokens_base": 3,
+      "num_speculative_tokens_oscar": 3
+    },
+    "profile_scope_verified_by_timeline": false,
+    "device_id_in_tables": 4,
+    "oscar_deployed_commit": null,
+    "actual_launch_argv": null,
+    "pc_hit_tokens": null,
+    "profile_start_end": null,
+    "end_to_end_wall_time": null
+  },
+  "tables": {
+    "oscar": {
+      "rows": 93,
+      "total_operator_time_us": 43842644.48,
+      "reported_ratio_sum": 99.999,
+      "sha256": "a00e4e1356eb1692f67dc05a90da80d5d3bf15026451ef82be2926d4c5362c76"
+    },
+    "base": {
+      "rows": 74,
+      "total_operator_time_us": 29188941.54,
+      "reported_ratio_sum": 99.999,
+      "sha256": "4d035d1de96abc25241128bcbcd59218c955f9de4f0fddc7bf9999a17947541c"
+    }
+  },
+  "arithmetic_only": {
+    "operator_sum_difference_us": 14653702.939999998,
+    "operator_sum_ratio": 1.5020292674853875,
+    "is_end_to_end_speed_ratio": false
+  },
+  "oscar_groups": {
+    "all_oscar": {
+      "operators": [
+        {
+          "op_type": "oscar_attention_cv_official_cluster16_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_cluster4_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_merge_lse_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_copy_validate_bf16_query_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_store_aligned_int2_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_kernel_25",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_current_only_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_q1_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_prepare_official_attention_tasks_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_status_guard_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_merge_lse_kernel_1",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_store_aligned_int2_kernel_8",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_prepare_official_attention_tasks_kernel_6",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_copy_validate_bf16_query_kernel_7",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_current_only_kernel_15",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_status_guard_kernel_14",
+          "core_type": "AI_VECTOR_CORE"
+        }
+      ],
+      "count": 13224,
+      "total_time_us": 17401177.7,
+      "ratio_pct_recomputed": 39.69007322981627
+    },
+    "c16": {
+      "operators": [
+        {
+          "op_type": "oscar_attention_cv_official_cluster16_kernel",
+          "core_type": "MIX_AIC"
+        }
+      ],
+      "count": 136,
+      "total_time_us": 8269972.22,
+      "ratio_pct_recomputed": 18.86284989896668
+    },
+    "c4": {
+      "operators": [
+        {
+          "op_type": "oscar_attention_cv_official_cluster4_kernel",
+          "core_type": "MIX_AIC"
+        }
+      ],
+      "count": 238,
+      "total_time_us": 5512903.42,
+      "ratio_pct_recomputed": 12.574294925377641
+    },
+    "decode_family_including_q1_and_suffix": {
+      "operators": [
+        {
+          "op_type": "oscar_attention_cv_official_decode_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_kernel_25",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_q1_kernel",
+          "core_type": "MIX_AIC"
+        }
+      ],
+      "count": 1114,
+      "total_time_us": 1427911.78,
+      "ratio_pct_recomputed": 3.2569015782142894
+    },
+    "merge": {
+      "operators": [
+        {
+          "op_type": "oscar_merge_lse_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_merge_lse_kernel_1",
+          "core_type": "AI_VECTOR_CORE"
+        }
+      ],
+      "count": 1488,
+      "total_time_us": 917041.8,
+      "ratio_pct_recomputed": 2.0916662552559604
+    },
+    "store": {
+      "operators": [
+        {
+          "op_type": "oscar_store_aligned_int2_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_store_aligned_int2_kernel_8",
+          "core_type": "AI_VECTOR_CORE"
+        }
+      ],
+      "count": 1658,
+      "total_time_us": 465639.58,
+      "ratio_pct_recomputed": 1.0620700131635856
+    },
+    "copy_query": {
+      "operators": [
+        {
+          "op_type": "oscar_copy_validate_bf16_query_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_copy_validate_bf16_query_kernel_7",
+          "core_type": "AI_VECTOR_CORE"
+        }
+      ],
+      "count": 1658,
+      "total_time_us": 476613.12,
+      "ratio_pct_recomputed": 1.0870993883989364
+    },
+    "prepare": {
+      "operators": [
+        {
+          "op_type": "oscar_prepare_official_attention_tasks_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_prepare_official_attention_tasks_kernel_6",
+          "core_type": "AI_VECTOR_CORE"
+        }
+      ],
+      "count": 1283,
+      "total_time_us": 114921.64,
+      "ratio_pct_recomputed": 0.2621229658088362
+    },
+    "guard": {
+      "operators": [
+        {
+          "op_type": "oscar_status_guard_kernel",
+          "core_type": "AI_VECTOR_CORE"
+        },
+        {
+          "op_type": "oscar_status_guard_kernel_14",
+          "core_type": "AI_VECTOR_CORE"
+        }
+      ],
+      "count": 3991,
+      "total_time_us": 24621.68,
+      "ratio_pct_recomputed": 0.05615920365212423
+    },
+    "all_cv": {
+      "operators": [
+        {
+          "op_type": "oscar_attention_cv_official_cluster16_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_cluster4_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_kernel_25",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_decode_q1_kernel",
+          "core_type": "MIX_AIC"
+        }
+      ],
+      "count": 1488,
+      "total_time_us": 15210787.42,
+      "ratio_pct_recomputed": 34.69404640255861
+    },
+    "c4_plus_c16": {
+      "operators": [
+        {
+          "op_type": "oscar_attention_cv_official_cluster16_kernel",
+          "core_type": "MIX_AIC"
+        },
+        {
+          "op_type": "oscar_attention_cv_official_cluster4_kernel",
+          "core_type": "MIX_AIC"
+        }
+      ],
+      "count": 374,
+      "total_time_us": 13782875.64,
+      "ratio_pct_recomputed": 31.43714482434432
+    },
+    "matmul_v2_v3": {
+      "operators": [
+        {
+          "op_type": "MatMulV3",
+          "core_type": "AI_CORE"
+        },
+        {
+          "op_type": "MatMulV2",
+          "core_type": "AI_CORE"
+        }
+      ],
+      "count": 27304,
+      "total_time_us": 15173642.5,
+      "ratio_pct_recomputed": 34.60932313725251
+    }
+  },
+  "base_fia": {
+    "operators": [
+      {
+        "op_type": "FusedInferAttentionScore",
+        "core_type": "MIX_AIC"
+      }
+    ],
+    "count": 2176,
+    "total_time_us": 2585747.72,
+    "ratio_pct_recomputed": 8.85865531114425
+  },
+  "base_matmul_v2_v3": {
+    "operators": [
+      {
+        "op_type": "MatMulV3",
+        "core_type": "AI_CORE"
+      },
+      {
+        "op_type": "MatMulV2",
+        "core_type": "AI_CORE"
+      },
+      {
+        "op_type": "MatMulV3",
+        "core_type": "MIX_AIC"
+      }
+    ],
+    "count": 39808,
+    "total_time_us": 16092530.04,
+    "ratio_pct_recomputed": 55.13228363538666
+  },
+  "shared_operator_comparison": [
+    {
+      "op_type": "MatMulV3",
+      "core_type": "AI_CORE",
+      "base_count": 5480,
+      "oscar_count": 6003,
+      "base_total_time_us": 13387823.1,
+      "oscar_total_time_us": 13608524.5,
+      "total_time_change_pct": 1.6485234257390236
+    },
+    {
+      "op_type": "MatMulV2",
+      "core_type": "AI_CORE",
+      "base_count": 34327,
+      "oscar_count": 21301,
+      "base_total_time_us": 2703335.2,
+      "oscar_total_time_us": 1565118.0,
+      "total_time_change_pct": -42.104183010675115
+    },
+    {
+      "op_type": "AddRmsNormBias",
+      "core_type": "AI_VECTOR_CORE",
+      "base_count": 16640,
+      "oscar_count": 8576,
+      "base_total_time_us": 2039484.1,
+      "oscar_total_time_us": 2042969.68,
+      "total_time_change_pct": 0.1709049852362199
+    },
+    {
+      "op_type": "SwiGlu",
+      "core_type": "AI_VECTOR_CORE",
+      "base_count": 8320,
+      "oscar_count": 4288,
+      "base_total_time_us": 715849.56,
+      "oscar_total_time_us": 701923.06,
+      "total_time_change_pct": -1.945450661449033
+    },
+    {
+      "op_type": "ChunkGatedDeltaRule",
+      "core_type": "MIX_AIC",
+      "base_count": 1104,
+      "oscar_count": 1200,
+      "base_total_time_us": 3325300.92,
+      "oscar_total_time_us": 3412038.1,
+      "total_time_change_pct": 2.6084009263137586
+    },
+    {
+      "op_type": "RecurrentGatedDeltaRule",
+      "core_type": "AI_VECTOR_CORE",
+      "base_count": 5760,
+      "oscar_count": 2784,
+      "base_total_time_us": 163209.76,
+      "oscar_total_time_us": 116163.84,
+      "total_time_change_pct": -28.82543298881146
+    }
+  ],
+  "count_differences": {
+    "_compute_slot_mapping_kernel": {
+      "base": 128,
+      "oscar": 64
+    },
+    "postprocess_mamba_fused_kernel": {
+      "base": 128,
+      "oscar": 64
+    },
+    "sample_recovered_tokens_kernel": {
+      "base": 120,
+      "oscar": 58
+    },
+    "rejection_random_sample_kernel": {
+      "base": 120,
+      "oscar": 58
+    },
+    "SwiGlu": {
+      "base": 8320,
+      "oscar": 4288
+    },
+    "split_qkv_rmsnorm_mrope_kernel": {
+      "base": 2176,
+      "oscar": 1216
+    },
+    "FusedGdnGating": {
+      "base": 6144,
+      "oscar": 3072
+    }
+  },
+  "concentration": {
+    "c4_c16_fraction_all_cv_time": 0.9061250584488151,
+    "c4_c16_fraction_all_oscar_time": 0.7920656795545511,
+    "c4_c16_fraction_cv_calls": 0.2513440860215054
+  },
+  "count_structure": {
+    "user_configured_speculative_tokens_equal": 3,
+    "base_identities": [
+      "6144=128*48",
+      "8320=128*65",
+      "2176=128*17"
+    ],
+    "oscar_identities": [
+      "3072=64*48",
+      "4288=64*67",
+      "1216=64*19"
+    ],
+    "interpretation": "These arithmetic identities are not configured draft-count evidence. Actual invocation/sampling-to-step mapping remains unexplained by the aggregate tables; user confirms both use num_speculative_tokens=3."
+  },
+  "local_source_binding_sha256": {
+    "oscar_ascend/ops/cv_dispatch.py": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6",
+    "oscar_ascend/integration/impl.py": "deffe121a591ee3a4506a79911089ce5012ad009f709dacd533a9d38e2208d6e",
+    "oscar_ascend/integration/current_only_dispatch.py": "14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264"
+  },
+  "limitations": [
+    "Operator duration sums are not wall time; overlap, scheduling, host and communication gaps are not represented.",
+    "Counts and row shapes/phases differ despite same user workload; per-op averages are not paired kernel speedups.",
+    "No classification of kernel suffixes such as _25 as a particular graph or phase is inferred.",
+    "C4/C16 are kernel families for longer query domains and may contain C1 tasks; their name does not prove every task achieved cluster reuse.",
+    "MatMulV2/V3 labels do not isolate model weights from all other matmuls.",
+    "No NPU connection, new performance experiment or quality evaluation performed."
+  ]
+}

@@ -2,7 +2,10 @@
   "generation_tools_sha256": {
     "tools/active_decode_transform.py": "b915e511a01b6b5e7fccbe81a3ae1edec35cf46d378d0e76e4b2b30abb73a941",
     "tools/active_store_transform.py": "e06bd3f9becf44cad3c41401d8cf6bb14afe792e3dcd2e1cdf67b69d3567e266",
-    "tools/generate_active_kernels.py": "19a72f8bff67e1e4b9263ccb98092851d2de594fd236853702a3bd5bbba85187"
+    "tools/cluster_prefill_transform.py": "9cb61f1dbf89c1b69641b7783e2835891602478c9a6f40ea7955963c57538ea0",
+    "tools/cluster_visibility_transform.py": "bd5f36d2a3291eed6f262c678dc5b96bde7e3693a08dabf7a2ba9be005f9bb6c",
+    "tools/generate_active_kernels.py": "be9e5b3780aef7474865241c55f8a4500676824f21df1d441d9c1f879d5e52f4",
+    "tools/precise_finite_transform.py": "161855ea20e4e7968e3b296cb05ebe5d7e4839617a5d994d4e97d152de0c0eb2"
   },
   "kernels": [
     {
@@ -20,8 +23,24 @@
       "mother_sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
       "public_abi": "unchanged",
       "transform": "tools.active_store_transform"
+    },
+    {
+      "active": "csrc/kernels/attention_cv_official_cluster4_active.cpp",
+      "active_sha256": "5e517e70f70835f6150baf5cb8ade678ac03bec00dc7168b8f7f72d9d417a985",
+      "mother": "csrc/kernels/attention_cv_official_cluster4.cpp",
+      "mother_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "public_abi": "unchanged",
+      "transform": "tools.cluster_prefill_transform"
+    },
+    {
+      "active": "csrc/kernels/attention_cv_official_cluster16_active.cpp",
+      "active_sha256": "1bbae85b60b1783db6e8a9650f20c29ab10a9b0bddcd4806b04e0de0c78c400f",
+      "mother": "csrc/kernels/attention_cv_official_cluster16.cpp",
+      "mother_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "public_abi": "unchanged",
+      "transform": "tools.cluster_prefill_transform"
     }
   ],
   "schema_version": 1,
-  "scope": "same-ABI inactive-work elimination; not execution acceptance"
+  "scope": "same-ABI inactive-work and finite-check optimization; not execution acceptance"
 }

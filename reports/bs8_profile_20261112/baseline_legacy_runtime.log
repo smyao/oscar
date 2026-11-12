@@ -1,0 +1,29 @@
+baseline_import: /private/tmp/oscar-bs8-baseline-066o6kp0/oscar_ascend/__init__.py
+FF.                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_actual_forward_selects_tuned_or_preserved_control[True-attention_cv_aligned_cluster16_out] _
+tests/test_c16_targeted_runtime.py:11: in test_actual_forward_selects_tuned_or_preserved_control
+    test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/integration/aligned_math.py:18: in dequant_mode
+    raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E   oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+_ test_actual_forward_selects_tuned_or_preserved_control[False-attention_cv_aligned_cluster16_control_out] _
+tests/test_c16_targeted_runtime.py:11: in test_actual_forward_selects_tuned_or_preserved_control
+    test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/integration/aligned_math.py:18: in dequant_mode
+    raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E   oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+=========================== short test summary info ============================
+FAILED tests/test_c16_targeted_runtime.py::test_actual_forward_selects_tuned_or_preserved_control[True-attention_cv_aligned_cluster16_out]
+FAILED tests/test_c16_targeted_runtime.py::test_actual_forward_selects_tuned_or_preserved_control[False-attention_cv_aligned_cluster16_control_out]
+2 failed, 1 passed in 1.33s

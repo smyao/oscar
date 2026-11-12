@@ -1,5 +1,7 @@
 # OSCAR Ascend：端到端设计与可证边界
 
+2026-11-12 BS8 profile 定向优化：C4/C16占OSCAR CV累计时间90.613%，本轮C4完整可见tile复用已有C16 finite证书，C4/C16 current K/V复用dead staging做相同批量判定；不改变数值、掩码、错误域或DMA/跨核同步。D.4四问及容量/等待账见[实现与证据](bs8_profile_20261112.md)。完整母源冻结，同ABI派生核经完整逆变换和旧缓存拒用门实际接入candidate/node93；169项专项通过。设备数值、图与性能未验收，不将13.78秒整个核耗时当作可节省量。
+
 2026-11-12 算子无效工作消除：完整保留受保护母源，使用同 ABI 派生源跳过负 slot 的 K/V 量化，以及零 qcount 任务的十个无用字段读取。D.4 四问：①current store 与融合 decode CV 的 task 装载；②旧全历史恢复约6.5秒、store约209–215ms只作历史教训；③仅消除不发布结果的工作，完整保留有效算术、DMA/fence、错误与图地址；④最多八个 int64 slot 局部快照及分支，工作量与硬件收益分开记录。设计、成本、源码身份与验证边界见[算子侧续修](operator_active_rows_20261112.md)。没有 CANN/真 NPU/性能通过的本轮证据。
 
 2026-11-09 KV 卸载：外部 `OscarAscendStoreConnector` 复用 MemCache SDK bootstrap，完整保存 packed/window/tags/GDN，保留原生 none/align、MTP、chunked prefill、prefix checkpoint 与图地址。调度、全 TP 提交、恢复及清理设计见 [卸载实现与部署](kv_offload_20261109.md)。本轮无真机连接，MemCache 尚待部署；不升级设备、质量或性能验收。

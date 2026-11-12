@@ -1,0 +1,157 @@
+{
+  "date": "2026-11-12",
+  "branch": "oscar-new-7",
+  "base_commit": "140190ac92742e7cc5d8fdc12a8372fc833718fa",
+  "scope": [
+    "C4 complete-visible tile finite certificate",
+    "C4/C16 current K/V finite certificate"
+  ],
+  "source_manifest": {
+    "generation_tools_sha256": {
+      "tools/active_decode_transform.py": "b915e511a01b6b5e7fccbe81a3ae1edec35cf46d378d0e76e4b2b30abb73a941",
+      "tools/active_store_transform.py": "e06bd3f9becf44cad3c41401d8cf6bb14afe792e3dcd2e1cdf67b69d3567e266",
+      "tools/cluster_prefill_transform.py": "9cb61f1dbf89c1b69641b7783e2835891602478c9a6f40ea7955963c57538ea0",
+      "tools/cluster_visibility_transform.py": "bd5f36d2a3291eed6f262c678dc5b96bde7e3693a08dabf7a2ba9be005f9bb6c",
+      "tools/generate_active_kernels.py": "be9e5b3780aef7474865241c55f8a4500676824f21df1d441d9c1f879d5e52f4",
+      "tools/precise_finite_transform.py": "161855ea20e4e7968e3b296cb05ebe5d7e4839617a5d994d4e97d152de0c0eb2"
+    },
+    "kernels": [
+      {
+        "active": "csrc/kernels/attention_cv_official_decode_active.cpp",
+        "active_sha256": "81f677c45c5c49b3d92b2ae3c007c66eafb6acbaa03f1aa72c9e0ce5dedca019",
+        "mother": "csrc/kernels/attention_cv_official_decode.cpp",
+        "mother_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+        "public_abi": "unchanged",
+        "transform": "tools.active_decode_transform"
+      },
+      {
+        "active": "csrc/kernels/store_aligned_int2_active.cpp",
+        "active_sha256": "fd35153511b9eacb2e63980d6aed712c8d4d1f8f2fe33f82ecb044eb4be53842",
+        "mother": "csrc/kernels/store_aligned_int2.cpp",
+        "mother_sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+        "public_abi": "unchanged",
+        "transform": "tools.active_store_transform"
+      },
+      {
+        "active": "csrc/kernels/attention_cv_official_cluster4_active.cpp",
+        "active_sha256": "5e517e70f70835f6150baf5cb8ade678ac03bec00dc7168b8f7f72d9d417a985",
+        "mother": "csrc/kernels/attention_cv_official_cluster4.cpp",
+        "mother_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+        "public_abi": "unchanged",
+        "transform": "tools.cluster_prefill_transform"
+      },
+      {
+        "active": "csrc/kernels/attention_cv_official_cluster16_active.cpp",
+        "active_sha256": "1bbae85b60b1783db6e8a9650f20c29ab10a9b0bddcd4806b04e0de0c78c400f",
+        "mother": "csrc/kernels/attention_cv_official_cluster16.cpp",
+        "mother_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+        "public_abi": "unchanged",
+        "transform": "tools.cluster_prefill_transform"
+      }
+    ],
+    "schema_version": 1,
+    "scope": "same-ABI inactive-work and finite-check optimization; not execution acceptance"
+  },
+  "unchanged_protected_source_sha256": {
+    "configs/target.json": "2803d44b7c209ee879e62236fe6658e5e426f9c7db90f87cd5ba2a5b8084a04c",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "configs/acceptance_official_bf16.json": "02c2765fac7d582d833ffca88841658af81b51f037ea86052fa0d34d0c38fed7",
+    "configs/acceptance_fp32_dequant_bf16.json": "d1a1be1bf0711e99810260234bd409ac60b52fb6160da0c9cdafbd31f7bdf45c",
+    "tools/serving_variants.py": "57fc11db6a95e5bfd8b0a4a42f396811c39c87a417dff8b4361a2b0b3fe1084b",
+    "scripts/start_node93_oscar.sh": "ce2f43e699b8a5337796ee5cdeeb99897b259bfe36b210c217141d1f6b8c9069",
+    "csrc/kernels/attention_cv_official_decode_active.cpp": "81f677c45c5c49b3d92b2ae3c007c66eafb6acbaa03f1aa72c9e0ce5dedca019",
+    "csrc/kernels/store_aligned_int2_active.cpp": "fd35153511b9eacb2e63980d6aed712c8d4d1f8f2fe33f82ecb044eb4be53842",
+    "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+    "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+    "csrc/kernels/status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab"
+  },
+  "host_tests": {
+    "primary_command": ".venv/bin/python -m pytest -q tests/test_active_kernel_generation.py tests/test_cluster_visibility_transform.py tests/test_precise_finite_transform.py tests/test_official_finite_transform.py tests/test_official_softmax_visibility_transform.py tests/test_universal_bf16_regression_protection.py tests/test_probe_official_attention.py tests/test_official_attention_generation.py",
+    "primary_first_attempt": {
+      "passed": 168,
+      "failed": 1,
+      "seconds": 9.41,
+      "failure": "existing C++ visibility enumeration compile could not use system developer directory"
+    },
+    "primary_retry": {
+      "passed": 1,
+      "seconds": 4.1,
+      "environment": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer",
+      "case": "test_compiled_predicate_against_independent_logical_position_enumeration",
+      "evidence": "compiler_environment_retry.xml"
+    },
+    "primary_final_unique_passed": 169,
+    "additional": {
+      "tests": 123,
+      "failed": 2,
+      "errors": 0,
+      "passed": 121,
+      "evidence": "host_additional.xml",
+      "overlaps_primary": true
+    },
+    "legacy_baseline": {
+      "isolated_git_archive": "140190ac92742e7cc5d8fdc12a8372fc833718fa",
+      "case_file": "tests/test_c16_targeted_runtime.py",
+      "passed": 1,
+      "failed": 2,
+      "same_failures": true,
+      "reason": "legacy aligned-only fixture conflicts with fp32_metadata official contract requirement",
+      "log": "baseline_legacy_runtime.log",
+      "log_sha256": "4218fce85297216f54f98fb18ec10ab0c9a91ec0c985ee33b44600c073f10a9e"
+    },
+    "cpp_control": {
+      "softmax_cases": 2016,
+      "current_finite_cases": 4644,
+      "current_reduction_orders": 2,
+      "ubsan": true,
+      "includes_real_extracted_methods_and_helpers": true,
+      "primitive_implementation": "recording host stubs, not CANN hardware"
+    },
+    "generated_source_check": "passed",
+    "git_diff_check": "passed"
+  },
+  "new_npu_probe": {
+    "family": "c4",
+    "queries": 336,
+    "context": 641,
+    "recent": 320,
+    "padded_tokens": 352,
+    "dequant_modes": [
+      0,
+      1
+    ],
+    "fixed_address_graph_states": [
+      "original",
+      "changed_query",
+      "changed_context"
+    ],
+    "execution": "not_run"
+  },
+  "work_model": {
+    "c4_normal_full_tile_row_checks": [
+      32,
+      1
+    ],
+    "current_normal_full_tile_row_checks": [
+      16,
+      1
+    ],
+    "added_per_certified_block": "Abs plus nonnegative block reduction",
+    "extra_ub_bytes": 0,
+    "extra_gm_bytes": 0,
+    "exact_profile_block_count": null,
+    "device_speedup": null
+  },
+  "independent_review": "no new functional defect identified; preserved masks/errors/buffer ownership; device qualification outstanding",
+  "acceptance": {
+    "source_identity": "passed",
+    "host_control": "passed",
+    "CANN_build": "not_run_no_local_SDK",
+    "official_CPU_debug": "not_run",
+    "NPU": "not_run",
+    "hardware_graph": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run",
+    "remote_hardware_connected": false
+  }
+}

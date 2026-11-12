@@ -24,6 +24,9 @@ SOURCE_PATHS = (
  'csrc/kernels/attention_cv_official_decode_active.cpp', 'csrc/kernels/store_aligned_int2_active.cpp',
  'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
+ 'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
+ 'csrc/kernels/attention_cv_official_cluster4_active.cpp', 'csrc/kernels/attention_cv_official_cluster16_active.cpp',
+ 'csrc/kernels/attention_official_finite.h', 'csrc/kernels/attention_c16_softmax_helpers.h',
  'csrc/kernels/attention_cv_official_decode.cpp', 'csrc/kernels/attention_cv_official_cluster4.cpp',
  'csrc/kernels/attention_cv_official_cluster16.cpp', 'csrc/kernels/attention_aligned_unpack.h',
  'csrc/kernels/store_aligned_int2.cpp', 'csrc/include/oscar_official_decode_launch.h',
@@ -60,11 +63,21 @@ def source_binding(root=ROOT):
 def case_plan():
     from dataclasses import replace
     from .probe_bf16_attention import case_plan as legacy_plan
+    from .probe_history_reuse import Shape
     rows = []
     for case in legacy_plan():
         for mode in (0, 1):
             shape = replace(case['shape'], name=case['shape'].name.replace('bf16_', 'official_') + f'_mode{mode}')
             rows.append({**case, 'shape': shape, 'dequant_mode': mode})
+    # #145/#154/#164: exercise the newly shared C4 full-window/current
+    # certificate, followed by the original partial/diagonal tile. The old
+    # mature C4 case has only 84 current rows and a one-token recent window.
+    # This is a bounded functional graph case, not a timing workload.
+    for mode in (0, 1):
+        shape = Shape(f'official_c4_visible_sources_mode{mode}', (336,), (641,),
+                      256, 1, 1, True, recent_tokens=320, padded_tokens=352)
+        rows.append({'family': 'c4', 'shape': shape, 'graph': True,
+                     'timed': False, 'dequant_mode': mode})
     return tuple(rows)
 
 

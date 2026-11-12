@@ -110,15 +110,29 @@ def test_production_cmake_compiles_only_one_definition_of_each_unchanged_abi():
     sources = compiled_sources()
     assert len(sources) == len(set(sources))
     texts = {name: (ROOT / "csrc" / name).read_text() for name in sources}
+    # Cluster variants preserve the historical declaration via one object-like
+    # macro. Resolve that alias before counting the actual linked ABI symbols.
+    def exported_symbols(text):
+        aliases = dict(re.findall(r"^#define\s+(\w+)\s+(\w+)\s*$", text, re.MULTILINE))
+        symbols = re.findall(r'extern "C" __global__ __aicore__ void (\w+)\(', text)
+        resolved = []
+        for symbol in symbols:
+            seen = set()
+            while symbol in aliases:
+                assert symbol not in seen, "cyclic kernel ABI alias"
+                seen.add(symbol)
+                symbol = aliases[symbol]
+            resolved.append(symbol)
+        return resolved
+    definitions = {name: exported_symbols(text) for name, text in texts.items()}
     for entry in generated.KERNELS:
         active = entry["active"].removeprefix("csrc/")
         mother = entry["mother"].removeprefix("csrc/")
         assert active in sources and mother not in sources
-        symbols = re.findall(r'extern "C" __global__ __aicore__ void (\w+)\(', texts[active])
+        symbols = definitions[active]
         assert symbols
         for symbol in symbols:
-            definition = 'extern "C" __global__ __aicore__ void ' + symbol + '('
-            assert sum(text.count(definition) for text in texts.values()) == 1
+            assert sum(items.count(symbol) for items in definitions.values()) == 1
 
 
 @pytest.mark.parametrize("name", INPUTS)
@@ -201,3 +215,33 @@ def test_real_candidate_entrypoint_builds_and_routes_the_same_abi_to_active_sour
     assert generated.KERNELS[0]["active"].removeprefix("csrc/") in compiled_sources()
     assert probe_official_attention.WRITER == "store_aligned_int2_out"
     assert generated.KERNELS[1]["active"].removeprefix("csrc/") in compiled_sources()
+
+
+@pytest.mark.parametrize("family,query", [("c4", 336), ("c16", 8192)])
+def test_candidate_prefill_routes_to_compiled_cluster_derivative(family, query):
+    config = variant_config(json.loads((ROOT / "configs/target.json").read_text()), "candidate")
+    flags = ("fast_unpack", "mixed_cv", "striped_cache", "decode_bundle",
+             "c4_member_pipeline", "mdl_decode", "c16_member_pipeline", "hybrid_l1_decode",
+             "c16_l1_reuse", "bf16_attention")
+    selected = select_cv_op(16, 6, 1, query, query,
+                           **{name: config.get("experimental_" + name, False) for name in flags})
+    operator = OFFICIAL_CV_MAP[selected]
+    assert config["experimental_official_math"] is True
+    assert operator == probe_official_attention.OPERATORS[family]
+    entry = generated.KERNELS[2 if family == "c4" else 3]
+    assert entry["active"].removeprefix("csrc/") in compiled_sources()
+    assert operator.removesuffix("_out") + "_launch" in (ROOT / entry["active"]).read_text()
+
+
+def test_c4_device_plan_covers_complete_window_current_and_tail_graphs():
+    cases = [case for case in probe_official_attention.case_plan()
+             if "c4_visible_sources" in case["shape"].name]
+    assert {case["dequant_mode"] for case in cases} == {0, 1}
+    for case in cases:
+        shape = case["shape"]
+        shape.validate()
+        assert case["graph"] and not case["timed"]
+        assert shape.qlens[0] > 256 and shape.qlens[0] % 256
+        assert shape.recent_tokens + min(64, shape.contexts[0]) > 256
+        assert (shape.recent_tokens + min(64, shape.contexts[0])) % 256
+        assert shape.padded_tokens > sum(shape.qlens)

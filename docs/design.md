@@ -1,5 +1,7 @@
 # OSCAR Ascend：端到端设计与可证边界
 
+2026-11-12 roofline定向优化：C4/C16是同请求历史query-tile复用簇，当前GQA6对应84/336 token。按144B槽、BF16操作数和FP32状态重算全部主数据流，区分GM语义字节与HBM实测。candidate同ABI派生核删除current完整覆盖的零填（完整KV256少768KiB UB写），删除cluster初始state往返（264192B/member，一次性），合并每轮max/sum两段DMA提交；数学/错误域、有效传输所有权、原始母源和PT/PC/MTP/argv/timer保持。261项主机测试通过，CANN/NPU/图/质量/性能未验收；工作量减少不作吞吐倍率。见[分析与改动](cv_roofline_20261112.md)和[验证](../reports/cv_roofline_20261112/validation.json)。
+
 2026-11-12 BS8 profile 定向优化：C4/C16占OSCAR CV累计时间90.613%，本轮C4完整可见tile复用已有C16 finite证书，C4/C16 current K/V复用dead staging做相同批量判定；不改变数值、掩码、错误域或DMA/跨核同步。D.4四问及容量/等待账见[实现与证据](bs8_profile_20261112.md)。完整母源冻结，同ABI派生核经完整逆变换和旧缓存拒用门实际接入candidate/node93；169项专项通过。设备数值、图与性能未验收，不将13.78秒整个核耗时当作可节省量。
 
 2026-11-12 算子无效工作消除：完整保留受保护母源，使用同 ABI 派生源跳过负 slot 的 K/V 量化，以及零 qcount 任务的十个无用字段读取。D.4 四问：①current store 与融合 decode CV 的 task 装载；②旧全历史恢复约6.5秒、store约209–215ms只作历史教训；③仅消除不发布结果的工作，完整保留有效算术、DMA/fence、错误与图地址；④最多八个 int64 slot 局部快照及分支，工作量与硬件收益分开记录。设计、成本、源码身份与验证边界见[算子侧续修](operator_active_rows_20261112.md)。没有 CANN/真 NPU/性能通过的本轮证据。

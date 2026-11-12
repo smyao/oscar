@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-12 roofline定向优化：C4/C16是同请求历史query-tile复用簇，当前GQA6对应84/336 token。按144B槽、BF16操作数和FP32状态重算全部主数据流，区分GM语义字节与HBM实测。candidate同ABI派生核删除current完整覆盖的零填（完整KV256少768KiB UB写），删除cluster初始state往返（264192B/member，一次性），合并每轮max/sum两段DMA提交；数学/错误域、有效传输所有权、原始母源和PT/PC/MTP/argv/timer保持。261项主机测试通过，CANN/NPU/图/质量/性能未验收；工作量减少不作吞吐倍率。见[分析与改动](cv_roofline_20261112.md)和[验证](../reports/cv_roofline_20261112/validation.json)。
+
 2026-11-12 BS8算子优化：C4完整可见tile和C4/C16 current K/V复用已有有限性证书；派生源/构建拒用旧缓存/candidate实际路由及169项专项通过，6,660组主机C++控制与错误域对照通过。扩展121项通过、2项旧fixture失败在改动前独立快照复现。新增完整window/current的真实NPU图回放用例已接线但未执行；设备、质量及性能状态均不升级。见[源码与证据边界](bs8_profile_20261112.md)。
 
 2026-11-10 请求级PC与PD step日志：外部插件在首次成功调度后读取原生PrefillStats，为每条实际获调度请求打印一次 `PREFIX_CACHE_REQUEST`，列出本地/外部/合计命中token数和以完整prompt为分母的百分比。排队重试、后续chunk、decode及私有swap恢复不重复计数。另在调度推进前保存prefill/decode阶段，主模型输出和卸载状态处理成功后累计纯decode/纯prefill/混合step，每100步及请求表清空时打印 `PD_STEP_STATS`；MTP宽度不用于阶段判断，空步/异常不进有效分母，无法确认的非空步显式excluded。新增38项及相关插件/原生生命周期79项联合117项主机回归通过。只读主机计数，不增加SDK查询或设备同步，不改原生统计、调度/缓存策略、timer与启动参数。详见[日志口径](kv_offload_20261109.md)。尚未部署到真机，不将调度匹配日志当作DMA完成、step比例当作耗时比例。

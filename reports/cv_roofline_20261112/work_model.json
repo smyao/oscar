@@ -1,0 +1,245 @@
+{
+  "date": "2026-11-12",
+  "source_commit": "de8d55f675acde8c63eaee3ef5b7e085b11da7fb",
+  "source_sha256": {
+    "csrc/kernels/attention_cv_official_decode_active.cpp": "81f677c45c5c49b3d92b2ae3c007c66eafb6acbaa03f1aa72c9e0ce5dedca019",
+    "csrc/kernels/attention_cv_official_cluster4_active.cpp": "5e517e70f70835f6150baf5cb8ade678ac03bec00dc7168b8f7f72d9d417a985",
+    "csrc/kernels/attention_cv_official_cluster16_active.cpp": "1bbae85b60b1783db6e8a9650f20c29ab10a9b0bddcd4806b04e0de0c78c400f",
+    "csrc/kernels/attention_aligned_unpack.h": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07",
+    "oscar_ascend/ops/cv_dispatch.py": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6"
+  },
+  "kind": "source_work_model_not_hardware_roofline_measurement",
+  "scope": {
+    "rank_count": 1,
+    "kv_heads": 1,
+    "head_dim": 256,
+    "gqa_ratio": 6,
+    "kv_tile_tokens": 256,
+    "history_source_kind": 0,
+    "tile": "complete KV256 tile; whole-tile QK/PV shape including any masked columns",
+    "query_tokens_are": "computed query tokens, not accepted output tokens",
+    "modeled_read_level": "explicit GM address traffic and minimum Matmul operand/atomic read-modify-write semantics; not HBM/cache-line transactions",
+    "state_bytes_accounting": "per-tile state includes one spill+restore; one-time term includes initial spill and final restore for de8d55f"
+  },
+  "formulas": {
+    "F_member": "4*M*N*D; M=G*q",
+    "B_decode": "144*N + 8*N*D + 10*M*D + 8*M*N + 4*R*N",
+    "B_cluster": "144*N + 4*N*D + B_KV_Cube + C*(10*M*D + 8*M*N + 4*R*N + 8*U*D + 16*U)",
+    "B_KV_Cube_C4": "4*C*N*D (minimum GM-B Matmul operand consumption)",
+    "B_KV_Cube_C16": "4*N*D (explicit once-per-tile external-B1 loads)",
+    "history_L_tiles": "L*main_dataflow_bytes + one_time_total_bytes + actual metadata/control/SDK padding/reloads; tails and source1/source2 separately",
+    "lower_bound": "max(D_HBM/BW_HBM,D_L2/BW_L2,F_BF16_Cube/P_Cube,Vector_and_SFU_service_bound,DMA_scalar_and_dependency_bounds) with measured or qualified matching ceilings"
+  },
+  "cases": {
+    "q1": {
+      "q_tokens_per_member": 1,
+      "members": 1,
+      "query_head_rows_per_member": 6,
+      "query_slot_rows": 32,
+      "score_rows_explicitly_read_per_member": 16,
+      "effective_query_tokens": 1,
+      "qk_pv_useful_flops": 1572864,
+      "per_full_history_tile_bytes": {
+        "packed_kv_read": 36864,
+        "bf16_kv_publish": 262144,
+        "kv_cube_semantic_read": 262144,
+        "q_cube_semantic_read": 3072,
+        "fp32_score_write": 6144,
+        "fp32_score_vector_block_read": 16384,
+        "bf16_p_publish_and_semantic_read": 6144,
+        "fp32_pv_write_and_vector_read": 12288
+      },
+      "main_dataflow_bytes": 605184,
+      "main_dataflow_bytes_per_query_token": 605184.0,
+      "useful_flops_per_query_token": 1572864.0,
+      "semantic_arithmetic_intensity_flop_per_byte": 2.598984771573604,
+      "kv_only_arithmetic_intensity_flop_per_byte": 2.802919708029197,
+      "one_time_per_history_task_or_cluster_bytes": {
+        "q_input_read_and_full_slot_publish": 19456,
+        "final_fp32_partial_and_lse": 6168,
+        "status": 8
+      },
+      "one_time_total_bytes": 25632,
+      "table_access_and_task_metadata_included": false
+    },
+    "q4": {
+      "q_tokens_per_member": 4,
+      "members": 1,
+      "query_head_rows_per_member": 24,
+      "query_slot_rows": 32,
+      "score_rows_explicitly_read_per_member": 32,
+      "effective_query_tokens": 4,
+      "qk_pv_useful_flops": 6291456,
+      "per_full_history_tile_bytes": {
+        "packed_kv_read": 36864,
+        "bf16_kv_publish": 262144,
+        "kv_cube_semantic_read": 262144,
+        "q_cube_semantic_read": 12288,
+        "fp32_score_write": 24576,
+        "fp32_score_vector_block_read": 32768,
+        "bf16_p_publish_and_semantic_read": 24576,
+        "fp32_pv_write_and_vector_read": 49152
+      },
+      "main_dataflow_bytes": 704512,
+      "main_dataflow_bytes_per_query_token": 176128.0,
+      "useful_flops_per_query_token": 1572864.0,
+      "semantic_arithmetic_intensity_flop_per_byte": 8.930232558139535,
+      "kv_only_arithmetic_intensity_flop_per_byte": 11.211678832116789,
+      "one_time_per_history_task_or_cluster_bytes": {
+        "q_input_read_and_full_slot_publish": 28672,
+        "final_fp32_partial_and_lse": 24672,
+        "status": 8
+      },
+      "one_time_total_bytes": 53352,
+      "table_access_and_task_metadata_included": false
+    },
+    "C4": {
+      "q_tokens_per_member": 21,
+      "members": 4,
+      "query_head_rows_per_member": 126,
+      "query_slot_rows": 128,
+      "score_rows_explicitly_read_per_member": 128,
+      "effective_query_tokens": 84,
+      "qk_pv_useful_flops": 132120576,
+      "per_full_history_tile_bytes": {
+        "packed_kv_read": 36864,
+        "bf16_kv_publish": 262144,
+        "kv_cube_semantic_read": 1048576,
+        "q_cube_semantic_read": 258048,
+        "fp32_score_write": 516096,
+        "fp32_score_vector_block_read": 524288,
+        "bf16_p_publish_and_semantic_read": 516096,
+        "fp32_state_spill_restore": 1056768,
+        "fp32_pv_atomic_semantic_read_modify_write": 1032192
+      },
+      "main_dataflow_bytes": 5251072,
+      "main_dataflow_bytes_per_query_token": 62512.76190476191,
+      "useful_flops_per_query_token": 1572864.0,
+      "semantic_arithmetic_intensity_flop_per_byte": 25.160686427457097,
+      "kv_only_arithmetic_intensity_flop_per_byte": 98.04255319148936,
+      "one_time_per_history_task_or_cluster_bytes": {
+        "q_input_read_and_full_slot_publish": 520192,
+        "final_fp32_partial_and_lse": 518112,
+        "status": 32,
+        "initial_state_spill_and_final_state_restore": 1056768
+      },
+      "one_time_total_bytes": 2095104,
+      "table_access_and_task_metadata_included": false,
+      "state_and_atomic_share_of_modeled_bytes_pct": 39.78159126365055
+    },
+    "C16": {
+      "q_tokens_per_member": 21,
+      "members": 16,
+      "query_head_rows_per_member": 126,
+      "query_slot_rows": 128,
+      "score_rows_explicitly_read_per_member": 128,
+      "effective_query_tokens": 336,
+      "qk_pv_useful_flops": 528482304,
+      "per_full_history_tile_bytes": {
+        "packed_kv_read": 36864,
+        "bf16_kv_publish": 262144,
+        "kv_cube_semantic_read": 262144,
+        "q_cube_semantic_read": 1032192,
+        "fp32_score_write": 2064384,
+        "fp32_score_vector_block_read": 2097152,
+        "bf16_p_publish_and_semantic_read": 2064384,
+        "fp32_state_spill_restore": 4227072,
+        "fp32_pv_atomic_semantic_read_modify_write": 4128768
+      },
+      "main_dataflow_bytes": 16175104,
+      "main_dataflow_bytes_per_query_token": 48140.19047619047,
+      "useful_flops_per_query_token": 1572864.0,
+      "semantic_arithmetic_intensity_flop_per_byte": 32.67257533552798,
+      "kv_only_arithmetic_intensity_flop_per_byte": 941.7810218978102,
+      "one_time_per_history_task_or_cluster_bytes": {
+        "q_input_read_and_full_slot_publish": 2080768,
+        "final_fp32_partial_and_lse": 2072448,
+        "status": 128,
+        "initial_state_spill_and_final_state_restore": 4227072
+      },
+      "one_time_total_bytes": 8380416,
+      "table_access_and_task_metadata_included": false,
+      "state_and_atomic_share_of_modeled_bytes_pct": 51.658647758926314
+    }
+  },
+  "unpack_per_history_tile": {
+    "packed_bytes_per_token": 144,
+    "packed_ub_row_stride_bytes": 160,
+    "kv_elements": 131072,
+    "fp32_subtract_multiply_operations": 262144,
+    "additional_work": [
+      "int16 shifts and masks",
+      "int16 to FP32 Cast",
+      "metadata gather/validation/broadcast",
+      "FP32 to BF16 publication Cast",
+      "mode1 has additional BF16 rounding; active policy must be checked separately"
+    ],
+    "not_a_cube_flop_estimate": true
+  },
+  "profile_evidence": {
+    "comparison_report": "reports/bs8_profile_20261112/comparison.json",
+    "user_workload_statement": {
+      "requests": 11,
+      "input": "32k",
+      "output_tokens": 50,
+      "max_batch_size": 8,
+      "same_dataset": true,
+      "end_to_end_completed": true,
+      "num_speculative_tokens_base": 3,
+      "num_speculative_tokens_oscar": 3
+    },
+    "device_id": 4,
+    "oscar_deployed_commit": null,
+    "wall_time": null,
+    "timeline_scope_verified": false,
+    "oscar_operator_duration_sum_us": 43842644.48,
+    "base_operator_duration_sum_us": 29188941.54,
+    "c4_c16_operator_duration_sum_us": 13782875.64,
+    "count_mapping_unresolved": true,
+    "cannot_infer": [
+      "actual HBM or L2 bandwidth",
+      "Cube/Vector utilization",
+      "critical-path overlap",
+      "complete wall-speed ratio",
+      "effect of changes not included in the supplied profile"
+    ]
+  },
+  "current_implementation_changes_work_only": {
+    "current_zero_fill": {
+      "applicable": "C4/C16 kind2 only: valid nonempty current K/V loads; skip BF16 staging zero only for all16 DMA rows",
+      "full_kv256_calls_across_two_aiv_and_kv": 32,
+      "fp32_zero_bytes_removed_per_call": 16384,
+      "bf16_zero_bytes_removed_per_full_call": 8192,
+      "full_source2_kv256_fp32_ub_zero_write_bytes_removed": 524288,
+      "full_source2_kv256_bf16_ub_zero_write_bytes_removed": 262144,
+      "full_source2_kv256_total_ub_zero_write_bytes_removed": 786432,
+      "gm_bytes_removed": 0,
+      "partial_empty_invalid_window_semantics": "partial BF16 zero remains; empty/error FP32 zero remains; source1 unchanged",
+      "new_cost": "integer eligibility checks; no claimed measured net speed"
+    },
+    "cluster_state_first_use": {
+      "applicable": "nonempty same-domain C4/C16 history clusters",
+      "state_bytes_per_member_per_transfer": 132096,
+      "initial_spill_and_first_restore_bytes_removed_per_member": 264192,
+      "bytes_removed_per_C4_cluster": 1056768,
+      "bytes_removed_per_C16_cluster": 4227072,
+      "per_tile_state_bytes_after": "unchanged for steady-state rounds; net is one removed roundtrip/member over the entire history loop",
+      "remaining_state_dma": "acc copy plus one 2-block max/sum strided copy, same addresses and total payload",
+      "stats_calls_before_per_state_transfer_per_aiv": 2,
+      "stats_calls_after_per_state_transfer_per_aiv": 1,
+      "stats_dma_bytes_saved_by_coalescing": 0,
+      "final_restore_retained": true,
+      "new_cost": "first-tile integer branch; no claimed measured net speed"
+    }
+  },
+  "exclusions": [
+    "task-table scans and actual 4B Physical blocktable loads",
+    "Matmul internal repeated reads and hardware padded FLOPs",
+    "memory transaction/cache-line alignment and HBM writeback",
+    "KV writer, query preparation/rotation, merge and final inverse rotation",
+    "source1 precise window and source2 current workloads",
+    "other model layers, weights, HCCL and MemCache transport",
+    "accepted-token efficiency and request scheduling"
+  ],
+  "validation_scope": "This JSON is arithmetic/source accounting only. It does not report compilation, functional test, device, precision or performance acceptance."
+}

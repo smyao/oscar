@@ -1,9 +1,9 @@
 """Archive #145/#154/#164/#172: reversible same-ABI C4/C16 derivatives.
 
-D.4(1): finite checks within the existing fused prefill/mixed CV kernels.
+D.4(1): finite checks and bounded data movement in fused prefill/mixed CV.
 D.4(2): the historical 6.5-second full-history restore remains prohibited.
-D.4(3): compose only complete-visible C4 checks and current K/V checks;
-all numerical work, task routing and ownership stay in the protected mothers.
+D.4(3): compose finite checks, overwritten current zero fills and initial
+cluster-state transfers; numerical work, task routing and ownership remain.
 D.4(4): no added buffer or launch; host proof is not device acceptance.
 """
 from __future__ import annotations
@@ -12,6 +12,8 @@ from hashlib import sha256
 
 from tools import cluster_visibility_transform as visibility
 from tools import precise_finite_transform as precise
+from tools import precise_zero_fill_transform as zero_fill
+from tools import cluster_state_transform as state
 
 
 MOTHERS = {
@@ -29,11 +31,12 @@ def _family(text: str) -> str:
 
 def transform(text: str) -> str:
     family = _family(text)
-    return precise.transform(visibility.transform(text) if family == "c4" else text)
+    finite = precise.transform(visibility.transform(text) if family == "c4" else text)
+    return state.transform(zero_fill.transform(finite))
 
 
 def restore(text: str) -> str:
-    original = precise.restore(text)
+    original = precise.restore(zero_fill.restore(state.restore(text)))
     if original.startswith(visibility.DERIVED_HEADER):
         original = visibility.restore(original)
     _family(original)

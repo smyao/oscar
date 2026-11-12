@@ -1,3 +1,20 @@
+// CLUSTER_STATE_FIRST_USE_V1
+// Archive #145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
+// D.4(1): bounded clustered FP32 online-state traffic inside C4/C16 FIA.
+// D.4(2): keep KV256 and prohibit the old6.5s full-history restoration.
+// D.4(3): identical state initialization at first use; same max/sum addresses
+// through two-block DMA; all math, live-transfer fences and cross flags stay.
+// D.4(4): no added memory; remove one state roundtrip per cluster member.
+// Address-byte savings do not establish HBM savings or measured NPU speed.
+// PRECISE_CURRENT_ZERO_FILL_V1
+// Archive #126/#145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
+// D.4(1): bounded current-source K/V staging in fused C4/C16 attention.
+// D.4(2): no whole-history restoration (old6499.8-6655.1ms/card).
+// D.4(3): skip only zeros overwritten by the original full-size Cast/DMA.
+// Empty/error/window paths, partial BF16 padding, finite predicate, Casts,
+// all DMA/fences and output ownership remain; no new GM/UB allocation.
+// D.4(4): full KV256 K+V avoids768KiB logical UB zero writes, with extra
+// integer eligibility checks. This is not measured HBM traffic or speed.
 // PRECISE_CURRENT_FINITE_CERTIFICATE_V1
 // Archive #145/#150/#151/#154/#164/#172; complete startup D.4 reviewed.
 // D.4(1): current-source finite validation inside bounded fused C4/C16 FIA.
@@ -711,7 +728,19 @@ template<int32_t D> class AttentionCv {
   }
   __aicore__ void LoadPrecise(int64_t start,bool value) {
     auto dst=dequantBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
-    Duplicate(dst,0.0F,kElements);PipeBarrier<PIPE_V>();
+    // A valid nonempty current load always Casts all kElements, including
+    // its explicitly zeroed BF16 tail. That Cast overwrites every dst bit.
+    // Keep the original Vector barrier and all original error checks below.
+    bool currentOverwritesDst=false;
+    if(kind==2) {
+      const int32_t writeRows=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-start-lane*kHalfKv)));
+      if(writeRows>0) {
+        const int64_t writeToken=requestBegin+start+lane*kHalfKv-context;
+        currentOverwritesDst=writeToken>=0 && writeToken+writeRows<=g.tokens;
+      }
+    }
+    if(!currentOverwritesDst)Duplicate(dst,0.0F,kElements);
+    PipeBarrier<PIPE_V>();
     if(kind==2) {
       const int32_t rows=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-start-lane*kHalfKv)));
       if(rows==0)return;
@@ -720,7 +749,10 @@ template<int32_t D> class AttentionCv {
       // The natural unpack buffer is not used by the precise source. Reuse
       // it for contiguous BF16 rows; no extra UB or full-history buffer.
       auto batch=naturalBuf.Get<bfloat16_t>();
-      Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),kElements);
+      // A full 16-row DMA writes the entire BF16 staging tile. Partial
+      // tiles retain their exact original full zero-fill and padded Cast.
+      if(rows<kHalfKv)
+        Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),kElements);
       Fence<HardEvent::V_MTE2>();
       DataCopyExtParams copy{static_cast<uint16_t>(rows),D*2,
           static_cast<uint32_t>((g.hk-1)*D*2),0,0};
@@ -1011,8 +1043,12 @@ template<int32_t D> class AttentionCv {
     const int64_t statBase=statStateOffset+member*2*kQueryRows+lane*kLaneRows;
     Fence<HardEvent::V_MTE3>();
     DataCopy(work[accBase],acc,kLaneRows*D);
-    DataCopy(work[statBase],stats,kLaneRows);
-    DataCopy(work[statBase+kQueryRows],stats[kLaneRows],kLaneRows);
+    static_assert(kQueryRows==2*kLaneRows && kLaneRows*sizeof(float)%32==0,
+        "cluster max/sum DMA requires two aligned lane blocks");
+    constexpr uint16_t statBlocks=kLaneRows*sizeof(float)/32;
+    // UB max/sum are adjacent; GM has the other AIV's lane between them.
+    DataCopyParams statCopy{2,statBlocks,0,statBlocks};
+    DataCopy(work[statBase],stats,statCopy);
     // These exact FP32 bits must reach GM before another member reuses UB
     // and before this member restores its own online state on a later tile.
     Fence<HardEvent::MTE3_MTE2>();Fence<HardEvent::MTE3_V>();
@@ -1022,8 +1058,11 @@ template<int32_t D> class AttentionCv {
     const int64_t accBase=accStateOffset+member*kQueryRows*D+lane*kLaneRows*D;
     const int64_t statBase=statStateOffset+member*2*kQueryRows+lane*kLaneRows;
     DataCopy(acc,work[accBase],kLaneRows*D);
-    DataCopy(stats,work[statBase],kLaneRows);
-    DataCopy(stats[kLaneRows],work[statBase+kQueryRows],kLaneRows);
+    static_assert(kQueryRows==2*kLaneRows && kLaneRows*sizeof(float)%32==0,
+        "cluster max/sum DMA requires two aligned lane blocks");
+    constexpr uint16_t statBlocks=kLaneRows*sizeof(float)/32;
+    DataCopyParams statCopy{2,statBlocks,statBlocks,0};
+    DataCopy(stats,work[statBase],statCopy);
     Fence<HardEvent::MTE2_V>();
   }
   __aicore__ void VectorCluster(const TaskState* members) {
@@ -1031,13 +1070,10 @@ template<int32_t D> class AttentionCv {
     int32_t memberErrors[4];
     for(int32_t member=0;member<4;++member) {
       UseTask(members[member]);qOffset=member*kQueryRows*D;error=0;
-      Duplicate(acc,0.0F,kLaneRows*D);Fence<HardEvent::V_S>();
-      Duplicate(stats,kEmptyMax,kLaneRows);
-      Duplicate(stats[kLaneRows],0.0F,kLaneRows);
-      Fence<HardEvent::V_S>();
+      // LoadQueries never reads online state and finishes its own publication.
+      // The first Softmax initializes state directly; no zero-state GM trip.
       LoadQueries();
       memberErrors[member]=error;
-      SpillState(member);
     }
     const int64_t first=members[0].kvbegin,last=members[0].kvend;
     UseTask(members[0]);error=0;SelectClusterSlots(0,0);
@@ -1051,7 +1087,16 @@ template<int32_t D> class AttentionCv {
         if(kvError)error=kvError;
         SelectClusterSlots(buffer,member%2);
         CrossCoreWaitFlag(kClusterScore0+member%2);
-        RestoreState(member);
+        if(start==first) {
+          // IsClusterMember proves first<last. Cube first consumes state only
+          // after the unchanged SpillState/PReady below, never before this.
+          Duplicate(acc,0.0F,kLaneRows*D);Fence<HardEvent::V_S>();
+          Duplicate(stats,kEmptyMax,kLaneRows);
+          Duplicate(stats[kLaneRows],0.0F,kLaneRows);
+          Fence<HardEvent::V_S>();
+        } else {
+          RestoreState(member);
+        }
         for(int32_t block=0;block<kRowBlocks;++block)
           Softmax(start,lane*kLaneRows+block*kHalfRows);
         memberErrors[member]=error;

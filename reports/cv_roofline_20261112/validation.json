@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-12",
+  "baseline_commit": "de8d55f675acde8c63eaee3ef5b7e085b11da7fb",
+  "branch": "oscar-new-7",
+  "host_environment": {
+    "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer",
+    "CANN_available": false,
+    "real_hardware_connected": false
+  },
+  "host_tests": {
+    "root_runs": {
+      "primary": {
+        "tests": "196",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "25.117",
+        "evidence": "host_primary.xml"
+      },
+      "integration": {
+        "tests": "44",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "1.800",
+        "evidence": "host_integration.xml"
+      }
+    },
+    "state_specialist_run": {
+      "command": ".venv/bin/python -m pytest -q tests/test_cluster_state_transform.py",
+      "compiler_environment": "fixture sets DEVELOPER_DIR for the compiler subprocess when needed",
+      "passed": 21,
+      "seconds": 32.58,
+      "evidence_kind": "delegated agent execution receipt, not a JUnit file",
+      "actual_extracted_state_lifecycle_cases": 114
+    },
+    "unique_final_passed": 261,
+    "current_source_control": {
+      "cases": 8568,
+      "fixed_addresses_reused": true,
+      "real_extracted_methods": [
+        "LoadPrecise",
+        "PublishKv"
+      ],
+      "real_finite_helpers": true,
+      "primitive_implementation": "recording bounded host stubs, not CANN",
+      "ubsan": true
+    },
+    "state_control": {
+      "members": [
+        4,
+        16
+      ],
+      "lanes": [
+        0,
+        1
+      ],
+      "history_tiles": [
+        1,
+        2,
+        3,
+        129
+      ],
+      "actual_extracted_methods": [
+        "SpillState",
+        "RestoreState",
+        "VectorCluster",
+        "IsClusterMember",
+        "CurrentTask",
+        "UseTask",
+        "TaskValid"
+      ],
+      "primitive_implementation": "bounded host DMA/math and cross-core-control stubs, not CANN",
+      "ubsan": true
+    },
+    "generated_source_check": "passed",
+    "diff_check": "passed"
+  },
+  "source_protection": {
+    "all_original_mothers_unchanged": true,
+    "original_Cube_and_numerical_methods_unchanged": true,
+    "whole_source_inverse": "passed",
+    "runtime_scheduler_offload_PC_GDN_MTP_argv_config_timer_unchanged": true,
+    "new_UB_bytes": 0,
+    "new_GM_bytes": 0,
+    "source_build_binding": "csrc/active_kernels_manifest.json"
+  },
+  "production_delivery": {
+    "candidate": "same existing ABI, CMake compiles regenerated C4/C16 active sources",
+    "node93": "unchanged script delegates to candidate",
+    "build_cache": "generator/source fingerprints checked before reuse",
+    "new_selector_thresholds": false
+  },
+  "new_functional_NPU_cases": {
+    "families": [
+      "c4",
+      "c16"
+    ],
+    "query_lengths": [
+      84,
+      336
+    ],
+    "context_replay": [
+      128,
+      160
+    ],
+    "dequant_modes": [
+      0,
+      1
+    ],
+    "history_tiles": 1,
+    "graph_fixed_addresses": true,
+    "timed": false,
+    "execution": "not_run"
+  },
+  "work_reduction": {
+    "full_source2_KV256_UB_zero_bytes": 786432,
+    "source2_GM_bytes_saved": 0,
+    "state_one_time_GM_semantic_bytes_per_member": 264192,
+    "state_DMA_API_calls_old": "12*C*(L+1), two AIV combined",
+    "state_DMA_API_calls_new": "8*C*L, two AIV combined",
+    "state_DMA_payload_bursts_old": "12*C*(L+1)",
+    "state_DMA_payload_bursts_new": "12*C*L",
+    "state_extra_scalar_comparisons_max": "2*C*L",
+    "state_first_round_hard_events_removed": "8*C",
+    "device_speedup": null
+  },
+  "independent_review": "both transforms and tests reviewed independently; no new functional defect found; actual CANN asynchronous ownership remains to be qualified",
+  "acceptance": {
+    "source": "passed",
+    "host_control": "passed",
+    "CANN_build": "not_run_no_local_SDK",
+    "official_CPU_debug": "not_run",
+    "NPU": "not_run",
+    "hardware_graph": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run"
+  }
+}

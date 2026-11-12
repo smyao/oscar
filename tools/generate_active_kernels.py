@@ -52,6 +52,8 @@ TOOL_PATHS = (
     "tools/cluster_prefill_transform.py",
     "tools/cluster_visibility_transform.py",
     "tools/precise_finite_transform.py",
+    "tools/precise_zero_fill_transform.py",
+    "tools/cluster_state_transform.py",
 )
 
 

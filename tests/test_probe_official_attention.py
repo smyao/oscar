@@ -237,10 +237,13 @@ def complete_receipt():
         'source_binding':probe.source_binding(),'operator_families':probe.OPERATORS,'cases':rows,
         'writer_rotation':{'status':'passed','writer':probe.WRITER,'query_copy':probe.QUERY_COPY,
             'codec_bytes':'exact','rotated_windows':'exact','canaries':'exact','query_status':'exact','writer_status':'exact',
-            'graph_capture':'passed','graph_replay':'passed','graph_same_addresses':True}}
+            'graph_capture':'passed','graph_replay':'passed','graph_same_addresses':True,
+            'active_rows':{'status':'passed','codec_window_status':'exact','same_addresses':True,
+                'eager_and_graph':'passed','timing':None,
+                'states':['interleaved','all_padding','changed_active_rows','all_live']}}}
 
 
-@pytest.mark.parametrize('failure',('v3','old_prepare','old_reader','old_window','missing_case','timing','old_graph_oracle','missing_copy_graph'))
+@pytest.mark.parametrize('failure',('v3','old_prepare','old_reader','old_window','missing_case','timing','old_graph_oracle','missing_copy_graph','missing_padding_gate','incomplete_padding_gate'))
 def test_v3_or_incomplete_success_receipts_cannot_certify_v4(failure):
     report=complete_receipt();assert probe.validate_evidence(report)==[]
     if failure=='v3':report['contract']='oscar_bf16_attention_v3'
@@ -251,6 +254,8 @@ def test_v3_or_incomplete_success_receipts_cannot_certify_v4(failure):
     elif failure=='timing':report['cases'][0]['timing']={'passed':True}
     elif failure=='old_graph_oracle':report['cases'][0]['graph']['states'][0].pop('v4_oracle')
     elif failure=='missing_copy_graph':report['cases'][0]['graph'].pop('final_copy_and_guard')
+    elif failure=='missing_padding_gate':report['writer_rotation'].pop('active_rows')
+    elif failure=='incomplete_padding_gate':report['writer_rotation']['active_rows']['states'].remove('all_padding')
     assert probe.validate_evidence(report)
 
 
@@ -285,3 +290,5 @@ def test_writer_gate_stores_rotated_exact_windows_and_replays_fresh_inputs():
     report=probe.writer_rotation_gate(TorchProxy(),ops,torch.device('cpu'),1)
     assert report['rotated_windows']==report['codec_bytes']=='exact'
     assert report['graph_same_addresses'] is True
+    assert report['active_rows']['states']==['interleaved','all_padding','changed_active_rows','all_live']
+    assert report['active_rows']['codec_window_status']=='exact'

@@ -53,8 +53,8 @@ ascendc_library(oscar_ascend_kernels SHARED kernels/store_int2.cpp kernels/merge
   kernels/attention_cv_striped_decode.cpp kernels/attention_cv_striped_decode_simd.cpp
   kernels/attention_cv_decode_bundle.cpp kernels/attention_cv_mdl_decode.cpp
   kernels/attention_cv_bf16_decode.cpp kernels/attention_cv_bf16_cluster4.cpp kernels/attention_cv_bf16_cluster16.cpp
-  kernels/attention_official_tasks.cpp kernels/attention_cv_official_decode.cpp kernels/attention_cv_official_cluster4.cpp kernels/attention_cv_official_cluster16.cpp
-  kernels/attention_cv_aligned_decode.cpp kernels/attention_cv_aligned_cluster4.cpp kernels/attention_cv_aligned_cluster16.cpp kernels/attention_cv_aligned_cluster16_control.cpp kernels/store_aligned_int2.cpp
+  kernels/attention_official_tasks.cpp kernels/attention_cv_official_decode_active.cpp kernels/attention_cv_official_cluster4.cpp kernels/attention_cv_official_cluster16.cpp
+  kernels/attention_cv_aligned_decode.cpp kernels/attention_cv_aligned_cluster4.cpp kernels/attention_cv_aligned_cluster16.cpp kernels/attention_cv_aligned_cluster16_control.cpp kernels/store_aligned_int2_active.cpp
   kernels/attention_cv_hybrid_l1_decode.cpp
   kernels/attention_cv_window_range.cpp kernels/attention_cv_window_range_balanced.cpp
   kernels/attention_cv_window_range_cluster4.cpp kernels/attention_cv_window_range_cluster16.cpp

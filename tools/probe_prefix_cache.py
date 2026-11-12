@@ -25,6 +25,9 @@ SCOPE = "synthetic_page_owned_prefix_writer_reader_graph"
 BLOCKS, HEADS, DIM, QUERIES = 7, 6, 256, 8
 STATES = ("shared_prefix_forks", "partial_hit_changed_graph", "released_tail_reuse")
 SOURCE_PATHS = (
+    "csrc/kernels/attention_cv_official_decode_active.cpp", "csrc/kernels/store_aligned_int2_active.cpp",
+    "csrc/active_kernels_manifest.json", "tools/generate_active_kernels.py",
+    "tools/active_decode_transform.py", "tools/active_store_transform.py",
     "oscar_ascend/lifecycle.py", "oscar_ascend/layout.py",
     "oscar_ascend/ops/cv_dispatch.py", "csrc/kernels/rotate_clip_store_striped.cpp",
     "csrc/kernels/rotate_vector_init.cpp", "csrc/kernels/attention_tasks.cpp",

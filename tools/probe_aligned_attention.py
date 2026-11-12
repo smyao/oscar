@@ -20,6 +20,10 @@ OPERATORS = {'q4': 'attention_cv_aligned_decode_out', 'q1': 'attention_cv_aligne
 WRITER = 'store_aligned_int2_out'
 QUERY_COPY = 'copy_validate_bf16_query_out'
 SOURCE_PATHS = (
+ 'csrc/kernels/attention_cv_official_decode.cpp',
+ 'csrc/kernels/attention_cv_official_decode_active.cpp', 'csrc/kernels/store_aligned_int2_active.cpp',
+ 'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
+ 'tools/active_decode_transform.py', 'tools/active_store_transform.py',
  'csrc/kernels/attention_cv_aligned_decode.cpp', 'csrc/kernels/attention_cv_aligned_cluster4.cpp',
  'csrc/kernels/attention_cv_aligned_cluster16.cpp', 'csrc/kernels/attention_aligned_unpack.h',
  'csrc/kernels/store_aligned_int2.cpp', 'csrc/include/oscar_aligned_decode_launch.h',

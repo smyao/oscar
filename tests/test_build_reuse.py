@@ -10,6 +10,7 @@ import pytest
 from oscar_ascend.ops.contracts import ABI_VERSION, SOURCE_CAPABILITIES
 from oscar_ascend.ops.loader import validate_build_artifacts
 from tools import build_ops
+from tools.generate_active_kernels import KERNELS, MANIFEST, TOOL_PATHS
 
 
 @pytest.fixture
@@ -18,6 +19,14 @@ def compiler(tmp_path, monkeypatch):
     source = root / "csrc/bindings.cpp"
     source.parent.mkdir()
     source.write_text("original source\n")
+    # The real builder validates full protected mothers and checked derivatives
+    # even on cache reuse. Stage those exact inputs for this fake compiler;
+    # do not bypass the production generation gate in unit tests.
+    for name in (*TOOL_PATHS, MANIFEST,
+                 *(entry[key] for entry in KERNELS for key in ("mother", "active"))):
+        staged = root / name
+        staged.parent.mkdir(parents=True, exist_ok=True)
+        staged.write_bytes((build_ops.ROOT / name).read_bytes())
     cann = root / "cann"
     (cann / "include").mkdir(parents=True)
     (cann / "tools/tikcpp/ascendc_kernel_cmake").mkdir(parents=True)

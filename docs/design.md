@@ -1,5 +1,7 @@
 # OSCAR Ascend：端到端设计与可证边界
 
+2026-11-12 算子无效工作消除：完整保留受保护母源，使用同 ABI 派生源跳过负 slot 的 K/V 量化，以及零 qcount 任务的十个无用字段读取。D.4 四问：①current store 与融合 decode CV 的 task 装载；②旧全历史恢复约6.5秒、store约209–215ms只作历史教训；③仅消除不发布结果的工作，完整保留有效算术、DMA/fence、错误与图地址；④最多八个 int64 slot 局部快照及分支，工作量与硬件收益分开记录。设计、成本、源码身份与验证边界见[算子侧续修](operator_active_rows_20261112.md)。没有 CANN/真 NPU/性能通过的本轮证据。
+
 2026-11-09 KV 卸载：外部 `OscarAscendStoreConnector` 复用 MemCache SDK bootstrap，完整保存 packed/window/tags/GDN，保留原生 none/align、MTP、chunked prefill、prefix checkpoint 与图地址。调度、全 TP 提交、恢复及清理设计见 [卸载实现与部署](kv_offload_20261109.md)。本轮无真机连接，MemCache 尚待部署；不升级设备、质量或性能验收。
 
 2026-10-28档案#173/current-only新精度政策：在已有无历史精确suffix资格下，直接原Q/K/V native FIA，输出不经历旋转往返；原中心化、K/V旋转及INT2/精确snapshot写入保留。历史和混合来源仍完整v4旋转域。D.4四问：①current fused FIA，②避免全历史恢复且消除无必要有限精度变换，③原context/slot/finite/error门、输入缓冲与writer所有权均保留，④删除2个query-head GEMM，不增加copy、kernel或workspace。timer本身不动，K/V旋转从FIA相位移入store相位，总工作量账必须计入该迁移。详见[设计与证明](native_exact_current_precision_20261028.md)。

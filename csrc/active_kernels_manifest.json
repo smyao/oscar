@@ -1,0 +1,27 @@
+{
+  "generation_tools_sha256": {
+    "tools/active_decode_transform.py": "b915e511a01b6b5e7fccbe81a3ae1edec35cf46d378d0e76e4b2b30abb73a941",
+    "tools/active_store_transform.py": "e06bd3f9becf44cad3c41401d8cf6bb14afe792e3dcd2e1cdf67b69d3567e266",
+    "tools/generate_active_kernels.py": "19a72f8bff67e1e4b9263ccb98092851d2de594fd236853702a3bd5bbba85187"
+  },
+  "kernels": [
+    {
+      "active": "csrc/kernels/attention_cv_official_decode_active.cpp",
+      "active_sha256": "81f677c45c5c49b3d92b2ae3c007c66eafb6acbaa03f1aa72c9e0ce5dedca019",
+      "mother": "csrc/kernels/attention_cv_official_decode.cpp",
+      "mother_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "public_abi": "unchanged",
+      "transform": "tools.active_decode_transform"
+    },
+    {
+      "active": "csrc/kernels/store_aligned_int2_active.cpp",
+      "active_sha256": "fd35153511b9eacb2e63980d6aed712c8d4d1f8f2fe33f82ecb044eb4be53842",
+      "mother": "csrc/kernels/store_aligned_int2.cpp",
+      "mother_sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+      "public_abi": "unchanged",
+      "transform": "tools.active_store_transform"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "same-ABI inactive-work elimination; not execution acceptance"
+}

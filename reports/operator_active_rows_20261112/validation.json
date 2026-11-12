@@ -1,0 +1,140 @@
+{
+  "date": "2026-11-12",
+  "branch": "oscar-new-7",
+  "base_commit": "c89cae5a500667926e5eb4fdf2c675baa1edf22e",
+  "scope": [
+    "skip quantizers only for native negative store slots",
+    "skip ten scalar task fields only when qcount is exactly zero"
+  ],
+  "sources": {
+    "generation_tools_sha256": {
+      "tools/active_decode_transform.py": "b915e511a01b6b5e7fccbe81a3ae1edec35cf46d378d0e76e4b2b30abb73a941",
+      "tools/active_store_transform.py": "e06bd3f9becf44cad3c41401d8cf6bb14afe792e3dcd2e1cdf67b69d3567e266",
+      "tools/generate_active_kernels.py": "19a72f8bff67e1e4b9263ccb98092851d2de594fd236853702a3bd5bbba85187"
+    },
+    "kernels": [
+      {
+        "active": "csrc/kernels/attention_cv_official_decode_active.cpp",
+        "active_sha256": "81f677c45c5c49b3d92b2ae3c007c66eafb6acbaa03f1aa72c9e0ce5dedca019",
+        "mother": "csrc/kernels/attention_cv_official_decode.cpp",
+        "mother_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+        "public_abi": "unchanged",
+        "transform": "tools.active_decode_transform"
+      },
+      {
+        "active": "csrc/kernels/store_aligned_int2_active.cpp",
+        "active_sha256": "fd35153511b9eacb2e63980d6aed712c8d4d1f8f2fe33f82ecb044eb4be53842",
+        "mother": "csrc/kernels/store_aligned_int2.cpp",
+        "mother_sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+        "public_abi": "unchanged",
+        "transform": "tools.active_store_transform"
+      }
+    ],
+    "schema_version": 1,
+    "scope": "same-ABI inactive-work elimination; not execution acceptance"
+  },
+  "tests": {
+    "combined_command": ".venv/bin/python -m pytest -q tests/test_active_*.py tests/test_build_reuse.py tests/test_loader_linkage.py tests/test_official_attention_generation.py tests/test_universal_bf16_regression_protection.py tests/test_probe_official_attention.py tests/test_probe_prefix_cache.py tests/test_official_reference.py tests/test_official_runtime.py tests/test_offload_*.py tests/test_prefix_checkpoint_*.py tests/test_prefix_cache_request_logging.py tests/test_pd_step_stats.py tests/test_stable_launch_frozen.py tests/test_memcache_launch.py tests/test_align_prefill_state_contract.py tests/test_prefill_state_contract_hooks.py tests/test_plugin.py tests/test_forward_metadata_reuse.py tests/test_mixed_decode_split.py tests/test_mixed_prepare_reuse.py tests/test_prepare_reuse.py tests/test_decode_prepare_reuse.py --tb=short",
+    "first_sandbox_run": {
+      "passed": 964,
+      "skipped": 1,
+      "errors": 60,
+      "elapsed_seconds": 26.26,
+      "errors_reason": "Unix IPC bind Operation not permitted in sandbox; all 60 in test_offload_metadata.py"
+    },
+    "ipc_rerun": {
+      "command": ".venv/bin/python -m pytest -q tests/test_offload_metadata.py --tb=short",
+      "passed": 72,
+      "elapsed_seconds": 9.31,
+      "scope": "local Unix IPC outside sandbox; no remote service or NPU"
+    },
+    "combined_unique_final": {
+      "passed": 1024,
+      "failed": 0,
+      "skipped": 1,
+      "skip_reason": "ELF DT_NEEDED/SONAME regression requires Linux"
+    },
+    "host_cpp": {
+      "compiler": "Apple clang from /Applications/Xcode.app/Contents/Developer; subprocess-only DEVELOPER_DIR",
+      "actual_extracted_methods": [
+        "AlignedStore class including Run/Read/WriteRaw/WriteTag",
+        "decode LoadTask/Process/TaskValid"
+      ],
+      "limitations": [
+        "quantizer and DMA are recording host stubs",
+        "not CANN compilation or official CPU-debug",
+        "not hardware graph or concurrency evidence"
+      ],
+      "decode_ubsan": true
+    },
+    "source_generation_check": "passed",
+    "git_diff_check": "passed",
+    "new_files_test_cases": 62,
+    "additional_probe_receipt_rejection_cases": 2,
+    "decode_final_rerun": {
+      "command": ".venv/bin/python -m pytest -q tests/test_active_decode_kernel.py --tb=short",
+      "passed": 13,
+      "elapsed_seconds": 2.08,
+      "reason": "q1 fixture corrected to actual negative-slot qcount=-1; no q1 zero-follower saving claimed"
+    },
+    "additional_legacy_aligned_suite": {
+      "baseline_commit": "c89cae5a500667926e5eb4fdf2c675baa1edf22e",
+      "baseline_isolated_snapshot": true,
+      "command": ".venv/bin/python -m pytest -q tests/test_aligned_runtime.py tests/test_probe_aligned_attention.py --tb=short",
+      "baseline_passed": 41,
+      "baseline_failed": 8,
+      "baseline_elapsed_seconds": 1.47,
+      "same_failures_in_current_tree": true,
+      "reason": "Five legacy aligned-only runtime fixtures conflict with existing fp32_metadata official requirement; three legacy probe fixtures expect pre-official-v4 format/reader/gate. Unrelated production and test logic not changed.",
+      "log": "reports/operator_active_rows_20261112/baseline-aligned-tests.log",
+      "log_sha256": "3500b74a856e6ca63d90f10a961b93063744a1e8ae53ddf2219a8fb4810e38f7"
+    }
+  },
+  "work_reduction": {
+    "store_conditions": "later MTP N=4B, B valid slots, Hkv1; no claim for all-live rows",
+    "store_bs16_quantizer_calls": [
+      128,
+      32
+    ],
+    "store_bs28_quantizer_calls": [
+      224,
+      56
+    ],
+    "q4_conditions": "N=4B contiguous groups, Hq6/Hkv1, splits 5 for B16 / 4 for B28, three sources",
+    "q4_bs16_scalar_reads_per_task_traversal": [
+      10560,
+      3360
+    ],
+    "q4_bs28_scalar_reads_per_task_traversal": [
+      14784,
+      4704
+    ],
+    "q1_negative_padding_scalar_reads": "unchanged; negative qcount is not a zero-count follower",
+    "aiv_dma_bytes": "unchanged",
+    "store_bulk_dma_and_cast": "unchanged",
+    "tradeoff": "up to eight int64 local slot values and integer branches"
+  },
+  "protection": {
+    "complete_mother_sources_unchanged": true,
+    "exact_inverse_transform": true,
+    "old_sha_guards_unchanged": true,
+    "public_operator_abi_unchanged": true,
+    "valid_row_arithmetic_reductions_rounding_fences_unchanged": true,
+    "python_runtime_offload_configs_scripts_references_timers_unchanged_from_base": true,
+    "entrypoints": "same start_node93_oscar.sh / install_serve.sh --variant candidate; CMake compiles only same-ABI active derivatives",
+    "old_build_reuse": "rejected by csrc source fingerprint; generation check before build/reuse"
+  },
+  "hardware_functional_gate": {
+    "added": "writer_padding_gate: eager and fixed-address graph masks interleaved/all_padding/changed_active_rows/all_live, poisoned padding, exact codec/window/tag/status",
+    "executed": false
+  },
+  "not_performed": [
+    "CANN compilation: no local SDK or Lima",
+    "official Ascend CPU-debug",
+    "real NPU connection",
+    "hardware graph replay",
+    "model quality evaluation",
+    "performance measurement"
+  ],
+  "interpretation": "Removed conditional work and preserved source/control-flow evidence; no claim of measured end-to-end throughput gain."
+}

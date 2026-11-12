@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 from .environment import file_fingerprint
+from .generate_active_kernels import check_generated_sources
 from .phase import atomic_json, run_phase
 from oscar_ascend.ops.contracts import SOURCE_CAPABILITIES
 from oscar_ascend.ops.loader import OperatorUnavailable, validate_build_artifacts
@@ -80,6 +81,9 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
     # build concurrency; target code, numerics and runtime flags stay intact.
     if jobs is not None and (type(jobs) is not int or jobs <= 0):
         raise ValueError("build jobs must be a positive integer")
+    # #85/#172: verify checked-in derivatives before compilation or reuse.
+    # Never rewrite a source tree to make an old binary appear compatible.
+    check_generated_sources(ROOT)
     compile_jobs = min(os.cpu_count() or 1, 8) if jobs is None else jobs
     env = os.environ.copy()
     cann = cann_root(env)

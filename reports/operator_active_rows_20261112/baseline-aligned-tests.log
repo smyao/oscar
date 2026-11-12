@@ -1,0 +1,276 @@
+FFFFF..........................FF....F...........                        [100%]
+=================================== FAILURES ===================================
+_ test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[8-False-attention_cv_aligned_decode_out] _
+
+n = 8, later = False, name = 'attention_cv_aligned_decode_out'
+
+    @pytest.mark.parametrize('n,later,name',[
+        (8,False,'attention_cv_aligned_decode_out'),(8,True,'attention_cv_aligned_decode_q1_out'),
+        (256,False,'attention_cv_aligned_cluster4_out'),(8192,False,'attention_cv_aligned_cluster16_out'),
+        (10,False,'attention_cv_aligned_cluster4_out')])
+    def test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations(n,later,name):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+>       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,_c16_l1=True,
+            _bf16_expected=name,_aligned=True)
+
+tests/test_aligned_runtime.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+metadata = OscarMetadata(query_start_loc=tensor([0, 4, 8], dtype=torch.int32), seq_lens=tensor([32768,     8], dtype=torch.int32)...=False, cv_shape_tokens=None, mixed_decode_split=False, mixed_split_segment=None, window_map=None, prepare_region=None)
+config = {'devices': [0, 1, 2, 3], 'port': 8989, 'oscar_dequant_policy': 'fp32_metadata', 'rotation_variant': 'perhead_center', ...}
+
+    def dequant_mode(metadata, config=None):
+        config = {} if config is None else config
+        policy = config.get("oscar_dequant_policy", "native_phase")
+        if policy not in ("native_phase", "fp32_metadata"):
+            raise OscarReadinessError(f"unknown OSCAR dequantization policy {policy!r}")
+        fp32 = policy == "fp32_metadata"
+        if fp32 and not all(config.get(flag) is True for flag in (
+                "experimental_official_math", "experimental_aligned_math", "experimental_bf16_attention")):
+>           raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+
+oscar_ascend/integration/aligned_math.py:18: OscarReadinessError
+_ test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[8-True-attention_cv_aligned_decode_q1_out] _
+
+n = 8, later = True, name = 'attention_cv_aligned_decode_q1_out'
+
+    @pytest.mark.parametrize('n,later,name',[
+        (8,False,'attention_cv_aligned_decode_out'),(8,True,'attention_cv_aligned_decode_q1_out'),
+        (256,False,'attention_cv_aligned_cluster4_out'),(8192,False,'attention_cv_aligned_cluster16_out'),
+        (10,False,'attention_cv_aligned_cluster4_out')])
+    def test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations(n,later,name):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+>       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,_c16_l1=True,
+            _bf16_expected=name,_aligned=True)
+
+tests/test_aligned_runtime.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+metadata = OscarMetadata(query_start_loc=tensor([0, 1, 2], dtype=torch.int32), seq_lens=tensor([32768,     8], dtype=torch.int32)...=False, cv_shape_tokens=None, mixed_decode_split=False, mixed_split_segment=None, window_map=None, prepare_region=None)
+config = {'devices': [0, 1, 2, 3], 'port': 8989, 'oscar_dequant_policy': 'fp32_metadata', 'rotation_variant': 'perhead_center', ...}
+
+    def dequant_mode(metadata, config=None):
+        config = {} if config is None else config
+        policy = config.get("oscar_dequant_policy", "native_phase")
+        if policy not in ("native_phase", "fp32_metadata"):
+            raise OscarReadinessError(f"unknown OSCAR dequantization policy {policy!r}")
+        fp32 = policy == "fp32_metadata"
+        if fp32 and not all(config.get(flag) is True for flag in (
+                "experimental_official_math", "experimental_aligned_math", "experimental_bf16_attention")):
+>           raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+
+oscar_ascend/integration/aligned_math.py:18: OscarReadinessError
+_ test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[256-False-attention_cv_aligned_cluster4_out] _
+
+n = 256, later = False, name = 'attention_cv_aligned_cluster4_out'
+
+    @pytest.mark.parametrize('n,later,name',[
+        (8,False,'attention_cv_aligned_decode_out'),(8,True,'attention_cv_aligned_decode_q1_out'),
+        (256,False,'attention_cv_aligned_cluster4_out'),(8192,False,'attention_cv_aligned_cluster16_out'),
+        (10,False,'attention_cv_aligned_cluster4_out')])
+    def test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations(n,later,name):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+>       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,_c16_l1=True,
+            _bf16_expected=name,_aligned=True)
+
+tests/test_aligned_runtime.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+metadata = OscarMetadata(query_start_loc=tensor([  0, 128, 256], dtype=torch.int32), seq_lens=tensor([32768,   128], dtype=torch....=False, cv_shape_tokens=None, mixed_decode_split=False, mixed_split_segment=None, window_map=None, prepare_region=None)
+config = {'devices': [0, 1, 2, 3], 'port': 8989, 'oscar_dequant_policy': 'fp32_metadata', 'rotation_variant': 'perhead_center', ...}
+
+    def dequant_mode(metadata, config=None):
+        config = {} if config is None else config
+        policy = config.get("oscar_dequant_policy", "native_phase")
+        if policy not in ("native_phase", "fp32_metadata"):
+            raise OscarReadinessError(f"unknown OSCAR dequantization policy {policy!r}")
+        fp32 = policy == "fp32_metadata"
+        if fp32 and not all(config.get(flag) is True for flag in (
+                "experimental_official_math", "experimental_aligned_math", "experimental_bf16_attention")):
+>           raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+
+oscar_ascend/integration/aligned_math.py:18: OscarReadinessError
+_ test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[8192-False-attention_cv_aligned_cluster16_out] _
+
+n = 8192, later = False, name = 'attention_cv_aligned_cluster16_out'
+
+    @pytest.mark.parametrize('n,later,name',[
+        (8,False,'attention_cv_aligned_decode_out'),(8,True,'attention_cv_aligned_decode_q1_out'),
+        (256,False,'attention_cv_aligned_cluster4_out'),(8192,False,'attention_cv_aligned_cluster16_out'),
+        (10,False,'attention_cv_aligned_cluster4_out')])
+    def test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations(n,later,name):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+>       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,_c16_l1=True,
+            _bf16_expected=name,_aligned=True)
+
+tests/test_aligned_runtime.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+metadata = OscarMetadata(query_start_loc=tensor([   0, 8192], dtype=torch.int32), seq_lens=tensor([40960], dtype=torch.int32), bl...=False, cv_shape_tokens=None, mixed_decode_split=False, mixed_split_segment=None, window_map=None, prepare_region=None)
+config = {'devices': [0, 1, 2, 3], 'port': 8989, 'oscar_dequant_policy': 'fp32_metadata', 'rotation_variant': 'perhead_center', ...}
+
+    def dequant_mode(metadata, config=None):
+        config = {} if config is None else config
+        policy = config.get("oscar_dequant_policy", "native_phase")
+        if policy not in ("native_phase", "fp32_metadata"):
+            raise OscarReadinessError(f"unknown OSCAR dequantization policy {policy!r}")
+        fp32 = policy == "fp32_metadata"
+        if fp32 and not all(config.get(flag) is True for flag in (
+                "experimental_official_math", "experimental_aligned_math", "experimental_bf16_attention")):
+>           raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+
+oscar_ascend/integration/aligned_math.py:18: OscarReadinessError
+_ test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[10-False-attention_cv_aligned_cluster4_out] _
+
+n = 10, later = False, name = 'attention_cv_aligned_cluster4_out'
+
+    @pytest.mark.parametrize('n,later,name',[
+        (8,False,'attention_cv_aligned_decode_out'),(8,True,'attention_cv_aligned_decode_q1_out'),
+        (256,False,'attention_cv_aligned_cluster4_out'),(8192,False,'attention_cv_aligned_cluster16_out'),
+        (10,False,'attention_cv_aligned_cluster4_out')])
+    def test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations(n,later,name):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+>       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,_c16_l1=True,
+            _bf16_expected=name,_aligned=True)
+
+tests/test_aligned_runtime.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:749: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+oscar_ascend/integration/impl.py:314: in forward
+    mode_args = (dequant_mode(attn_metadata, self.provider.config),)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+metadata = OscarMetadata(query_start_loc=tensor([ 0,  5, 10], dtype=torch.int32), seq_lens=tensor([32768,     8], dtype=torch.int...=False, cv_shape_tokens=None, mixed_decode_split=False, mixed_split_segment=None, window_map=None, prepare_region=None)
+config = {'devices': [0, 1, 2, 3], 'port': 8989, 'oscar_dequant_policy': 'fp32_metadata', 'rotation_variant': 'perhead_center', ...}
+
+    def dequant_mode(metadata, config=None):
+        config = {} if config is None else config
+        policy = config.get("oscar_dequant_policy", "native_phase")
+        if policy not in ("native_phase", "fp32_metadata"):
+            raise OscarReadinessError(f"unknown OSCAR dequantization policy {policy!r}")
+        fp32 = policy == "fp32_metadata"
+        if fp32 and not all(config.get(flag) is True for flag in (
+                "experimental_official_math", "experimental_aligned_math", "experimental_bf16_attention")):
+>           raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: fp32_metadata requires official aligned BF16 attention
+
+oscar_ascend/integration/aligned_math.py:18: OscarReadinessError
+__ test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x114c5e210>
+
+    def test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device(monkeypatch):
+        import sys
+        from types import ModuleType
+        module=ModuleType('oscar_ascend.integration.impl')
+        module.OscarAttentionImpl=type('HostShapeOnlyImpl',(),{})
+        monkeypatch.setitem(sys.modules,module.__name__,module)
+        from oscar_ascend import runtime
+        def workspace(geometry,device):
+            assert geometry.aligned_math is True
+            return SimpleNamespace(geometry=geometry,
+                query_rot_bf16=torch.empty(geometry.tokens,geometry.query_heads,geometry.head_dim,dtype=torch.bfloat16),
+                key_rot_bf16=torch.empty(geometry.tokens,geometry.kv_heads,geometry.head_dim,dtype=torch.bfloat16))
+        monkeypatch.setattr(runtime,'GraphWorkspace',workspace)
+        from tools.aligned_fixture import make_fixture
+        from tools.probe_history_reuse import Shape
+        from tools.serving_variants import variant_config
+        config=variant_config(json.loads((probe.ROOT/'configs/target.json').read_text()),'candidate')
+        fixture=make_fixture(torch,Shape('aligned_lifecycle_state',(1,),(65,),256,1,1,False,recent_tokens=1))
+        impl,state=shared._runtime(torch,fixture,fixture['cpu'],torch.device('cpu'),1,config,False)
+>       assert state.cache_format=='striped_fp32_v2'
+E       AssertionError: assert 'striped_rotated_fp32_v3' == 'striped_fp32_v2'
+E         
+E         - striped_fp32_v2
+E         + striped_rotated_fp32_v3
+
+tests/test_probe_aligned_attention.py:193: AssertionError
+_________ test_aligned_prefix_layout_and_reader_use_new_metadata_width _________
+
+    def test_aligned_prefix_layout_and_reader_use_new_metadata_width():
+        from tools import probe_prefix_cache as prefix
+        from tools.serving_variants import variant_config
+        cfg=variant_config(json.loads((probe.ROOT/'configs/target.json').read_text()),'candidate')
+        cfg['enable_prefix_caching']=True
+        layout=prefix.fixture_layout(aligned=True)
+        assert layout.page.slot_layout.metadata_bytes==4 and layout.page.slot_layout.slot_bytes==144
+        assert layout.page.block_size==2304
+>       assert prefix.selected_reader(cfg)==probe.OPERATORS['q4']
+E       AssertionError: assert 'attention_cv...al_decode_out' == 'attention_cv...ed_decode_out'
+E         
+E         - attention_cv_aligned_decode_out
+E         ?                -----
+E         + attention_cv_official_decode_out
+E         ?              ++++++
+
+tests/test_probe_aligned_attention.py:208: AssertionError
+_ test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-679/test_aligned_default_probe_onl0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x131c7b460>
+
+    def test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing(tmp_path,monkeypatch):
+        import os
+        from tools import observe_serve as observe
+        seen=[]
+        for name in dir(observe):
+            if name.startswith('_') and name.endswith('_gate'):
+                monkeypatch.setattr(observe,name,lambda *a,_name=name,**k:seen.append(_name))
+        def preflight(*args):
+            assert 'OSCAR_PASSIVE_TIMING_CONTROL' not in os.environ
+            assert 'OSCAR_PASSIVE_TIMING_CONTROL' not in args[2]
+        monkeypatch.setattr(observe,'_preflight',preflight)
+        monkeypatch.setattr(observe,'_terminal',lambda *a,**k:None)
+        monkeypatch.setenv('OSCAR_PASSIVE_TIMING_CONTROL','/tmp/inherited-do-not-arm')
+        monkeypatch.setattr(observe,'managed_server',lambda *a,**k:pytest.fail('probe-only cannot serve'))
+        log=tmp_path/'run'
+        assert observe.run(probe.ROOT/'configs/target.json',log,'candidate',probe_only=True)==0
+>       assert '_aligned_attention_gate' in seen
+E       AssertionError: assert '_aligned_attention_gate' in ['_official_attention_gate', '_mixed_prepare_reuse_gate', '_current_only_gate', '_first_mtp_current_gate', '_mixed_decode_split_gate']
+
+tests/test_probe_aligned_attention.py:253: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_aligned_runtime.py::test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[8-False-attention_cv_aligned_decode_out]
+FAILED tests/test_aligned_runtime.py::test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[8-True-attention_cv_aligned_decode_q1_out]
+FAILED tests/test_aligned_runtime.py::test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[256-False-attention_cv_aligned_cluster4_out]
+FAILED tests/test_aligned_runtime.py::test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[8192-False-attention_cv_aligned_cluster16_out]
+FAILED tests/test_aligned_runtime.py::test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations[10-False-attention_cv_aligned_cluster4_out]
+FAILED tests/test_probe_aligned_attention.py::test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device
+FAILED tests/test_probe_aligned_attention.py::test_aligned_prefix_layout_and_reader_use_new_metadata_width
+FAILED tests/test_probe_aligned_attention.py::test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing
+8 failed, 41 passed in 1.47s

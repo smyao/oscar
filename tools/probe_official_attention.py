@@ -21,6 +21,9 @@ WRITER = 'store_aligned_int2_out'
 QUERY_COPY = 'copy_validate_bf16_query_out'
 PREPARE = 'prepare_official_attention_tasks_out'
 SOURCE_PATHS = (
+ 'csrc/kernels/attention_cv_official_decode_active.cpp', 'csrc/kernels/store_aligned_int2_active.cpp',
+ 'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
+ 'tools/active_decode_transform.py', 'tools/active_store_transform.py',
  'csrc/kernels/attention_cv_official_decode.cpp', 'csrc/kernels/attention_cv_official_cluster4.cpp',
  'csrc/kernels/attention_cv_official_cluster16.cpp', 'csrc/kernels/attention_aligned_unpack.h',
  'csrc/kernels/store_aligned_int2.cpp', 'csrc/include/oscar_official_decode_launch.h',
@@ -321,6 +324,78 @@ def run_case(torch, ops, case, device, cores):
             'check': check, 'graph': graph_report, 'timing': None}
 
 
+def writer_padding_gate(torch, ops, device):
+    """Exercise changing native padding at fixed addresses; no timings.
+
+    #157: only a negative slot is padding. Poisoned inactive rows must not
+    publish anything, including after a graph replay changes row ownership.
+    The independent codec is evaluated only for the finite source rows.
+    """
+    from .official_reference import pack_kv
+    from .probe_striped_cache import _store_bits_equal
+    n, h, d, block, blocks, prefix = 17, 2, 256, 512, 2, 64
+    generator = torch.Generator().manual_seed(12112026)
+    k = torch.randn(n, h, d, generator=generator).bfloat16()
+    v = torch.randn(n, h, d, generator=generator).bfloat16()
+    # Preserve both signs of zero in the exact, pre-clip window.
+    k[0, 0, :2] = torch.tensor([0., -0.], dtype=torch.bfloat16)
+    v[0, 0, :2] = torch.tensor([-0., 0.], dtype=torch.bfloat16)
+    positions = torch.arange(60, 60+n, dtype=torch.int64)
+    stride, sink, recent = block*h*144, 64, 259
+    raw_initial = torch.full((prefix+blocks*stride+64,), 0xA5, dtype=torch.uint8)
+    window_initial = torch.full((blocks, sink+recent, h, d), float('nan'), dtype=torch.bfloat16)
+    tag_initial = torch.full((blocks, sink+recent), -1, dtype=torch.int64)
+    inputs = [x.to(device).clone() for x in (k, v, k, v, positions, positions)]
+    outputs = [x.to(device).clone() for x in (raw_initial, window_initial, window_initial, tag_initial)]
+    status = torch.empty(n, h, dtype=torch.int32, device=device)
+    addresses = [x.data_ptr() for x in (*inputs, *outputs, status)]
+
+    def execute():
+        getattr(ops, WRITER)(*inputs, *outputs, status,
+            block, blocks, prefix, stride, sink, recent, .96, .92)
+
+    encoded = pack_kv(k, v, .96, .92)
+    # Warm up before recording; graph and eager below consume identical data.
+    execute(); torch.npu.synchronize()
+    graph = torch.npu.NPUGraph()
+    with torch.npu.graph(graph, capture_error_mode='thread_local', auto_dispatch_capture=True):
+        execute()
+    states = []
+    masks = (
+        ('interleaved', torch.arange(n) % 2 == 0),
+        ('all_padding', torch.zeros(n, dtype=torch.bool)),
+        ('changed_active_rows', torch.arange(n) % 2 != 0),
+        ('all_live', torch.ones(n, dtype=torch.bool)),
+    )
+    for name, active in masks:
+        slots = positions.clone(); slots[~active] = -1
+        current_k, current_v = k.clone(), v.clone()
+        current_k[~active] = float('nan'); current_v[~active] = float('inf')
+        for dst, src in zip(inputs, (current_k, current_v, current_k, current_v, slots, positions)):
+            dst.copy_(src.to(device))
+        want = [raw_initial.clone(), window_initial.clone(), window_initial.clone(), tag_initial.clone()]
+        for token in range(n):
+            if not bool(active[token]):
+                continue
+            within = int(positions[token]); row = within if within < sink else sink+within % recent
+            begin = prefix+within*h*144
+            want[0][begin:begin+h*144] = encoded[token].reshape(-1)
+            want[1][0, row] = k[token]; want[2][0, row] = v[token]; want[3][0, row] = within
+        for run in (execute, graph.replay):
+            for dst, src in zip(outputs, (raw_initial, window_initial, window_initial, tag_initial)):
+                dst.copy_(src.to(device))
+            status.fill_(0x12345678)
+            run(); torch.npu.synchronize()
+            if bool(status.ne(0).any()) or not all(
+                    _store_bits_equal(torch, actual.cpu(), expected) for actual, expected in zip(outputs, want)):
+                raise RuntimeError('official writer active/padding bytes or status differ: '+name)
+        if addresses != [x.data_ptr() for x in (*inputs, *outputs, status)]:
+            raise RuntimeError('official writer active/padding graph changed addresses')
+        states.append(name)
+    return {'status': 'passed', 'codec_window_status': 'exact', 'same_addresses': True,
+            'eager_and_graph': 'passed', 'states': states, 'timing': None}
+
+
 def writer_rotation_gate(torch, ops, device, cores):
     """Exact input-driven codec/window checks plus BF16 rotation and Q guard."""
     from .official_reference import pack_kv, rotate_bf16
@@ -403,10 +478,12 @@ def writer_rotation_gate(torch, ops, device, cores):
     torch.npu.synchronize(); want_status = torch.zeros_like(qstatus); want_status[0, 0] = 2
     if not torch.equal(qstatus, want_status) or bool(qr[-1].ne(0).any()):
         raise RuntimeError('Q nonfinite/padding error domain differs')
+    padding_report = writer_padding_gate(torch, ops, device)
     return {'status': 'passed', 'writer': WRITER, 'query_copy': QUERY_COPY,
             'codec_bytes': 'exact', 'rotated_windows': 'exact', 'canaries': 'exact',
             'query_status': 'exact', 'writer_status': 'exact', 'rotation': 'BF16_operands_FP32acc_BF16_output',
-            'graph_capture': 'passed', 'graph_replay': 'passed', 'graph_same_addresses': True}
+            'graph_capture': 'passed', 'graph_replay': 'passed', 'graph_same_addresses': True,
+            'active_rows': padding_report}
 
 
 def runtime_precision(config):
@@ -446,6 +523,12 @@ def validate_evidence(report, config=None):
                        'query_status': 'exact', 'writer_status': 'exact', 'graph_capture': 'passed', 'graph_replay': 'passed',
                        'graph_same_addresses': True}.items():
         if writer.get(key) != value: bad.append('writer_rotation.' + key)
+    padding = writer.get('active_rows', {})
+    for key, value in {'status': 'passed', 'codec_window_status': 'exact', 'same_addresses': True,
+                       'eager_and_graph': 'passed', 'timing': None,
+                       'states': ['interleaved', 'all_padding', 'changed_active_rows', 'all_live']}.items():
+        if key not in padding or padding[key] != value:
+            bad.append('writer_rotation.active_rows.'+key)
     rows, plan = report.get('cases', []), case_plan()
     if len(rows) != len(plan): return bad + ['complete_case_plan']
     for row, case in zip(rows, plan):

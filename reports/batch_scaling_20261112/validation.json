@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-12",
+  "branch": "oscar-new-7",
+  "base_commit": "87a8959f89878d9f335f257ea720a84a184933e0",
+  "scope": [
+    "main decode and uniform FULL recording prepare reuse",
+    "same-step prefix counter reads and save synchronization"
+  ],
+  "tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_offload_*.py tests/test_prefix_checkpoint_*.py tests/test_prefix_cache_request_logging.py tests/test_pd_step_stats.py tests/test_stable_launch_frozen.py tests/test_memcache_launch.py tests/test_align_prefill_state_contract.py tests/test_prefill_state_contract_hooks.py tests/test_plugin.py tests/test_forward_metadata_reuse.py tests/test_mixed_decode_split.py tests/test_mixed_prepare_reuse.py tests/test_prepare_reuse.py tests/test_decode_prepare_reuse.py tests/test_universal_bf16_regression_protection.py --tb=short",
+    "passed": 834,
+    "failed": 0,
+    "skipped": 0,
+    "elapsed_seconds": 29.28,
+    "execution": "local host; loopback IPC, CPU tensors, real native ForwardContext/ACLGraphWrapper control flow with recording graph/operator and stream/event doubles",
+    "new_decode_prepare_cases": 15,
+    "new_prefix_batch_counter_cases": 29
+  },
+  "work_reduction_examples": {
+    "main_16_full_layers": {
+      "prepare_before": 16,
+      "prepare_after": 1,
+      "rotate_cv_merge_store_guard_calls_unchanged": true
+    },
+    "main_plus_three_mtp_rounds": {
+      "prepare_before": 19,
+      "prepare_after": 4,
+      "mtp_prepare_unchanged": true
+    },
+    "same_snapshot_all_non_speculative_prompts_saved": {
+      "batch16": {
+        "counter_d2h_before": 32,
+        "counter_d2h_after": 2,
+        "counter_event_wait_before": 16,
+        "counter_event_wait_after": 1,
+        "save_stream_barrier_before": 16,
+        "save_stream_barrier_after": 1
+      },
+      "batch28": {
+        "counter_d2h_before": 56,
+        "counter_d2h_after": 2,
+        "counter_event_wait_before": 28,
+        "counter_event_wait_after": 1,
+        "save_stream_barrier_before": 28,
+        "save_stream_barrier_after": 1
+      },
+      "per_request_put_ack_and_all_tp_publication_preserved": true,
+      "tradeoff": "For 1 < saved rows S < valid snapshot rows B, base/accepted batch reads transfer about 12B bytes instead of 12S. A single save keeps scalar reads."
+    }
+  },
+  "static_workload": {
+    "path": "reports/batch_scaling_20261112/workload.json",
+    "reproduced_cases": 8,
+    "cases_assumptions_selectors_and_source_hashes_match": true,
+    "kind": "static work count, not timing or physical HBM traffic"
+  },
+  "protection": {
+    "normalized_impl_sha256": "069ce6aa7038f1b9378efaf42eaaf4b9b8a400257b3304dd537442c7d49ebe3a",
+    "expected_frozen_hashes_changed": false,
+    "cann_math_codec_rotation_pt_timer_configs_tools_scripts_references_unchanged_from_base": true,
+    "production_paths_changed": [
+      "oscar_ascend/integration/impl.py",
+      "oscar_ascend/integration/prepare_reuse.py",
+      "oscar_ascend/offload/connector.py",
+      "oscar_ascend/offload/state.py"
+    ],
+    "production_sha256": {
+      "oscar_ascend/integration/impl.py": "deffe121a591ee3a4506a79911089ce5012ad009f709dacd533a9d38e2208d6e",
+      "oscar_ascend/integration/prepare_reuse.py": "3c6cedf37250b05553970fe7b3e9c57dc0792eec9203235c285d493a451b70de",
+      "oscar_ascend/offload/connector.py": "6c7427f2b3b3b8c7049f11419f15dd142ab778a52d2bc94c16063da93f7191b1",
+      "oscar_ascend/offload/state.py": "926a6c074265358637129540330030e80702c3e646fcf228bbeef9b33e3fdf04"
+    },
+    "candidate_activation": "existing experimental_prepare_reuse=true; start_node93_oscar.sh and install_serve.sh --variant candidate unchanged"
+  },
+  "not_performed": [
+    "real NPU connection",
+    "model quality evaluation",
+    "hardware graph validation",
+    "performance benchmarking"
+  ],
+  "interpretation": "Removed work and host functional/source-identity evidence only. BS28 versus BS16 end-to-end throughput improvement is not established."
+}

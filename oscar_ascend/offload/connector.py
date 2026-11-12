@@ -606,12 +606,13 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                     objects.append(TransferObject(key, segments))
         return tuple(objects)
 
-    def _save_resolved(self, plan, resolved):
+    def _save_resolved(self, plan, resolved, *, synchronize=True):
         if resolved.committed_tokens != plan.committed_tokens:
             raise OffloadLifecycleError("planned prefix does not equal the committed worker state")
         plan = replace(plan, block_ids=resolved.block_ids)
         objects = self._objects(plan, canonical=resolved.mamba)
-        self._synchronize()
+        if synchronize:
+            self._synchronize()
         if objects:
             try:
                 self.transport.put(objects)
@@ -741,29 +742,42 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
             raise OffloadLifecycleError("postprocess lost its offload metadata")
         self.tracker.record_step(runner, scheduler_output, generations=metadata.generations,
                                  step_id=metadata.step_id)
-        if metadata.prefixes:
-            completion = self._prefix_producer_event
-            if completion is None or completion[0] != metadata.step_id:
-                raise OffloadLifecycleError("prefix publication lost its target/draft producer completion")
-            # Native postprocess runs on global_stream, which waits only for
-            # sampling_done_event recorded BEFORE the drafter. The event below
-            # was recorded by finalize_kv_connector AFTER draft writes. Wait
-            # for both producer streams before reading their shared raw pool.
-            completion[1].synchronize()
-            self._prefix_producer_event = None
-        for plan in metadata.prefixes:
-            snapshot = RequestSnapshot(plan.request_id, plan.generation, 0, plan.epoch,
+        if not metadata.prefixes:
+            return
+        completion = self._prefix_producer_event
+        if completion is None or completion[0] != metadata.step_id:
+            raise OffloadLifecycleError("prefix publication lost its target/draft producer completion")
+        # Native postprocess runs on global_stream, which waits only for
+        # sampling_done_event recorded BEFORE the drafter. The event below
+        # was recorded by finalize_kv_connector AFTER draft writes. Wait
+        # for both producer streams before reading their shared raw pool.
+        completion[1].synchronize()
+        self._prefix_producer_event = None
+        snapshots = (RequestSnapshot(plan.request_id, plan.generation, 0, plan.epoch,
                 plan.block_ids, plan.committed_tokens, plan.committed_tokens + 1,
                 0, token_digest(()), runner.cache_config.mamba_cache_mode)
-            resolved = self.tracker.resolve(runner, snapshot, clone=False)
+                for plan in metadata.prefixes)
+        # One saved row keeps its original scalar reads, rather than copying
+        # the counters of other requests in a larger mixed batch.
+        resolved_states = ((self.tracker.resolve(runner, next(snapshots), clone=False),)
+                           if len(metadata.prefixes) == 1 else
+                           self.tracker.resolve_many(runner, snapshots, clone=False))
+        synchronized = False
+        for plan, resolved in zip(metadata.prefixes, resolved_states, strict=True):
             index_key = self._prefix_index_key(plan.base_key, metadata.prefix_view)
             # A writer never modifies another writer's payload, including
             # concurrent identical prefixes. Only the small checked manifest
             # may change; either version references a complete immutable set.
-            generation = snapshot_key(metadata.session, snapshot, plan.committed_tokens)
+            generation = snapshot_key(metadata.session, resolved.snapshot, plan.committed_tokens)
             plan = replace(plan, base_key=f"prefix/data/{generation}/step{metadata.step_id}",
                            page_hashes=())
-            self._save_resolved(plan, resolved)
+            # Producer completion above covers target/draft writes. Resolve
+            # borrows canonical views (clone=False), and subsequent saves only
+            # read those views; no later model work is submitted in this loop.
+            # Keep one current-stream barrier before its first actual save.
+            # Private preemption retains _save_resolved's default per-save fence.
+            self._save_resolved(plan, resolved, synchronize=not synchronized)
+            synchronized = True
             self._prefix_acks.append(PrefixReceipt(index_key, replace(plan, block_ids=()),
                                                    self.rank, metadata.prefix_view))
 

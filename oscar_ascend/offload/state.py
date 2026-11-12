@@ -54,6 +54,7 @@ class _WorkerRecord:
     ready_event: Any
     counter_snapshot: Any = None
     block_cache: Any = None
+    counter_row: int | None = None
 
 
 @dataclass(eq=False)
@@ -65,6 +66,43 @@ class _CounterSnapshot:
     stream: Any
     ready_event: Any = None
     references: int = 0
+    valid_rows: int = 0
+
+
+class _CounterReadBatch:
+    """Call-local host values, read lazily in the original request order.
+
+    This owns no pool references and never waits for a later snapshot before
+    it is selected. Python lists detach CPU-test aliases as well as NPU copies.
+    The recorded row bound excludes the unused tail of full-capacity buffers.
+    """
+
+    def __init__(self):
+        self._snapshots = {}
+
+    def wait(self, record):
+        slot, row = record.counter_snapshot, record.counter_row
+        if slot is None or row is None:
+            record.ready_event.synchronize()
+            return
+        if (type(row) is not int or type(slot.valid_rows) is not int
+                or not 0 <= row < slot.valid_rows
+                or slot.ready_event is not record.ready_event):
+            raise OffloadLifecycleError("counter snapshot row or completion identity changed")
+        key = (id(slot), id(record.ready_event))
+        if key not in self._snapshots:
+            record.ready_event.synchronize()
+            # Retain identities to prevent id reuse while this batch is live.
+            self._snapshots[key] = (slot, record.ready_event, slot.valid_rows, {})
+
+    def integer(self, record, name, column):
+        slot = record.counter_snapshot
+        if slot is None or record.counter_row is None:
+            return _integer(getattr(record, name))
+        _, _, count, columns = self._snapshots[(id(slot), id(record.ready_event))]
+        if column not in columns:
+            columns[column] = slot.buffers[column][:count].cpu().tolist()
+        return int(columns[column][record.counter_row])
 
 
 def _freeze_worker_blocks(blocks, previous=None):
@@ -328,17 +366,32 @@ class WorkerCheckpointTracker:
         event = device.Event()
         event.record()
         slot.ready_event = event
+        slot.valid_rows = count
         slot.references = len(pending)
         for index, rid, blocks, comparison, scheduled, speculative, running in pending:
             old = self._records.get(rid)
             self._records[rid] = _WorkerRecord(
                 generations[rid], step_id, blocks,
                 base[index], accepted[index], normalized[index],
-                scheduled, speculative, running, mode, event, slot, comparison,
+                scheduled, speculative, running, mode, event, slot, comparison, index,
             )
             self._release_record(old)
 
     def resolve(self, runner, snapshot: RequestSnapshot, *, clone: bool = True) -> ResolvedCheckpoint:
+        return self._resolve(runner, snapshot, clone=clone)
+
+    def resolve_many(self, runner, snapshots, *, clone: bool = True):
+        """Yield one resolved request at a time, sharing only host counters.
+
+        A caller saves/acknowledges each yielded state before advancing. A
+        later bad request cannot prevent an earlier request's successful save.
+        Canonical GDN state and physical page views are never combined.
+        """
+        counters = _CounterReadBatch()
+        for snapshot in snapshots:
+            yield self._resolve(runner, snapshot, clone=clone, counters=counters)
+
+    def _resolve(self, runner, snapshot, *, clone, counters=None):
         record = self._records.get(snapshot.request_id)
         if record is None:
             if snapshot.num_computed_hint == 0:
@@ -346,12 +399,20 @@ class WorkerCheckpointTracker:
             raise OffloadLifecycleError("preempted request lacks an executed worker checkpoint")
         if record.generation != snapshot.generation or record.mode != snapshot.mamba_mode:
             raise OffloadLifecycleError("stale worker checkpoint generation or native layout")
-        record.ready_event.synchronize()
-        position = committed_position(_integer(record.base), record.scheduled,
-                                      record.speculative, _integer(record.accepted))
+        if counters is None:
+            record.ready_event.synchronize()
+            base, raw_accepted = _integer(record.base), _integer(record.accepted)
+        else:
+            counters.wait(record)
+            base = counters.integer(record, "base", 0)
+            raw_accepted = counters.integer(record, "accepted", 1)
+        position = committed_position(base, record.scheduled, record.speculative, raw_accepted)
         # True prefill stores only the final state at column zero (#163), even
         # for qLen == MTP width; an accepted count from another row is irrelevant.
-        accepted = _integer(record.next_accepted) if record.speculative else 1
+        accepted = 1
+        if record.speculative:
+            accepted = (_integer(record.next_accepted) if counters is None else
+                        counters.integer(record, "next_accepted", 2 if record.mode == "align" else 1))
         canonical = copy_canonical_mamba(runner, record.block_ids,
                                           record.running_state_index, accepted, clone=clone)
         return ResolvedCheckpoint(snapshot, position, record.step_id,

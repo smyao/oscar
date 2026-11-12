@@ -33,6 +33,14 @@ SDK 调用要求完整返回状态数组，拒绝异常、部分成功、非法�
 
 前缀manifest读取也先检查存在性：未发布的候选索引直接返回miss，不调用会对缺失键打印ERROR的SDK Get。预查后读取为空仍再次确认是否被驱逐；对象仍存在却读空、SDK异常及校验失败继续报错。此顺序修正不缓存miss、不改变发布/查找范围，也不把所有SDK info invalid无条件吞掉。用户07:49日志已有外部命中40.6%及四rank前缀恢复；与本轮尚未部署的查询修复分开记录，详见档案#183。
 
+### 2026-11-12：同批 prefix 保存减少同步
+
+同一步有多条 prefix 保存时，按 counter snapshot 的实际有效行合并 base/accepted 回读，同一 snapshot 的完成 event 只等一次；保留逐请求解析、同步 PUT、ACK 顺序和全 TP 完成后发布。共同 target/draft producer 完成后，第一次保存执行 current-stream 屏障，后续 `clone=False` canonical 视图无新设备写入，不再重复同步。单条保存、私有 swap 保持原路径，无 prefix 时不构造批量读取对象。
+
+全部16/28条非 speculative prompt保存的例子中，counter D2H 32/56→2次，counter event等待及保存stream屏障各16/28→1；PUT次数、提交位置、GDN选择、对象字节和页所有权不变。保存子集会回读整个snapshot的有效行，存在少量额外元数据字节，不能宣称传输字节总减少。纯decode无保存/抢占/回载时原本就没有这些I/O，不将此优化计入每个decode步。
+
+同时扩展主模型decode/FULL图的prepare复用，全部细节与834项主机回归见[BS16/28工作量与优化](batch_scaling_20261112.md)。保留数值链和真实验收边界，未进行NPU或性能测试。
+
 ### 2026-11-11：三个主机路径优化，不改变数值链
 
 本轮在 `b18f7e0` 基底上实现用户选定的前三项，入口和开关保持现状，`bash scripts/start_node93_oscar.sh` 自动使用：

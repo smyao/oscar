@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-11-12 BS16→28：静态源码计数确认请求数增加仍带来每请求历史工作，不能以相同 PC 命中率推导吞吐必然增长。candidate 将同原生 forward 的主模型 decode/FULL 图 prepare 从16次合为1次；同批 prefix 保存合并计数回读与屏障，保持逐请求 PUT/ACK 及全 TP 发布。新增44项专项，联合834项主机回归通过。CANN、数值链、split、GDN/MTP、timer/argv和配置保持，未连接真机或测速，不宣称端到端收益。见[工作量、实现与验证](batch_scaling_20261112.md)。
+
 2026-11-11 用户授权的前三项主机优化：同 step prefix 选择首个 writer，保留全 TP 发布与私有 swap；同原生 forward 复用 mixed plan/child metadata，逐层 guard 和算术保持；checkpoint counter 按请求引用保活后复用，页表按值比较后复用不可变快照。主机对照重复 prefix 的 TP2 PUT 4→2、16层 plan 16→1/切片32→2，字节和执行路径等价；这些是工作量变化，不是耗时收益。CANN/PT/精度策略、timer/argv不变，未连接真机或测速。所有权边界与本轮验证见[卸载实现说明](kv_offload_20261109.md#2026-11-11三个主机路径优化不改变数值链)。
 
 2026-10-28 当前精度修复：发现此前none-only分类保护遗漏PC align末尾短续块。真实native调度5000→2304/1536/1156/4与2304 prefix命中后续步可复现；fold将accepted1改4并读旧GDN状态，有限值即可造成错误输出。外部插件统一保护none/align真正prefill，纠正图选择与最终提交；正常decode图、CANN/codec/PT/预算/PC/MTP/timer保持。207项主机回归与32K/64K选路/源码门通过；不将局部结果写成四项质量分数。见[完整修复](gdn_prefill_state_20261028.md)。

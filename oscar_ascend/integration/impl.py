@@ -22,9 +22,9 @@ from .current_attention import (guard_current_slots, native_current_partial,
                                 suppress_current_source_tasks, use_native_current,
                                 write_current_partial)
 from .guard_diag import run_status_guard
-from .prepare_reuse import (can_reuse_prepare, invalidate_prepare_reuse,
+from .prepare_reuse import (can_reuse_prepare, decode_prepare_candidate, invalidate_prepare_reuse,
                             mixed_prepare_eligible, prepare_views, registered_prepare_owner,
-                            remember_prepared, reused_slots)
+                            registered_decode_prepare_owner, remember_prepared, reused_slots)
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
@@ -196,6 +196,12 @@ class OscarAttentionImpl(AttentionImpl):
             prepare_context = get_forward_context()
             reuse_prepare = (attn_metadata.prepare_region is not None or
                              registered_prepare_owner(attn_metadata, layer.layer_name, prepare_context))
+        elif (self.provider.config.get("experimental_prepare_reuse", False)
+              and decode_prepare_candidate(attn_metadata)):
+            from vllm.forward_context import get_forward_context
+            prepare_context = get_forward_context()
+            reuse_prepare = registered_decode_prepare_owner(attn_metadata, layer.layer_name, prepare_context)
+            prepare_stream = torch.npu.current_stream() if reuse_prepare else None
         if reuse_prepare:
             tasks, positions, slot_output = prepare_views(
                 workspace, attn_metadata, n, hk, source_splits, layer.layer_name, prepare_context)

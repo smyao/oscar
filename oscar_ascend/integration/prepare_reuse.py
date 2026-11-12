@@ -5,12 +5,14 @@ layers. GraphWorkspace is shared by equal device/geometry and its tasks and
 positions are read-only after source2 suppression. Physical KV, rotations,
 outputs and status remain per-layer operations; none is cached here.
 
-Reuse is confined to a real main-model prefill in one native ForwardContext
-on the same stream. Mixed request domains use two disjoint regions of the
-existing task/position/slot arenas. Each region is keyed independently; no
-layer or region call order establishes freshness. Capture/dummy/draft and
-other writers end the lease. No device values or historical KV are read by
-the host, no device allocation is added and no error task is discarded.
+Reuse is confined to one registered main-model ForwardContext and stream.
+Eager prefill retains its original qualification. Main decode may also share
+the read-only descriptors, including one uniform FULL graph recording: the
+first layer records the real prepare launch, so every replay rewrites these
+fixed buffers. Standalone dummy/profile, draft and PIECEWISE are excluded.
+Mixed request domains use two disjoint regions of the existing arenas; no
+layer order establishes freshness. No device values or historical KV are
+read by the host, no device allocation is added and no error task is discarded.
 """
 
 from dataclasses import dataclass
@@ -38,6 +40,8 @@ class _Prepared:
     token_span: tuple[int, int]
     task_span: tuple[int, int]
     boundaries: object
+    phase: tuple
+    descriptor: object
 
 
 def invalidate_prepare_reuse(workspace):
@@ -70,6 +74,43 @@ def registered_prepare_owner(metadata, layer_name, context):
     return (isinstance(registered, dict) and registered.get(layer_name) is metadata
             and not getattr(context, "capturing", False)
             and not getattr(context, "in_profile_run", False))
+
+
+def decode_prepare_candidate(metadata):
+    """Cheap host-only filter before asking for the native forward context."""
+    if (metadata.is_draft or metadata.current_only_plan is not None
+            or metadata.mixed_split_segment is not None or metadata.prepare_region is not None):
+        return False
+    if metadata.capture_origin:
+        return True
+    state = metadata.attn_state
+    return (not metadata.dummy_origin and type(state).__name__ == "AscendAttentionState"
+            and state.name in {"DecodeOnly", "SpecDecoding"})
+
+
+def registered_decode_prepare_owner(metadata, layer_name, context):
+    """Prove eager main decode or one complete uniform FULL recording.
+
+    #34/#36/#127/#128/#157/#163: never infer valid rows from dummy values or
+    reuse MTP's accepted-position preparation. Native non-MLA MTP capture has
+    ChunkedPrefill state (model_runner_v1.py:3483-3490); the uniform FULL batch
+    descriptor, not a query-length guess, establishes its capture domain.
+    ACLGraphWrapper.__call__ records the complete runnable once and later
+    replays it without Python. Its first prepare must remain inside the graph.
+    """
+    registered = getattr(context, "attn_metadata", None)
+    if (not decode_prepare_candidate(metadata) or not isinstance(registered, dict)
+            or registered.get(layer_name) is not metadata
+            or getattr(context, "is_draft_model", None) is not False
+            or getattr(context, "in_profile_run", None) is not False
+            or getattr(context, "ubatch_slices", None) is not None):
+        return False
+    mode = getattr(getattr(context, "cudagraph_runtime_mode", None), "name", None)
+    capturing = getattr(context, "capturing", None)
+    if metadata.capture_origin:
+        return (capturing is True and mode == "FULL"
+                and getattr(getattr(context, "batch_descriptor", None), "uniform", None) is True)
+    return capturing is False and mode == "NONE"
 
 
 def mixed_prepare_eligible(metadata, layer_name, *, enabled, native_current):
@@ -148,7 +189,19 @@ def _same_scope(entries, owner, stream, context):
     return all(entry.metadata is owner and entry.context is context
                and entry.stream == stream
                and entry.boundaries is getattr(owner, "current_cumulative", None)
+               and entry.phase == _phase(context)
+               and entry.descriptor is getattr(context, "batch_descriptor", None)
                for entry in entries)
+
+
+def _phase(context):
+    # Explicitly separate warmup and capture even if a caller retains the same
+    # context/metadata. Only identity and host flags are used, never tensor
+    # values or inference tensor versions. PIECEWISE never enters this lease.
+    return (getattr(context, "capturing", None),
+            getattr(getattr(context, "cudagraph_runtime_mode", None), "name", None),
+            getattr(context, "is_draft_model", None),
+            getattr(context, "in_profile_run", None))
 
 
 def _intersects(left, right):
@@ -195,5 +248,6 @@ def remember_prepared(workspace, metadata, layer_name, geometry, stream, slots, 
         entries = []
     entries = _before_write(entries, role, token_span, task_span)
     entries.append(_Prepared(owner, geometry, stream, context, {layer_name}, slots,
-                             role, token_span, task_span, getattr(owner, "current_cumulative", None)))
+                             role, token_span, task_span, getattr(owner, "current_cumulative", None),
+                             _phase(context), getattr(context, "batch_descriptor", None)))
     workspace._oscar_prepared_tasks = entries

@@ -26,6 +26,7 @@ SOURCE_PATHS = (
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
  'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
  'tools/precise_zero_fill_transform.py', 'tools/cluster_state_transform.py',
+ 'tools/cluster4_l1_transform.py', 'tools/cluster_score_ring_transform.py',
  'csrc/kernels/attention_cv_official_cluster4.cpp', 'csrc/kernels/attention_cv_official_cluster16.cpp',
  'csrc/kernels/attention_cv_official_cluster4_active.cpp', 'csrc/kernels/attention_cv_official_cluster16_active.cpp',
  'csrc/kernels/attention_official_finite.h', 'csrc/kernels/attention_c16_softmax_helpers.h',

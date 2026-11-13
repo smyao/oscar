@@ -54,6 +54,8 @@ TOOL_PATHS = (
     "tools/precise_finite_transform.py",
     "tools/precise_zero_fill_transform.py",
     "tools/cluster_state_transform.py",
+    "tools/cluster4_l1_transform.py",
+    "tools/cluster_score_ring_transform.py",
 )
 
 
@@ -91,7 +93,7 @@ def outputs(root: Path | None = None) -> dict[str, bytes]:
     # a cached binary can be reused; build never silently regenerates files.
     manifest = {
         "schema_version": 1,
-        "scope": "same-ABI inactive-work and finite-check optimization; not execution acceptance",
+        "scope": "same-ABI inactive-work, finite-check and bounded data reuse; not execution acceptance",
         "kernels": kernels,
         "generation_tools_sha256": {name: _sha(_read(root, name)) for name in TOOL_PATHS},
     }

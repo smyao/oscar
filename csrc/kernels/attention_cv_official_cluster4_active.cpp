@@ -1,3 +1,14 @@
+// C4_SINGLE_B1_REUSE_V1
+// Archive #145/#150/#151/#154/#164/#172; complete startup D.4 reviewed.
+// D.4(1): bounded C4 QK/PV operand reuse; two score slots, four P/state slots.
+// D.4(2): no full-history restoration (old6499.8--6655.1ms) or writer change.
+// D.4(3): exact protected C16 B1 implementation and SDK tiling. Wait both
+// AIV PReady owners before score reuse or switching K to V; keep round/final
+// completion and all Vector math. No BF16/FP32 arithmetic or error change.
+// D.4(4): one128KiB B1 and one SDK Matmul instance; the existing C16 reserve
+// assertion remains. No extra GM/UB, no measured speed/HBM claim.
+// C1 CubeTask/VectorTask are unchanged, but their Matmul B transport now uses
+// that same C16 B1 wrapper. C1 still loads one B per QK/PV; it needs device QA.
 // CLUSTER_STATE_FIRST_USE_V1
 // Archive #145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
 // D.4(1): bounded clustered FP32 online-state traffic inside C4/C16 FIA.
@@ -252,7 +263,7 @@ __aicore__ inline int64_t Min64(int64_t a,int64_t b){return a<b?a:b;}
 __aicore__ inline int64_t Max64(int64_t a,int64_t b){return a>b?a:b;}
 using Matrix=MatmulType<TPosition::GM,CubeFormat::ND,bfloat16_t,false>;
 using ResultMatrix=MatmulType<TPosition::GM,CubeFormat::ND,float,false>;
-using TransposedMatrix=MatmulType<TPosition::GM,CubeFormat::ND,bfloat16_t,true>;
+using TransposedMatrix=MatmulType<TPosition::B1,CubeFormat::NZ,bfloat16_t,true>;
 __aicore__ constexpr MatmulConfig CvConfig() {
   auto cfg=GetNormalConfig();
   cfg.basicM=64;cfg.basicN=64;cfg.basicK=128;
@@ -261,6 +272,11 @@ __aicore__ constexpr MatmulConfig CvConfig() {
   return cfg;
 }
 constexpr auto kCubeConfig=GetMatmulApiTiling<Matrix,TransposedMatrix,ResultMatrix,ResultMatrix>(CvConfig());
+static_assert(kCubeConfig.baseM==64 && kCubeConfig.baseN==64 && kCubeConfig.baseK==128,
+    "original FP32 M/N/K tiling changed");
+static_assert(kCubeConfig.shareL1Size>0 && kCubeConfig.shareL1Size+128*1024<=512*1024,
+    "single BF16 B1 plus SDK A/reserve exceeds physical L1");
+
 using CubeMatmul=matmul::MatmulImpl<Matrix,TransposedMatrix,ResultMatrix,ResultMatrix,kCubeConfig>;
 
 struct Geometry {
@@ -332,6 +348,7 @@ template<int32_t D> class AttentionCv {
     if ASCEND_IS_AIC {
       // Static tiling is compiler-derived by the real SDK. SetOrg/SingleShape
       // below specify each QK/PV/rotation matrix, never hand-written tiling POD.
+      pipe.InitBuffer(residentB,128*1024);
       mm.Init(static_cast<const TCubeTiling*>(nullptr),&pipe);
       SetHF32Mode(false);
     } else {
@@ -493,15 +510,33 @@ template<int32_t D> class AttentionCv {
     oscar_ascend_aligned::InitIndices<D,kHistoryHalfKv>(wordIndexBuf,laneIndexBuf,
         metadataIndexBuf,maskBuf);
   }
-  __aicore__ void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,
-      bool rotation=false,bool transposeB=true) {
-    SetHF32Mode(false); // no implicit HF32/TF32 relaxation of the frozen oracle.
+  __aicore__ void LoadResidentB(int64_t b,bool rotation=false) {
+    // AIC-only direct MatmulImpl: no KFC/SyncAll cross-core flag bank.
+    // End resets SDK iteration state, but cannot own this external B1.
+    Fence<HardEvent::MTE1_MTE2>();
+    auto local=residentB.Get<bfloat16_t>();
+    Nd2NzParams copy;
+    copy.ndNum=1;copy.nValue=D;copy.dValue=D;
+    copy.srcNdMatrixStride=0;copy.srcDValue=D;
+    copy.dstNzC0Stride=D;copy.dstNzNStride=1;copy.dstNzMatrixStride=0;
+    if(rotation)DataCopy(local,rv,copy);else DataCopy(local,operands[2*b],copy);
+    Fence<HardEvent::MTE2_MTE1>();
+  }
+  __aicore__ void MatmulResidentB(int64_t a,int64_t c,int32_t m,int32_t n,int32_t k,
+      bool transposeB=true,uint8_t atomic=0) {
+    SetHF32Mode(false);
+    // Normal scheduler external-L1 InitSplitBParams uses SingleCoreN/K.
+    // This D256 C4 family always has N=K=256, including bounded precise tiles.
     mm.SetOrgShape(m,n,k);mm.SetSingleShape(m,n,k);
     mm.SetTensorA(operands[2*a],false);
-    if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(operands[2*b],transposeB);
-    mm.template IterateAll<true>(work[c]);
-    // End closes the iteration state; buffers remain initialized for reuse.
+    mm.SetTensorB(residentB.Get<bfloat16_t>(),transposeB);
+    mm.template IterateAll<true>(work[c],atomic);
     mm.End();
+  }
+  __aicore__ void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,
+      bool rotation=false,bool transposeB=true) {
+    LoadResidentB(b,rotation);
+    MatmulResidentB(a,c,m,n,k,rotation?true:transposeB);
   }
   __aicore__ void SelectClusterSlots(int32_t buffer,int32_t slot) {
     kOffset=buffer?extraKvOffset:baseKOffset;
@@ -518,12 +553,8 @@ template<int32_t D> class AttentionCv {
   }
   __aicore__ void MatmulAtomic(int64_t a,int64_t b,int64_t c,
       int32_t m,int32_t n,int32_t k) {
-    SetHF32Mode(false);
-    mm.SetOrgShape(m,n,k);mm.SetSingleShape(m,n,k);
-    mm.SetTensorA(operands[2*a],false);mm.SetTensorB(operands[2*b],false);
-    // Same K128 accumulation order; atomic=1 applies only to final FP32 C.
-    mm.template IterateAll<true>(work[c],static_cast<uint8_t>(1));
-    mm.End();
+    LoadResidentB(b);
+    MatmulResidentB(a,c,m,n,k,false,static_cast<uint8_t>(1));
   }
   __aicore__ void CubeTask() {
     const int32_t rows=static_cast<int32_t>(qcount*(g.hq/g.hk));
@@ -546,26 +577,24 @@ template<int32_t D> class AttentionCv {
     int32_t buffer=0;
     for(int64_t start=first;start<last;start+=kKvRows,buffer^=1) {
       CrossCoreWaitFlag(kClusterKvReady);
-      // QK0,QK1,PV0,QK2,PV1,QK3,PV2,PV3. Reusing score slot i%2
-      // follows the completed PV that consumed its prior P, never a V guess.
-      for(int32_t member=0;member<2;++member) {
-        SelectClusterSlots(buffer,member);
-        Matmul(member*kQueryRows*D,kOffset,scoreOffset,rows,kKvRows,D);
-        CrossCoreSetFlag<2,PIPE_FIX>(kClusterScore0+member);
-      }
+      SelectClusterSlots(buffer,0);LoadResidentB(kOffset);
       for(int32_t member=0;member<4;++member) {
         const int32_t slot=member%2;
-        CrossCoreWaitFlag(kClusterP0+slot);
+        // P(i-2) is published only after BOTH AIVs consumed Score(i-2).
+        // Each member's P lives in its own Q-slot second half, not score.
+        if(member>=2)CrossCoreWaitFlag(kClusterP0+slot);
         SelectClusterSlots(buffer,slot);
-        MatmulAtomic(ProbabilityOffset(member*kQueryRows*D),vOffset,accStateOffset+member*kQueryRows*D,
-            rows,D,kKvRows);
-        if(member+2<4) {
-          Matmul((member+2)*kQueryRows*D,kOffset,scoreOffset,rows,kKvRows,D);
-          CrossCoreSetFlag<2,PIPE_FIX>(kClusterScore0+slot);
-        }
+        MatmulResidentB(member*kQueryRows*D,scoreOffset,rows,kKvRows,D);
+        CrossCoreSetFlag<2,PIPE_FIX>(kClusterScore0+slot);
       }
-      // This orders every member's complete-K atomic before next-round
-      // RestoreState. The separate atomic-v2 immediate-read gate is mandatory.
+      for(int32_t slot=0;slot<2;++slot)CrossCoreWaitFlag(kClusterP0+slot);
+      // All four P/alpha states are published. The copied C16 B1 loader
+      // waits for every old MTE1 read before MTE2 may replace K with V.
+      SelectClusterSlots(buffer,0);LoadResidentB(vOffset);
+      for(int32_t member=0;member<4;++member) {
+        MatmulResidentB(ProbabilityOffset(member*kQueryRows*D),
+            accStateOffset+member*kQueryRows*D,rows,D,kKvRows,false,static_cast<uint8_t>(1));
+      }
       CrossCoreSetFlag<2,PIPE_FIX>(kClusterRoundDone);
     }
     // Acknowledge each completed publication before this flag can be reused.
@@ -1172,7 +1201,7 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::S_MTE3>();DataCopyExtParams copy{1,4,0,0,0};
     DataCopyPad(outStatus[id*2+lane],word,copy);Fence<HardEvent::MTE3_S>();
   }
-  TPipe pipe;CubeMatmul mm;
+  TPipe pipe;CubeMatmul mm;TBuf<TPosition::B1> residentB;
   Geometry g;
   GlobalTensor<bfloat16_t> q,qr,ck,cv,wk,wv,rv,operands;
   GlobalTensor<float> out,outLse,work;

@@ -1,3 +1,11 @@
+// CLUSTER_SCORE_RING4_V1
+// Archive #145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
+// D.4(1): C16 bounded fused-FIA score address reuse, no attention math change.
+// D.4(2): no full-history restore (historical dequant6499.8--6655.1ms).
+// D.4(3): P(i-4) acknowledges BOTH AIV score consumers before slot overwrite;
+// Q/P and online-state slots remain per member, with all existing fences/flags.
+// D.4(4): score address-set capacity2MiB->512KiB/core; same allocator and DMA
+// bytes. No measured L2-hit, HBM-bandwidth, NPU-correctness or speed claim.
 // CLUSTER_STATE_FIRST_USE_V1
 // Archive #145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
 // D.4(1): bounded clustered FP32 online-state traffic inside C4/C16 FIA.
@@ -541,7 +549,10 @@ template<int32_t D> class AttentionCv {
   __aicore__ void SelectClusterSlots(int32_t buffer,int32_t slot) {
     kOffset=buffer?extraKvOffset:baseKOffset;
     vOffset=kOffset+kKvRows*D;
-    scoreOffset=slot?extraScoreOffset+(slot-1)*kQueryRows*kKvRows:baseScoreOffset; // P lives in each Q slot second half, never in FP32 score.
+    // Cube waits P(i-4), from both AIVs, before replacing Score(i-4).
+    // P remains in the member's Q half-slot; only score uses the four-slot ring.
+    const int32_t scoreSlot=slot%4;
+    scoreOffset=scoreSlot?extraScoreOffset+(scoreSlot-1)*kQueryRows*kKvRows:baseScoreOffset;
   }
   __aicore__ void LoadClusterKv(int64_t start) {
     // Preserve the tested H32 two-old-16-row lane domains and K/V order.

@@ -2,10 +2,12 @@
   "generation_tools_sha256": {
     "tools/active_decode_transform.py": "b915e511a01b6b5e7fccbe81a3ae1edec35cf46d378d0e76e4b2b30abb73a941",
     "tools/active_store_transform.py": "e06bd3f9becf44cad3c41401d8cf6bb14afe792e3dcd2e1cdf67b69d3567e266",
-    "tools/cluster_prefill_transform.py": "9bb01e97c031aa47ba4382e18c98f2b284c3a536ee2695d86d45b62518d6e255",
+    "tools/cluster4_l1_transform.py": "ca3903c4dd60885a9960cc9ec1f8aae995e194159d6f0d76f83f071840679069",
+    "tools/cluster_prefill_transform.py": "c995a555c8fd6c5aa600f2298bff9c288db45ce5f30f6ad3a50d56d8412dfc4f",
+    "tools/cluster_score_ring_transform.py": "0878140fd61b427adb16bf5f7e337f16d5b7e45543990e3d5cfa17cf661aaeee",
     "tools/cluster_state_transform.py": "44cae5155ada4f01c33d1783ff72d83b17a93b2b20e89bb33dd3bc1d077ce44e",
     "tools/cluster_visibility_transform.py": "bd5f36d2a3291eed6f262c678dc5b96bde7e3693a08dabf7a2ba9be005f9bb6c",
-    "tools/generate_active_kernels.py": "32973322369dda605531adbfc8eb9e0a96db23761e7451a56e0b3bb0aecf9fa1",
+    "tools/generate_active_kernels.py": "12ad31f63869a130d844d583d4efdf7a5591f3e679d528dffdddeb33001e3316",
     "tools/precise_finite_transform.py": "161855ea20e4e7968e3b296cb05ebe5d7e4839617a5d994d4e97d152de0c0eb2",
     "tools/precise_zero_fill_transform.py": "36e084848796e26e36bbcab0164d1a3e736c0d998c6318e5b71a082f2c08ae0b"
   },
@@ -28,7 +30,7 @@
     },
     {
       "active": "csrc/kernels/attention_cv_official_cluster4_active.cpp",
-      "active_sha256": "f6f44d4aa0c5420a3cfaa6b0b394340a66dc0b06d22fdf29a7bde28cd3cbea44",
+      "active_sha256": "4141c96580820f19db8d7fbe34ed6f0b73ef85a773452336645d846e4d83642a",
       "mother": "csrc/kernels/attention_cv_official_cluster4.cpp",
       "mother_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
       "public_abi": "unchanged",
@@ -36,7 +38,7 @@
     },
     {
       "active": "csrc/kernels/attention_cv_official_cluster16_active.cpp",
-      "active_sha256": "2df2abbbaa863e0c6cfc2a9f3c848b4827e8939cecf5c4ac2d2b9389fa3fed53",
+      "active_sha256": "c073f2608b89533df60e1f1f0d5f46d830374a2c7a0d9aa9055baee259be1a1f",
       "mother": "csrc/kernels/attention_cv_official_cluster16.cpp",
       "mother_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
       "public_abi": "unchanged",
@@ -44,5 +46,5 @@
     }
   ],
   "schema_version": 1,
-  "scope": "same-ABI inactive-work and finite-check optimization; not execution acceptance"
+  "scope": "same-ABI inactive-work, finite-check and bounded data reuse; not execution acceptance"
 }

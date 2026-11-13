@@ -26,6 +26,7 @@ SOURCE_PATHS = (
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
  'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
  'tools/precise_zero_fill_transform.py', 'tools/cluster_state_transform.py',
+ 'tools/cluster4_l1_transform.py', 'tools/cluster_score_ring_transform.py',
  'csrc/kernels/attention_cv_official_cluster4_active.cpp', 'csrc/kernels/attention_cv_official_cluster16_active.cpp',
  'csrc/kernels/attention_official_finite.h', 'csrc/kernels/attention_c16_softmax_helpers.h',
  'csrc/kernels/attention_cv_official_decode.cpp', 'csrc/kernels/attention_cv_official_cluster4.cpp',
@@ -89,6 +90,16 @@ def case_plan():
                           speed_gate=False, recent_tokens=1, padded_tokens=padded)
             rows.append({'family': family, 'shape': shape, 'graph': True,
                          'timed': False, 'dequant_mode': mode})
+    # #145/#154: the C4 single-B1 Matmul wrapper also serves ordinary C1
+    # tasks. Cover multiple query groups that cannot form a cluster, with
+    # history, a sizeable exact window, partial current and graph replay.
+    # C16's existing mature/single-tile cases cover all four score wraps.
+    for mode in (0, 1):
+        shape = Shape(f'official_c4_l1_ordinary_sources_mode{mode}', (47,), (641,),
+                      256, 1, 1, False, speed_gate=False,
+                      recent_tokens=320, padded_tokens=64)
+        rows.append({'family': 'c4', 'shape': shape, 'graph': True,
+                     'timed': False, 'dequant_mode': mode})
     return tuple(rows)
 
 

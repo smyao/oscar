@@ -238,6 +238,30 @@ def test_single_history_tile_gate_keeps_cluster_and_graph_allocation(family,memb
         assert 0 < fixture['spec'].contexts[0] - fixture['sink_tokens'] <= 256
 
 
+@pytest.mark.parametrize('mode', (0, 1))
+def test_c4_l1_ordinary_gate_has_three_sources_and_stable_replay_shapes(mode):
+    from dataclasses import replace
+    case = next(row for row in probe.case_plan() if row['shape'].name ==
+                f'official_c4_l1_ordinary_sources_mode{mode}')
+    shape = case['shape']
+    assert case['family'] == 'c4' and case['dequant_mode'] == mode
+    assert case['graph'] and not case['timed'] and not shape.speed_gate
+    assert not shape.expect_clusters
+    assert 128 // 6 < shape.qlens[0] < 4 * (128 // 6)
+    first = make_fixture(torch, shape)
+    changed = make_fixture(torch, replace(shape, contexts=(shape.contexts[0]+32,)))
+    for name, value in first['cpu'].items():
+        assert value.shape == changed['cpu'][name].shape
+    for fixture in (first, changed):
+        # More than one history and exact-window KV256 block, with a
+        # nonempty partial current source, all handled by the C1 wrapper.
+        context = fixture['spec'].contexts[0]
+        cut = fixture['cached_quant_ends'][0]
+        assert cut - fixture['sink_tokens'] > 256
+        assert fixture['sink_tokens'] + context - cut > 256
+        assert 0 < shape.qlens[0] < 256
+
+
 def complete_receipt():
     rows=[]
     for case in probe.case_plan():

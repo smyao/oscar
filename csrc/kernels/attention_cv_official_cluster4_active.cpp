@@ -1,3 +1,22 @@
+// WINDOW_ORDERED_FINITE_CERTIFICATE_V1
+// Archive #126/#145/#150/#151/#154/#164/#172; startup D.4 reviewed in full.
+// D.4(1): finite validation of exact-window K/V, bounded16-row DMA runs.
+// D.4(2): no historical6.5-second whole-history restore or layout change.
+// D.4(3): consecutive valid-tag runs only; invalid tags and physical errors
+// retain original order against finite errors. Same source values, count-mode
+// row fallback, Cast, every DMA and ownership fence, K then V publication.
+// D.4(4): completed Cast frees naturalBuf for Abs scratch; no new allocation.
+// The scalar-wait work reduction is not a measured speed or NPU certificate.
+// PHYSICAL_PAGE_SCALAR_CACHE_V1
+// Archive #126/#145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
+// D.4(1): bounded FIA physical-page metadata lookup, not attention math.
+// D.4(2): no full-history restore (historical dequant6499.8--6655.1ms).
+// D.4(3): cache one (request,virtual128-column) -> scalar table value only
+// within this read-only-input launch; Init resets it for every graph replay.
+// Keep every bounds/error check and MTE2_S fence, including cache hits:
+// the old fence can also complete a preceding packed-data DMA.
+// D.4(4): three int64 scalar fields, no additional UB/GM, no FP change.
+// Metadata DMA/read counts may fall; no NPU speed or HBM claim follows.
 // C4_SINGLE_B1_REUSE_V1
 // Archive #145/#150/#151/#154/#164/#172; complete startup D.4 reviewed.
 // D.4(1): bounded C4 QK/PV operand reuse; two score slots, four P/state slots.
@@ -313,6 +332,7 @@ template<int32_t D> class AttentionCv {
       GM_ADDR lse,GM_ADDR status,GM_ADDR workspace,GM_ADDR clusterStatsPtr,
       const Geometry& geometry) {
     g=geometry;
+    physicalCacheRequest=-1;physicalCacheColumn=-1;physicalCacheValue=0;
     q.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(query));
     qr.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(queryRot));
     ck.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(key));
@@ -651,11 +671,21 @@ template<int32_t D> class AttentionCv {
   }
   __aicore__ bool Physical(int64_t position,int64_t& block,int64_t& inpage) {
     if(position<0 || position/128>=g.columns) {error=1;return false;}
-    auto local=addressBuf.Get<int32_t>();
-    DataCopyExtParams copy{1,4,0,0,0};DataCopyPadExtParams<int32_t> pad{false,0,0,0};
-    DataCopyPad(local,bt[request*g.columns+position/128],copy,pad);
+    const int64_t column=position/128;
+    const bool cached=physicalCacheRequest==request && physicalCacheColumn==column;
+    if(!cached) {
+      auto local=addressBuf.Get<int32_t>();
+      DataCopyExtParams copy{1,4,0,0,0};DataCopyPadExtParams<int32_t> pad{false,0,0,0};
+      DataCopyPad(local,bt[request*g.columns+column],copy,pad);
+    }
+    // Preserve incidental completion of preceding packed-data MTE2 work.
     Fence<HardEvent::MTE2_S>();
-    const int64_t virtualBlock=local.GetValue(0);
+    if(!cached) {
+      physicalCacheValue=addressBuf.Get<int32_t>().GetValue(0);
+      physicalCacheRequest=request;physicalCacheColumn=column;
+    }
+    // The saved value is scalar, independent of tag/status addressBuf reuse.
+    const int64_t virtualBlock=physicalCacheValue;
     const int64_t ratio=g.blockTokens/128;
     if(virtualBlock<0 || virtualBlock>=g.blocks*ratio) {error=1;return false;}
     block=virtualBlock/ratio;inpage=(virtualBlock%ratio)*128+position%128;
@@ -744,11 +774,28 @@ template<int32_t D> class AttentionCv {
       // Do NOT publish errors during the tag/DMA prepass. Original order is
       // physical->tag->finite for each row, K side first then V side. A later
       // bad tag must overwrite an earlier finite error, and vice versa.
-      auto check=scratchBuf.Get<float>(128);
-      for(int32_t row=0;row<rows;++row) {
-        if(tags.GetValue(row)!=inpage+row) {error=4;continue;}
-        ReduceSum(check,dst[(j+row)*D],check[16],D);Fence<HardEvent::V_S>();
-        if(!Finite(check.GetValue(0)))error=2;
+      // Cast has consumed every BF16 batch row. Its completed PIPE_V
+      // permits naturalBuf to serve as disjoint FP32 Abs work. Tags remain
+      // in packedBuf, and dst remains untouched. Keep both trailing reuse
+      // fences before the next physical/tag/DMA run.
+      static_assert(D==256 && kHalfKv==16,
+          "window finite certificate requires D256/16-row runs");
+      static_assert(kHistoryHalfKv*(D+16)*sizeof(bfloat16_t)>=kElements*sizeof(float),
+          "dead window BF16 staging must fit the FP32 certificate work");
+      static_assert(kHistoryHalfKv*8>=kHalfKv*8,
+          "window finite result scratch must fit original row slots");
+      auto check=scratchBuf.Get<float>(kHalfKv*8);
+      auto finiteWork=naturalBuf.Get<float>(kElements);
+      for(int32_t row=0;row<rows;) {
+        if(tags.GetValue(row)!=inpage+row) {error=4;++row;continue;}
+        int32_t end=row+1;
+        while(end<rows && tags.GetValue(end)==inpage+end)++end;
+        // Only error2 is possible inside this valid-tag run. Aggregate its
+        // unchanged row predicates before applying the next tag/physical
+        // error, preserving original last-error ownership (4 then2,2 then4).
+        if(!oscar_official_finite::FiniteRows256(
+            check,dst[(j+row)*D],finiteWork,end-row))error=2;
+        row=end;
       }
       Fence<HardEvent::V_MTE2>();Fence<HardEvent::S_MTE2>();
       j+=rows;
@@ -1201,6 +1248,7 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::S_MTE3>();DataCopyExtParams copy{1,4,0,0,0};
     DataCopyPad(outStatus[id*2+lane],word,copy);Fence<HardEvent::MTE3_S>();
   }
+  int64_t physicalCacheRequest,physicalCacheColumn,physicalCacheValue;
   TPipe pipe;CubeMatmul mm;TBuf<TPosition::B1> residentB;
   Geometry g;
   GlobalTensor<bfloat16_t> q,qr,ck,cv,wk,wv,rv,operands;

@@ -1,5 +1,7 @@
 # OSCAR Ascend：端到端设计与可证边界
 
+2026-11-13 BS扩展续修的D.4四问：①有界融合FIA的页表元数据读取、精确窗口finite检查，以及抢占counter主机读取；②继续禁止历史全量恢复和每请求冗余同步；③缓存仅launch内单条映射、保持MTE2_S/错误校验，窗口仅连续有效tag用既有证书并保留原错误顺序，私有保存仍逐条PUT/ACK/释放；④新增三个int64标量、key比较及有限性Abs/归约，无额外UB/GM，删除的调用次数不等于设备加速。完整源可逆，生成/构建/候选路由和graph换页表probe接线；数值链、分流阈值、PT/GDN/MTP、argv/timer保持。[原因、实现、代价与验证](bs_scaling_20261113.md)，CANN/NPU/质量/性能未验收。
+
 2026-11-12 roofline定向优化：C4/C16是同请求历史query-tile复用簇，当前GQA6对应84/336 token。按144B槽、BF16操作数和FP32状态重算全部主数据流，区分GM语义字节与HBM实测。candidate同ABI派生核删除current完整覆盖的零填（完整KV256少768KiB UB写），删除cluster初始state往返（264192B/member，一次性），合并每轮max/sum两段DMA提交；数学/错误域、有效传输所有权、原始母源和PT/PC/MTP/argv/timer保持。261项主机测试通过，CANN/NPU/图/质量/性能未验收；工作量减少不作吞吐倍率。见[分析与改动](cv_roofline_20261112.md)和[验证](../reports/cv_roofline_20261112/validation.json)。
 
 2026-11-12 BS8 profile 定向优化：C4/C16占OSCAR CV累计时间90.613%，本轮C4完整可见tile复用已有C16 finite证书，C4/C16 current K/V复用dead staging做相同批量判定；不改变数值、掩码、错误域或DMA/跨核同步。D.4四问及容量/等待账见[实现与证据](bs8_profile_20261112.md)。完整母源冻结，同ABI派生核经完整逆变换和旧缓存拒用门实际接入candidate/node93；169项专项通过。设备数值、图与性能未验收，不将13.78秒整个核耗时当作可节省量。

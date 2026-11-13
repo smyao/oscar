@@ -1,0 +1,269 @@
+{
+  "kind": "static_logical_work_count_not_measurement",
+  "baseline_commit": "de0c85b",
+  "source_sha256": {
+    "decode": "81f677c45c5c49b3d92b2ae3c007c66eafb6acbaa03f1aa72c9e0ce5dedca019",
+    "cluster4": "4141c96580820f19db8d7fbe34ed6f0b73ef85a773452336645d846e4d83642a",
+    "cluster16": "c073f2608b89533df60e1f1f0d5f46d830374a2c7a0d9aa9055baee259be1a1f"
+  },
+  "derived_sha256": {
+    "decode": "c286404e59a9242541dfa047b50ac698a808f53d45bdc2e0419f3c37b6efe7ba",
+    "cluster4": "1f4c77f87ba49e5749496d3528a719974183aa9e6dc8d687612934336d1784ce",
+    "cluster16": "8ea2316a6e1f050dde6b30656ae1c630c0f1036555877e16c23cda930e639b40"
+  },
+  "decode_cases": [
+    {
+      "context_tokens": 32768,
+      "batch_requests": 16,
+      "source_splits": 5,
+      "phase": "q4_history; same history traversal in later q1",
+      "lookups_and_fences_before_and_after": 11504,
+      "table_dma_before": 11504,
+      "table_dma_after": 8240,
+      "table_scalar_reads_before": 11504,
+      "table_scalar_reads_after": 8240,
+      "table_dma_payload_before": 46016,
+      "table_dma_payload_after": 32960,
+      "hit_pct": 28.373,
+      "per_split_two_aiv": [
+        {
+          "begin_mod128": 64,
+          "lookups": 103,
+          "dma_misses": 103
+        },
+        {
+          "begin_mod128": 77,
+          "lookups": 154,
+          "dma_misses": 103
+        },
+        {
+          "begin_mod128": 90,
+          "lookups": 154,
+          "dma_misses": 103
+        },
+        {
+          "begin_mod128": 103,
+          "lookups": 154,
+          "dma_misses": 103
+        },
+        {
+          "begin_mod128": 116,
+          "lookups": 154,
+          "dma_misses": 103
+        }
+      ]
+    },
+    {
+      "context_tokens": 32768,
+      "batch_requests": 28,
+      "source_splits": 4,
+      "phase": "q4_history; same history traversal in later q1",
+      "lookups_and_fences_before_and_after": 19684,
+      "table_dma_before": 19684,
+      "table_dma_after": 14392,
+      "table_scalar_reads_before": 19684,
+      "table_scalar_reads_after": 14392,
+      "table_dma_payload_before": 78736,
+      "table_dma_payload_after": 57568,
+      "hit_pct": 26.885,
+      "per_split_two_aiv": [
+        {
+          "begin_mod128": 64,
+          "lookups": 128,
+          "dma_misses": 128
+        },
+        {
+          "begin_mod128": 48,
+          "lookups": 192,
+          "dma_misses": 129
+        },
+        {
+          "begin_mod128": 32,
+          "lookups": 192,
+          "dma_misses": 129
+        },
+        {
+          "begin_mod128": 16,
+          "lookups": 191,
+          "dma_misses": 128
+        }
+      ]
+    },
+    {
+      "context_tokens": 65536,
+      "batch_requests": 16,
+      "source_splits": 5,
+      "phase": "q4_history; same history traversal in later q1",
+      "lookups_and_fences_before_and_after": 22944,
+      "table_dma_before": 22944,
+      "table_dma_after": 16448,
+      "table_scalar_reads_before": 22944,
+      "table_scalar_reads_after": 16448,
+      "table_dma_payload_before": 91776,
+      "table_dma_payload_after": 65792,
+      "hit_pct": 28.312,
+      "per_split_two_aiv": [
+        {
+          "begin_mod128": 64,
+          "lookups": 205,
+          "dma_misses": 205
+        },
+        {
+          "begin_mod128": 103,
+          "lookups": 308,
+          "dma_misses": 206
+        },
+        {
+          "begin_mod128": 14,
+          "lookups": 307,
+          "dma_misses": 206
+        },
+        {
+          "begin_mod128": 53,
+          "lookups": 307,
+          "dma_misses": 206
+        },
+        {
+          "begin_mod128": 92,
+          "lookups": 307,
+          "dma_misses": 205
+        }
+      ]
+    },
+    {
+      "context_tokens": 65536,
+      "batch_requests": 28,
+      "source_splits": 4,
+      "phase": "q4_history; same history traversal in later q1",
+      "lookups_and_fences_before_and_after": 39396,
+      "table_dma_before": 39396,
+      "table_dma_after": 28728,
+      "table_scalar_reads_before": 39396,
+      "table_scalar_reads_after": 28728,
+      "table_dma_payload_before": 157584,
+      "table_dma_payload_after": 114912,
+      "hit_pct": 27.079,
+      "per_split_two_aiv": [
+        {
+          "begin_mod128": 64,
+          "lookups": 256,
+          "dma_misses": 256
+        },
+        {
+          "begin_mod128": 48,
+          "lookups": 384,
+          "dma_misses": 257
+        },
+        {
+          "begin_mod128": 32,
+          "lookups": 384,
+          "dma_misses": 257
+        },
+        {
+          "begin_mod128": 16,
+          "lookups": 383,
+          "dma_misses": 256
+        }
+      ]
+    }
+  ],
+  "isolated_history_intervals": [
+    {
+      "family": "decode",
+      "begin": 0,
+      "end": 256,
+      "lookups_and_fences_before_and_after": 4,
+      "table_dma_before": 4,
+      "table_dma_after": 4,
+      "hit_pct": 0.0
+    },
+    {
+      "family": "decode",
+      "begin": 64,
+      "end": 32768,
+      "lookups_and_fences_before_and_after": 511,
+      "table_dma_before": 511,
+      "table_dma_after": 511,
+      "hit_pct": 0.0
+    },
+    {
+      "family": "decode",
+      "begin": 77,
+      "end": 32768,
+      "lookups_and_fences_before_and_after": 766,
+      "table_dma_before": 766,
+      "table_dma_after": 511,
+      "hit_pct": 33.29
+    },
+    {
+      "family": "cluster4",
+      "begin": 0,
+      "end": 256,
+      "lookups_and_fences_before_and_after": 16,
+      "table_dma_before": 16,
+      "table_dma_after": 4,
+      "hit_pct": 75.0
+    },
+    {
+      "family": "cluster4",
+      "begin": 64,
+      "end": 32768,
+      "lookups_and_fences_before_and_after": 2044,
+      "table_dma_before": 2044,
+      "table_dma_after": 512,
+      "hit_pct": 74.951
+    },
+    {
+      "family": "cluster4",
+      "begin": 77,
+      "end": 32768,
+      "lookups_and_fences_before_and_after": 2299,
+      "table_dma_before": 2299,
+      "table_dma_after": 512,
+      "hit_pct": 77.729
+    },
+    {
+      "family": "cluster16",
+      "begin": 0,
+      "end": 256,
+      "lookups_and_fences_before_and_after": 16,
+      "table_dma_before": 16,
+      "table_dma_after": 4,
+      "hit_pct": 75.0
+    },
+    {
+      "family": "cluster16",
+      "begin": 64,
+      "end": 32768,
+      "lookups_and_fences_before_and_after": 2044,
+      "table_dma_before": 2044,
+      "table_dma_after": 512,
+      "hit_pct": 74.951
+    },
+    {
+      "family": "cluster16",
+      "begin": 77,
+      "end": 32768,
+      "lookups_and_fences_before_and_after": 2299,
+      "table_dma_before": 2299,
+      "table_dma_after": 512,
+      "hit_pct": 77.729
+    }
+  ],
+  "assumptions": [
+    "Valid nonempty source0 tasks and physical table mappings; sink64; two AIV lanes.",
+    "Decode B16/B28 split counts inherited from the recorded Hq6/Hkv1,20-Cube scenario.",
+    "One cold scalar cache at each task start. Production cache is per kernel instance; extra cross-task same-key hits are excluded.",
+    "C4/C16 isolated intervals represent one shared history stream, not multiplied by member count.",
+    "Full source hashes bind the unchanged loader traversal used by the counting formulas."
+  ],
+  "costs_and_limits": [
+    "Every Physical call retains its old MTE2_S fence, including a cache hit.",
+    "Each valid-position call adds two scalar key comparisons, one branch, and a cached scalar access; a miss also updates three scalar fields.",
+    "No extra UB/GM; three int64 scalar fields. Compiler register/spill effects are not measured.",
+    "Aligned decode intervals can have zero hits: extra comparisons then have no DMA savings.",
+    "Removed payload is only 4 bytes per hit. Submission reduction is not HBM traffic, elapsed wait reduction or CV/throughput speedup.",
+    "No change to INT2 dequant, KV staging, Cube/softmax work, split/owner schedule, native graph/MTP, PT, precision, argv or timer."
+  ],
+  "reproduce": ".venv/bin/python reports/bs_scaling_20261113/physical_page_cache_workload.py"
+}

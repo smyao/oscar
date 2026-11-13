@@ -1,0 +1,147 @@
+{
+  "date": "2026-11-13",
+  "baseline_commit": "de0c85b953e2a8d3c947ba8a2a6fea745fb5f766",
+  "branch": "oscar-new-7",
+  "scope": "source and host behavioral/bit-transport models; not CANN or NPU execution",
+  "host_runs": {
+    "primary": {
+      "tests": 108,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 18.606,
+      "evidence": "host_primary.xml",
+      "command": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer .venv/bin/python -m pytest -q tests/test_physical_page_cache_transform.py tests/test_window_finite_transform.py tests/test_offload_preemption_batch_counters.py tests/test_offload_cleanup.py tests/test_offload_native_bridge.py tests/test_offload_prefix_batch_counters.py"
+    },
+    "integration": {
+      "tests": 192,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 25.925,
+      "evidence": "host_integration.xml",
+      "command": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer .venv/bin/python -m pytest -q tests/test_active_decode_kernel.py tests/test_active_kernel_generation.py tests/test_build_reuse.py tests/test_serving_variants.py tests/test_official_runtime.py tests/test_universal_bf16_regression_protection.py tests/test_cluster4_l1_transform.py tests/test_cluster_score_ring_transform.py"
+    },
+    "page_map_probe": {
+      "tests": 61,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 3.725,
+      "evidence": "host_page_map_probe.xml",
+      "command": ".venv/bin/python -m pytest -q tests/test_probe_official_attention.py tests/test_official_lifecycle_probes.py"
+    }
+  },
+  "unique_passed": 361,
+  "physical_page_cache": {
+    "actual_cpp_lookup_comparisons": 39228,
+    "actual_cpp_packed_scenarios": 720,
+    "invocations_per_packed_scenario": 3,
+    "fields": "three int64 scalar values reset in every Init; no persistent cross-launch cache",
+    "preserved": "position and virtualBlock validation, errors, all original MTE2_S fences and DMA completion boundaries",
+    "additional_UB_GM_bytes": 0,
+    "scope_costs": "two key comparisons, branch and scalar state; zero-hit aligned decode retained in work report",
+    "workload_model": "physical_page_cache_workload.json",
+    "scope_of_reduction": "4B page-table DMA submissions and UB scalar reads only, no elapsed-time claim"
+  },
+  "window_finite": {
+    "actual_cpp_control_cases": 2476,
+    "host_reduction_orders": 2,
+    "valid_run_only": true,
+    "checks": "bits/guards, K then V error order, interleaved invalid tag, physical failures, NaN/Inf, BF16 extrema cancellation, partial tails",
+    "preserved": "actual data source/offset/stride, Cast and all non-finite-check fences",
+    "costs": "existing sufficient-bound Abs plus sum, short/uncertified runs use original row predicate",
+    "additional_UB_GM_bytes": 0
+  },
+  "private_preemption": {
+    "same_snapshot_MTP3_B28_old_event_waits": 28,
+    "new_event_waits": 1,
+    "old_scalar_items": 84,
+    "new_host_columns_none_align": [
+      2,
+      3
+    ],
+    "private_stream_barriers_before_after": [
+      28,
+      28
+    ],
+    "checks": "actual connector CPU-pointer payload bytes and receipts; lazy ordered failures and per-request rollback"
+  },
+  "probe": {
+    "graph_states": [
+      "original",
+      "changed_query",
+      "changed_context",
+      "changed_page_map"
+    ],
+    "same_address_page_permutation": "prepared; not device-executed",
+    "single_page_fixture": "one poisoned spare before initial device allocation; production capacity unchanged",
+    "negative_control": "stale original table after relocation fails host oracle"
+  },
+  "source_protection": {
+    "complete_inverse": "passed",
+    "original_mothers_unchanged": true,
+    "numerical_contract_PT_clip_GDN_MTP_argv_timer_unchanged": true,
+    "new_input_length_thresholds": false,
+    "new_candidate_switches": false,
+    "sha256": {
+      "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "csrc/kernels/attention_cv_official_cluster16_active.cpp": "b2ff7b8e43e95127c0a70e0d998543e361c8b95fb963e962d632703f29479052",
+      "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "csrc/kernels/attention_cv_official_cluster4_active.cpp": "93a787be765e08f02e5dfd27a1e1e417267a6264e75f01b271cdec52b6af5874",
+      "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "csrc/kernels/attention_cv_official_decode_active.cpp": "c286404e59a9242541dfa047b50ac698a808f53d45bdc2e0419f3c37b6efe7ba",
+      "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+      "csrc/kernels/store_aligned_int2_active.cpp": "fd35153511b9eacb2e63980d6aed712c8d4d1f8f2fe33f82ecb044eb4be53842",
+      "oscar_ascend/offload/connector.py": "c7a8ef17ada2bd9383d46f159611ce41fe55d8a826ef7cc0aee11ac64c55a594",
+      "tools/active_decode_transform.py": "b915e511a01b6b5e7fccbe81a3ae1edec35cf46d378d0e76e4b2b30abb73a941",
+      "tools/active_store_transform.py": "e06bd3f9becf44cad3c41401d8cf6bb14afe792e3dcd2e1cdf67b69d3567e266",
+      "tools/cluster4_l1_transform.py": "ca3903c4dd60885a9960cc9ec1f8aae995e194159d6f0d76f83f071840679069",
+      "tools/cluster_prefill_transform.py": "0e810300ae188d80fce9b16ba8a4427413bf94eab835bfcab25598a8544bfd2c",
+      "tools/cluster_score_ring_transform.py": "0878140fd61b427adb16bf5f7e337f16d5b7e45543990e3d5cfa17cf661aaeee",
+      "tools/cluster_state_transform.py": "44cae5155ada4f01c33d1783ff72d83b17a93b2b20e89bb33dd3bc1d077ce44e",
+      "tools/cluster_visibility_transform.py": "bd5f36d2a3291eed6f262c678dc5b96bde7e3693a08dabf7a2ba9be005f9bb6c",
+      "tools/generate_active_kernels.py": "7e1f4c3736cec5d5a264cd0298c2a3d65a9d42a31376a8a5b15c21aa725bed92",
+      "tools/official_active_decode_transform.py": "dd48fcdc03ae0c2f20901b73f2d748fbc47970c7beac1de4a977eb25f94f294d",
+      "tools/physical_page_cache_transform.py": "d391232bed716173e1a2e15a6feb086bd36a7b0dd5435a3e11f03872ee024b22",
+      "tools/precise_finite_transform.py": "161855ea20e4e7968e3b296cb05ebe5d7e4839617a5d994d4e97d152de0c0eb2",
+      "tools/precise_zero_fill_transform.py": "36e084848796e26e36bbcab0164d1a3e736c0d998c6318e5b71a082f2c08ae0b",
+      "tools/probe_aligned_attention.py": "9e0eab9521322aabdab8d25accb1aa93f3a33830cfdbd0765fbce8b9bffe20eb",
+      "tools/probe_official_attention.py": "9af96b114ee0b7f569dd4da4c7e768c2a632782dbd7e802e51acaf75c0b63e75",
+      "tools/probe_prefix_cache.py": "771093f7677bb9de6ff057df913bde89003906062b39de7c3b5b6504e7e6eb23",
+      "tools/window_finite_transform.py": "5b97bd8ab051db8908e49bddfaf2baf6e0e06aa01d1e9eecd5e9011f3a26e92c"
+    }
+  },
+  "delivery": {
+    "candidate": "existing same ABI and candidate selectors use new generated sources",
+    "source_gate": ".venv/bin/python -m tools.generate_active_kernels --check",
+    "build_cache": "generation tool/source fingerprints bind artifacts; stale builds rejected",
+    "start_command": "bash scripts/start_node93_oscar.sh",
+    "fixed_command": "git pull --ff-only && bash scripts/install_serve.sh --variant candidate"
+  },
+  "local_fixture_failures": [
+    {
+      "test": "physical cache C++ host harness",
+      "failure": "dependent template syntax in initial host fixture",
+      "resolution": "non-template harness class; production unchanged",
+      "evidence": "agent execution receipt; final primary JUnit retained"
+    },
+    {
+      "test": "window C++ host harness",
+      "failure": "initial fixture exceeded bounded 60-second host execution",
+      "resolution": "reduce repeated backing initialization and compile O2; bounded per-reduction-order execution; production unchanged",
+      "evidence": "agent execution receipt; final primary JUnit retained"
+    }
+  ],
+  "acceptance": {
+    "source": "passed",
+    "host_functional_control_and_transport": "passed",
+    "CANN_compile": "not_run_no_local_SDK",
+    "official_CPU_debug": "not_run_no_local_SDK",
+    "NPU_precision": "not_run",
+    "real_graph_capture_replay": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run_user_hardware_constraint",
+    "real_hardware_connected": false
+  }
+}

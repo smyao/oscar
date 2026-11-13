@@ -24,9 +24,11 @@ SOURCE_PATHS = (
  'csrc/kernels/attention_cv_official_decode_active.cpp', 'csrc/kernels/store_aligned_int2_active.cpp',
  'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
+ 'tools/official_active_decode_transform.py',
  'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
  'tools/precise_zero_fill_transform.py', 'tools/cluster_state_transform.py',
  'tools/cluster4_l1_transform.py', 'tools/cluster_score_ring_transform.py',
+ 'tools/physical_page_cache_transform.py', 'tools/window_finite_transform.py',
  'csrc/kernels/attention_cv_official_cluster4_active.cpp', 'csrc/kernels/attention_cv_official_cluster16_active.cpp',
  'csrc/kernels/attention_official_finite.h', 'csrc/kernels/attention_c16_softmax_helpers.h',
  'csrc/kernels/attention_cv_official_decode.cpp', 'csrc/kernels/attention_cv_official_cluster4.cpp',
@@ -110,6 +112,69 @@ def allocate(torch, fixture, device, cores, family):
     buffers['final_lse'] = torch.empty_like(buffers['output_lse'])
     buffers['final_status'] = torch.empty_like(buffers['merge_status'])
     return buffers
+
+
+def reserve_graph_remap_page(torch, fixture):
+    """Give single-page test fixtures a poisoned spare before NPU allocation.
+
+    A one-page arena has no nonidentity permutation. Reserve exactly one
+    unused page for that probe case so replay can change the physical map
+    without changing any pointer, logical token, query or history boundary.
+    """
+    from . import probe_history_reuse as reuse
+    if fixture['blocks'] > 1:
+        return
+    if fixture['blocks'] != 1:
+        raise ValueError('graph page-map fixture requires a positive page count')
+    data = fixture['cpu']
+    data['raw'] = torch.cat((data['raw'], torch.full((fixture['stride'],), 0xA5, dtype=torch.uint8, device='cpu')))
+    for name in ('wk', 'wv'):
+        data[name] = torch.cat((data[name], torch.full_like(data[name], float('nan'))))
+    data['tags'] = torch.cat((data['tags'], torch.full_like(data['tags'], -1)))
+    fixture['blocks'] = 2
+    fixture['input_sha256'] = reuse._fingerprint(data)
+
+
+def permute_physical_pages(torch, fixture):
+    """Relocate all test-only physical pages in place, preserving logical KV.
+
+    old physical p moves to (p+1)%blocks. Table entries are virtual128 IDs,
+    slots use physical BLOCK_TOKENS IDs, and tags are within-page positions.
+    Negative padding entries and every CPU/NPU allocation address stay fixed.
+    """
+    from . import probe_history_reuse as reuse
+    data, blocks, stride = fixture['cpu'], fixture['blocks'], fixture['stride']
+    if blocks < 2:
+        raise ValueError('page-map replay needs at least two physical pages; reserve before allocation')
+    prefix = data['raw'].numel() - blocks * stride
+    if prefix < 0 or any(data[name].shape[0] != blocks for name in ('wk', 'wv', 'tags')):
+        raise ValueError('page-map fixture has inconsistent physical storage')
+    ratio = reuse.BLOCK_TOKENS // 128
+    table, slots = data['table'], data['slots']
+    valid_table, valid_slots = table >= 0, slots >= 0
+    if (bool((table[valid_table].long() // ratio >= blocks).any())
+            or bool((slots[valid_slots] // reuse.BLOCK_TOKENS >= blocks).any())
+            or any(not 0 <= page < blocks for pages in fixture['page_assignments'] for page in pages)):
+        raise ValueError('page-map fixture references an unavailable physical page')
+    if not bool(valid_table.any()):
+        raise ValueError('page-map replay must change an actual table entry')
+    remapped_table, remapped_slots = table.clone(), slots.clone()
+    entries = table[valid_table].long()
+    remapped_table[valid_table] = (((entries // ratio + 1) % blocks) * ratio + entries % ratio).to(table.dtype)
+    entries = slots[valid_slots]
+    remapped_slots[valid_slots] = ((entries // reuse.BLOCK_TOKENS + 1) % blocks) * reuse.BLOCK_TOKENS + entries % reuse.BLOCK_TOKENS
+    # Destination p takes source p-1. index_select owns a separate source so
+    # every copy is safe even for overlapping cycles and the raw prefix stays.
+    source = (torch.arange(blocks, dtype=torch.int64, device='cpu') - 1) % blocks
+    raw_pages = data['raw'][prefix:].view(blocks, stride)
+    raw_pages.copy_(raw_pages.index_select(0, source))
+    for name in ('wk', 'wv', 'tags'):
+        data[name].copy_(data[name].index_select(0, source))
+    table.copy_(remapped_table)
+    slots.copy_(remapped_slots)
+    fixture['page_assignments'] = [tuple((page + 1) % blocks for page in pages)
+                                   for pages in fixture['page_assignments']]
+    fixture['input_sha256'] = reuse._fingerprint(data)
 
 
 def check_task_coverage(fixture, tasks):
@@ -303,6 +368,8 @@ def run_case(torch, ops, case, device, cores):
     from .probe_striped_cache import _store_bits_equal
     family, mode = case['family'], case['dequant_mode']
     fixture = make_fixture(torch, case['shape'])
+    if case['graph']:
+        reserve_graph_remap_page(torch, fixture)
     tensors = {name: value.to(device) for name, value in fixture['cpu'].items()}
     buffers = allocate(torch, fixture, device, cores, family)
     prepare(torch, ops, tensors, fixture, buffers)
@@ -327,16 +394,22 @@ def run_case(torch, ops, case, device, cores):
         with torch.npu.graph(graph, capture_error_mode='thread_local', auto_dispatch_capture=True):
             execute()
         states = []
-        for state in ('original', 'changed_query', 'changed_context'):
+        for state in ('original', 'changed_query', 'changed_context', 'changed_page_map'):
             if state == 'changed_query':
                 fixture['cpu']['q'][0].neg_(); fixture['cpu']['qr'][0].neg_()
                 tensors['q'].copy_(fixture['cpu']['q']); tensors['qr'].copy_(fixture['cpu']['qr'])
             elif state == 'changed_context':
                 shape = replace(case['shape'], contexts=tuple(x + 32 for x in case['shape'].contexts))
                 fixture = make_fixture(torch, shape)
+                reserve_graph_remap_page(torch, fixture)
                 for name, value in fixture['cpu'].items():
                     if value.shape != tensors[name].shape:
                         raise RuntimeError('official graph allocation changed ' + name)
+                    tensors[name].copy_(value)
+                prepare(torch, ops, tensors, fixture, buffers); tasks = buffers['tasks'].cpu()
+            elif state == 'changed_page_map':
+                permute_physical_pages(torch, fixture)
+                for name, value in fixture['cpu'].items():
                     tensors[name].copy_(value)
                 prepare(torch, ops, tensors, fixture, buffers); tasks = buffers['tasks'].cpu()
             golden = fixture_tasks_reference(fixture, tasks, mode)
@@ -578,7 +651,7 @@ def validate_evidence(report, config=None):
             graph = row.get('graph') or {}
             if (graph.get('capture') != 'passed' or graph.get('replay') != 'passed' or graph.get('same_addresses') is not True or
                     graph.get('final_copy_and_guard') != 'passed' or
-                    [x.get('state') for x in graph.get('states', [])] != ['original', 'changed_query', 'changed_context'] or
+                    [x.get('state') for x in graph.get('states', [])] != ['original', 'changed_query', 'changed_context', 'changed_page_map'] or
                     any(x.get('v4_oracle') != 'passed' or x.get('eager_replay_bitwise') != 'passed' for x in graph.get('states', []))):
                 bad.append(case['shape'].name + '.graph')
     return bad

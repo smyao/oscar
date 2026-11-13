@@ -644,8 +644,16 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
             self._transfer_session = metadata.session
         self.tracker.apply_branches(self.runner, metadata.branches)
         # Native executes this before _update_states zeros any recycled page.
-        for snapshot in metadata.preemptions:
-            resolved = self.tracker.resolve(self.runner, snapshot, clone=False)
+        # Share only host counter reads for snapshots from the same completed
+        # worker step. Resolve lazily so each save/ack/forget still precedes
+        # resolution (and any failure) of the next request. Private saves keep
+        # their independent stream barriers and rollback boundaries.
+        resolved_states = (
+            self.tracker.resolve_many(self.runner, metadata.preemptions, clone=False)
+            if len(metadata.preemptions) > 1 else
+            (self.tracker.resolve(self.runner, snapshot, clone=False)
+             for snapshot in metadata.preemptions))
+        for snapshot, resolved in zip(metadata.preemptions, resolved_states, strict=True):
             count = resolved.committed_tokens
             key = snapshot_key(metadata.session, snapshot, count)
             if count:

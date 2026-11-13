@@ -1,3 +1,13 @@
+// PHYSICAL_PAGE_SCALAR_CACHE_V1
+// Archive #126/#145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
+// D.4(1): bounded FIA physical-page metadata lookup, not attention math.
+// D.4(2): no full-history restore (historical dequant6499.8--6655.1ms).
+// D.4(3): cache one (request,virtual128-column) -> scalar table value only
+// within this read-only-input launch; Init resets it for every graph replay.
+// Keep every bounds/error check and MTE2_S fence, including cache hits:
+// the old fence can also complete a preceding packed-data DMA.
+// D.4(4): three int64 scalar fields, no additional UB/GM, no FP change.
+// Metadata DMA/read counts may fall; no NPU speed or HBM claim follows.
 // Derived by tools/active_decode_transform.py from protected 232b decode.
 // Archive #145/#150/#151/#154/#164/#172; startup D.4 full raw log reviewed.
 // D.4(1): fused q4/q1 CV task-descriptor scalar reads, not attention math.
@@ -93,6 +103,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       GM_ADDR windowValue,GM_ADDR tags,GM_ADDR tasks,GM_ADDR partial,
       GM_ADDR lse,GM_ADDR status,GM_ADDR workspace,const Geometry& geometry) {
     g=geometry;
+    physicalCacheRequest=-1;physicalCacheColumn=-1;physicalCacheValue=0;
     q.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(query));
     qr.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(queryRot));
     ck.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(key));
@@ -300,11 +311,21 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
   }
   __aicore__ bool Physical(int64_t position,int64_t& block,int64_t& inpage) {
     if(position<0 || position/128>=g.columns) {error=1;return false;}
-    auto local=addressBuf.Get<int32_t>();
-    DataCopyExtParams copy{1,4,0,0,0};DataCopyPadExtParams<int32_t> pad{false,0,0,0};
-    DataCopyPad(local,bt[request*g.columns+position/128],copy,pad);
+    const int64_t column=position/128;
+    const bool cached=physicalCacheRequest==request && physicalCacheColumn==column;
+    if(!cached) {
+      auto local=addressBuf.Get<int32_t>();
+      DataCopyExtParams copy{1,4,0,0,0};DataCopyPadExtParams<int32_t> pad{false,0,0,0};
+      DataCopyPad(local,bt[request*g.columns+column],copy,pad);
+    }
+    // Preserve incidental completion of preceding packed-data MTE2 work.
     Fence<HardEvent::MTE2_S>();
-    const int64_t virtualBlock=local.GetValue(0);
+    if(!cached) {
+      physicalCacheValue=addressBuf.Get<int32_t>().GetValue(0);
+      physicalCacheRequest=request;physicalCacheColumn=column;
+    }
+    // The saved value is scalar, independent of tag/status addressBuf reuse.
+    const int64_t virtualBlock=physicalCacheValue;
     const int64_t ratio=g.blockTokens/128;
     if(virtualBlock<0 || virtualBlock>=g.blocks*ratio) {error=1;return false;}
     block=virtualBlock/ratio;inpage=(virtualBlock%ratio)*128+position%128;
@@ -833,6 +854,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     Fence<HardEvent::S_MTE3>();DataCopyExtParams copy{1,4,0,0,0};
     DataCopyPad(outStatus[id*2+lane],word,copy);Fence<HardEvent::MTE3_S>();
   }
+  int64_t physicalCacheRequest,physicalCacheColumn,physicalCacheValue;
   TPipe pipe;CubeMatmul mm;TBuf<TPosition::B1> externalB;
   Geometry g;
   GlobalTensor<bfloat16_t> q,ck,cv,wk,wv,rv,operands;

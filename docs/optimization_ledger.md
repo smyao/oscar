@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-11-13 BS扩展续修：以de0c85b为基底，q4/q1/C4/C16按launch内(request,virtual128列)复用一个页表标量，保持每次bounds/值校验和MTE2_S；代表decode只减少约27–28%的该类4B DMA提交，对齐区间可能零命中，不换算吞吐。C4/C16仅连续有效tag run复用既有finite证书，保持坏tag/finite最后错误顺序及原值/Cast/DMA；多私有抢占复用lazy counter读取，逐条PUT/ACK/forget及保存屏障保持。固定地址graph功能probe新增真实页映射迁移，候选生成/构建/路由已接线。源码/主机工作量与CANN/NPU/性能分栏，未连接真机、未测速；见[当前原因与改进](bs_scaling_20261113.md)及[验证](../reports/bs_scaling_20261113/validation.json)。不以Running峰值、PC命中率或纯decode次数占比代替有效输出/步和step时间；保留masked末tile等不等价删除的反例。
+
 2026-11-13 搬运与缓存复用：以b49a689为基底，C4采用受保护C16的单128KiB B1及SDK资源断言，同簇K/V语义装载8份→2份；保持两score槽、四份P/state、每member数学及双AIV所有权。普通C1的B传输也改变，净性能需设备验证。C16只将score地址映射为四槽，地址集合2MiB→512KiB/core，allocator及DMA总量不变。跨簇首tile缓存按实际owner模型仅省约0.12%–0.42%历史解包、decode零收益且增加活跃地址覆盖，明确不入生产。295项主机检查最终通过，含三actor、实际输入位、固定地址换输入、生成/构建/路由；CANN/NPU/图/质量/性能未验收。详见[实现与取舍](cv_reuse_20261113.md)、[验证凭证](../reports/cv_reuse_20261113/validation.json)。
 
 2026-11-12 roofline定向优化：C4/C16是同请求历史query-tile复用簇，当前GQA6对应84/336 token。按144B槽、BF16操作数和FP32状态重算全部主数据流，区分GM语义字节与HBM实测。candidate同ABI派生核删除current完整覆盖的零填（完整KV256少768KiB UB写），删除cluster初始state往返（264192B/member，一次性），合并每轮max/sum两段DMA提交；数学/错误域、有效传输所有权、原始母源和PT/PC/MTP/argv/timer保持。261项主机测试通过，CANN/NPU/图/质量/性能未验收；工作量减少不作吞吐倍率。见[分析与改动](cv_roofline_20261112.md)和[验证](../reports/cv_roofline_20261112/validation.json)。

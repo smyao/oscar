@@ -188,6 +188,8 @@ def test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device(m
     from tools.probe_history_reuse import Shape
     from tools.serving_variants import variant_config
     config=variant_config(json.loads((probe.ROOT/'configs/target.json').read_text()),'candidate')
+    # This fixture qualifies the retained v3 ABI, not the current v4 default.
+    config.update(experimental_official_math=False, oscar_dequant_policy='native_phase')
     fixture=make_fixture(torch,Shape('aligned_lifecycle_state',(1,),(65,),256,1,1,False,recent_tokens=1))
     impl,state=shared._runtime(torch,fixture,fixture['cpu'],torch.device('cpu'),1,config,False)
     assert state.cache_format=='striped_fp32_v2'
@@ -201,6 +203,7 @@ def test_aligned_prefix_layout_and_reader_use_new_metadata_width():
     from tools import probe_prefix_cache as prefix
     from tools.serving_variants import variant_config
     cfg=variant_config(json.loads((probe.ROOT/'configs/target.json').read_text()),'candidate')
+    cfg.update(experimental_official_math=False, oscar_dequant_policy='native_phase')
     cfg['enable_prefix_caching']=True
     layout=prefix.fixture_layout(aligned=True)
     assert layout.page.slot_layout.metadata_bytes==4 and layout.page.slot_layout.slot_bytes==144
@@ -234,9 +237,15 @@ def test_normal_bf16_start_removes_inherited_npu_event_control():
     assert target_env({'devices':[0,1,2,3]},base)['OSCAR_PASSIVE_TIMING_CONTROL']==base['OSCAR_PASSIVE_TIMING_CONTROL']
 
 
-def test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing(tmp_path,monkeypatch):
+def test_legacy_aligned_probe_only_uses_its_gate_without_timing(tmp_path,monkeypatch):
     import os
     from tools import observe_serve as observe
+    variant_config = observe.variant_config
+    def legacy_aligned_config(*args, **kwargs):
+        config = variant_config(*args, **kwargs)
+        config.update(experimental_official_math=False, oscar_dequant_policy='native_phase')
+        return config
+    monkeypatch.setattr(observe, 'variant_config', legacy_aligned_config)
     seen=[]
     for name in dir(observe):
         if name.startswith('_') and name.endswith('_gate'):

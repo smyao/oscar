@@ -5,7 +5,7 @@ replay checks use the independent v4 oracle, never an old mixed-domain golden.
 """
 import copy
 import json
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from types import SimpleNamespace
 
 import pytest
@@ -282,12 +282,15 @@ def complete_receipt():
         'writer_rotation':{'status':'passed','writer':probe.WRITER,'query_copy':probe.QUERY_COPY,
             'codec_bytes':'exact','rotated_windows':'exact','canaries':'exact','query_status':'exact','writer_status':'exact',
             'graph_capture':'passed','graph_replay':'passed','graph_same_addresses':True,
-            'active_rows':{'status':'passed','codec_window_status':'exact','same_addresses':True,
-                'eager_and_graph':'passed','timing':None,
-                'states':['interleaved','all_padding','changed_active_rows','all_live']}}}
+            **{field:{'status':'passed','codec_window_status':'exact','same_addresses':True,
+                'input_mode':mode,'alias_pairs':aliases,'changed_finite_inputs':True,
+                'eager_and_graph':'passed','eager_replay_bitwise':'passed','timing':None,
+                'states':['interleaved','all_padding','changed_active_rows','all_live']}
+               for field,mode,aliases in (('active_rows','distinct_originals',[]),
+                    ('exact_input_reuse','exact_input_reuse',[[0,2],[1,3]]))}}}
 
 
-@pytest.mark.parametrize('failure',('v3','old_prepare','old_reader','old_window','missing_case','timing','old_graph_oracle','missing_copy_graph','missing_padding_gate','incomplete_padding_gate','missing_page_map_graph','unchecked_page_map_graph'))
+@pytest.mark.parametrize('failure',('v3','old_prepare','old_reader','old_window','missing_case','timing','old_graph_oracle','missing_copy_graph','missing_padding_gate','incomplete_padding_gate','missing_page_map_graph','unchecked_page_map_graph','missing_alias_gate','false_alias_gate','partial_alias_gate','missing_alias_graph','unchanged_alias_inputs','alias_in_distinct_gate'))
 def test_v3_or_incomplete_success_receipts_cannot_certify_v4(failure):
     report=complete_receipt();assert probe.validate_evidence(report)==[]
     if failure=='v3':report['contract']='oscar_bf16_attention_v3'
@@ -302,6 +305,12 @@ def test_v3_or_incomplete_success_receipts_cannot_certify_v4(failure):
     elif failure=='incomplete_padding_gate':report['writer_rotation']['active_rows']['states'].remove('all_padding')
     elif failure=='missing_page_map_graph':report['cases'][0]['graph']['states'].pop()
     elif failure=='unchecked_page_map_graph':report['cases'][0]['graph']['states'][-1].pop('v4_oracle')
+    elif failure=='missing_alias_gate':report['writer_rotation'].pop('exact_input_reuse')
+    elif failure=='false_alias_gate':report['writer_rotation']['exact_input_reuse']['alias_pairs']=[]
+    elif failure=='partial_alias_gate':report['writer_rotation']['exact_input_reuse']['alias_pairs']=[[0,2]]
+    elif failure=='missing_alias_graph':report['writer_rotation']['exact_input_reuse'].pop('eager_replay_bitwise')
+    elif failure=='unchanged_alias_inputs':report['writer_rotation']['exact_input_reuse']['changed_finite_inputs']=False
+    elif failure=='alias_in_distinct_gate':report['writer_rotation']['active_rows']['alias_pairs']=[[0,2],[1,3]]
     assert probe.validate_evidence(report)
 
 
@@ -449,10 +458,21 @@ def test_remapped_decode_slot_context_prepare_resolves_original_logical_position
         probe.prepare(TorchProxy(), Ops(), fixture['cpu'], fixture, buffers)
 
 
-def test_writer_gate_stores_rotated_exact_windows_and_replays_fresh_inputs():
+def writer_gate_spy(*, broken_path=None):
+    """Actual probe control on CPU; branch/address evidence, never NPU evidence."""
     class Ops:
+        def __init__(self):
+            self.records=[]
+            self.capturing=None
+            self.replaying=False
         def store_aligned_int2_out(self,rk,rv,k,v,slots,positions,raw,wk,wv,tags,status,block,blocks,prefix,stride,sink,recent,kc,vc):
-            self.last=(rk,rv,k,v,slots,positions,raw,wk,wv,tags,status,block,blocks,prefix,stride,sink,recent,kc,vc)
+            args=(rk,rv,k,v,slots,positions,raw,wk,wv,tags,status,block,blocks,prefix,stride,sink,recent,kc,vc)
+            if self.capturing is not None:
+                self.capturing.args=args
+            aliases=(rk is k and rk.data_ptr()==k.data_ptr(), rv is v and rv.data_ptr()==v.data_ptr())
+            self.records.append({'aliases':aliases,'replay':self.replaying,
+                'pointers':tuple(x.data_ptr() for x in args[:11]),
+                'slots':slots.clone(),'rk':rk.clone(),'rv':rv.clone(),'k':k.clone(),'v':v.clone()})
             status.zero_()
             for token in range(rk.shape[0]):
                 slot=int(slots[token]);position=int(positions[token])
@@ -462,23 +482,85 @@ def test_writer_gate_stores_rotated_exact_windows_and_replays_fresh_inputs():
                     if position<0:status[token,head]=4;continue
                     if not bool(torch.isfinite(rk[token,head]).all() and torch.isfinite(rv[token,head]).all()):
                         status[token,head]=2;continue
-                    assert torch.equal(rk[token,head],k[token,head]) and torch.equal(rv[token,head],v[token,head])
                     encoded=pack_kv(rk[token,head],rv[token,head],kc,vc)
                     page,within=divmod(slot,block);offset=prefix+page*stride+(within*rk.shape[1]+head)*144
                     raw[offset:offset+144]=encoded
                     row=position if position<sink else sink+within%recent
                     wk[page,row,head]=k[token,head];wv[page,row,head]=v[token,head];tags[page,row]=within
+                    if broken_path=='reuse' and all(aliases):
+                        wk[page,row,head].add_(1)
+                    if broken_path=='distinct' and not any(aliases):
+                        wk[page,row,head]=rk[token,head]
         def copy_validate_bf16_query_out(self,x,slots,out,status,cores):
             out.copy_(x);out[slots<0]=0
             status.copy_((~torch.isfinite(x).all(-1)).int()*2);status[slots<0]=0
     ops=Ops()
     class Graph:
-        def replay(self):ops.store_aligned_int2_out(*ops.last)
+        def replay(self):
+            ops.replaying=True
+            try:
+                ops.store_aligned_int2_out(*self.args)
+            finally:
+                ops.replaying=False
+    @contextmanager
+    def capture(graph,**kwargs):
+        ops.capturing=graph
+        try:
+            yield
+        finally:
+            ops.capturing=None
     class TorchProxy:
-        npu=SimpleNamespace(synchronize=lambda:None,NPUGraph=Graph,graph=lambda *a,**k:nullcontext())
+        npu=SimpleNamespace(synchronize=lambda:None,NPUGraph=Graph,graph=capture)
         def __getattr__(self,name):return getattr(torch,name)
-    report=probe.writer_rotation_gate(TorchProxy(),ops,torch.device('cpu'),1)
+    return TorchProxy(),ops
+
+
+def test_writer_gate_stores_rotated_exact_windows_and_replays_fresh_inputs():
+    proxy,ops=writer_gate_spy()
+    report=probe.writer_rotation_gate(proxy,ops,torch.device('cpu'),1)
     assert report['rotated_windows']==report['codec_bytes']=='exact'
     assert report['graph_same_addresses'] is True
     assert report['active_rows']['states']==['interleaved','all_padding','changed_active_rows','all_live']
     assert report['active_rows']['codec_window_status']=='exact'
+    assert report['active_rows']['input_mode']=='distinct_originals'
+    assert report['active_rows']['alias_pairs']==[]
+    assert report['exact_input_reuse']['alias_pairs']==[[0,2],[1,3]]
+    assert report['exact_input_reuse']['codec_window_status']=='exact'
+    assert report['exact_input_reuse']['eager_replay_bitwise']=='passed'
+    alias_calls=[record for record in ops.records if record['aliases']==(True,True)]
+    assert len(alias_calls)==10 and sum(record['replay'] for record in alias_calls)==4
+    distinct_calls=[record for record in ops.records if record['aliases']==(False,False)]
+    assert len(distinct_calls)==14 and sum(record['replay'] for record in distinct_calls)==5
+
+
+@pytest.mark.parametrize('reuse_inputs',(False,True))
+def test_writer_padding_gate_changes_finite_data_and_mask_at_actual_fixed_alias_addresses(reuse_inputs):
+    proxy,ops=writer_gate_spy()
+    report=probe.writer_padding_gate(proxy,ops,torch.device('cpu'),reuse_inputs=reuse_inputs)
+    assert report['same_addresses'] and report['changed_finite_inputs']
+    assert len(ops.records)==10
+    assert {record['aliases'] for record in ops.records}=={(reuse_inputs,reuse_inputs)}
+    assert len({record['pointers'] for record in ops.records})==1
+    assert len(set(ops.records[0]['pointers'][:4]))==(2 if reuse_inputs else 4)
+    replays=[record for record in ops.records if record['replay']]
+    assert [int(record['slots'].ge(0).sum()) for record in replays]==[9,0,8,17]
+    # Row0 is live both initially and finally. A double negation of aliased
+    # entries, stale captured values, or mask-only changes cannot satisfy this.
+    assert not torch.equal(replays[0]['rk'][0],replays[-1]['rk'][0])
+    assert not torch.equal(replays[0]['rv'][0],replays[-1]['rv'][0])
+    for record in replays:
+        live=record['slots']>=0
+        if live.any():
+            assert torch.equal(record['rk'][live],record['k'][live]) is reuse_inputs
+            assert torch.equal(record['rv'][live],record['v'][live]) is reuse_inputs
+    for eager,replay in zip(ops.records[2::2],ops.records[3::2]):
+        assert not eager['replay'] and replay['replay']
+        for name in ('slots','rk','rv','k','v'):
+            assert torch.equal(tensor_bits(eager[name]),tensor_bits(replay[name]))
+
+
+@pytest.mark.parametrize('reuse_inputs,broken_path',((False,'distinct'),(True,'reuse')))
+def test_writer_gate_rejects_bad_exact_window_in_each_real_pointer_branch(reuse_inputs,broken_path):
+    proxy,ops=writer_gate_spy(broken_path=broken_path)
+    with pytest.raises(RuntimeError,match='bytes or status differ'):
+        probe.writer_padding_gate(proxy,ops,torch.device('cpu'),reuse_inputs=reuse_inputs)

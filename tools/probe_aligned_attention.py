@@ -25,6 +25,7 @@ SOURCE_PATHS = (
  'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
  'tools/official_active_decode_transform.py',
+ 'tools/official_active_store_transform.py', 'tools/store_raw_reuse_transform.py',
  'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
  'tools/precise_zero_fill_transform.py', 'tools/cluster_state_transform.py',
  'tools/cluster4_l1_transform.py', 'tools/cluster_score_ring_transform.py',

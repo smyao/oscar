@@ -30,7 +30,7 @@ KERNELS = (
         "mother": "csrc/kernels/store_aligned_int2.cpp",
         "active": "csrc/kernels/store_aligned_int2_active.cpp",
         "mother_sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
-        "transform": "tools.active_store_transform",
+        "transform": "tools.official_active_store_transform",
     },
     {
         "mother": "csrc/kernels/attention_cv_official_cluster4.cpp",
@@ -50,6 +50,8 @@ TOOL_PATHS = (
     "tools/active_decode_transform.py",
     "tools/official_active_decode_transform.py",
     "tools/active_store_transform.py",
+    "tools/official_active_store_transform.py",
+    "tools/store_raw_reuse_transform.py",
     "tools/cluster_prefill_transform.py",
     "tools/cluster_visibility_transform.py",
     "tools/precise_finite_transform.py",

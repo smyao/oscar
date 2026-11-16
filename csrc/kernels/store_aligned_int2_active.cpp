@@ -1,3 +1,16 @@
+// Derived same-invocation raw-input reuse; archive #126/#145/#154/#155/#164/#172.
+// D.4 four questions (complete original log read):
+// 1. This removes bounded exact-window rereads in phase1_stores only.
+// 2. Old full-history dequant6499.8-6655.1ms/card and stores209-215ms
+//    describe rejected historical structures, not current measurements.
+// 3. Retain the existing K DMA in rawBuf and V DMA in inputBuf only when
+//    key==originalKey and value==originalValue. Quantizers modify floatBuf,
+//    never these BF16 bytes. Keep every DMA fence and error/owner decision;
+//    distinct originals use the original reload. Binding forbids input/output
+//    overlap. Do not reuse across calls, tokens, layers, or cache generations.
+// 4. UB adds3584B/core atD256; no new GM/graph allocation or UB copy.
+//    Each published exact KV row avoids two GM reads (1024B atD256), while
+//    all quantization and writes remain. Host checks do not certify NPU speed.
 // Derived active-slot writer; archive #37-49/#126/#145/#157/#164.
 // D.4 four questions (complete original log read):
 // 1. This changes phase1_stores for current tokens only.
@@ -141,7 +154,8 @@ class AlignedStore {
     pipe_.InitBuffer(inputBuf_,kRowTile*kMaxDim*2);
     pipe_.InitBuffer(floatBuf_,kRowTile*kMaxDim*4);
     pipe_.InitBuffer(packBuf_,kRowTile*160); pipe_.InitBuffer(statusBuf_,32);
-    pipe_.InitBuffer(metaBuf_,32); pipe_.InitBuffer(rawBuf_,kMaxDim*2);
+    pipe_.InitBuffer(metaBuf_,32); pipe_.InitBuffer(rawBuf_,kRowTile*kMaxDim*2);
+    const bool reuseExact=key==originalKey && value==originalValue;
     const int64_t total=tokens*heads; const int32_t headBytes=dim/2+16;
     for (int64_t base=GetBlockIdx()*kRowTile;base<total;base+=GetBlockNum()*kRowTile) {
       const int32_t count=static_cast<int32_t>(total-base<kRowTile ? total-base : kRowTile);
@@ -153,7 +167,9 @@ class AlignedStore {
       }
       auto bytes=packBuf_.Get<uint8_t>();
       for (int32_t side=0;side<2;++side) {
-        auto input=inputBuf_.Get<bfloat16_t>();auto values=floatBuf_.Get<float>();
+        auto input=(reuseExact && side==0) ? rawBuf_.Get<bfloat16_t>()
+                                          : inputBuf_.Get<bfloat16_t>();
+        auto values=floatBuf_.Get<float>();
         DataCopy(input,(side==0?k_:v_)[base*dim],count*dim);
         Fence<HardEvent::MTE2_V>();
         Cast(values,input,RoundMode::CAST_NONE,count*dim);PipeBarrier<PIPE_V>();
@@ -190,12 +206,12 @@ class AlignedStore {
           if (later>=0 && later/blockTokens==page && later==slot+recent) keepRecent=false;
         }
         if (position<sink) {
-          WriteRaw(token,head,page,position,kStride,vStride,heads,dim);
+          WriteRaw(token,head,page,position,kStride,vStride,heads,dim,row,reuseExact);
           if (head==0) WriteTag(page*tagStride+position,inPage);
         }
         if (keepRecent) {
           const int64_t index=sink+inPage%recent;
-          WriteRaw(token,head,page,index,kStride,vStride,heads,dim);
+          WriteRaw(token,head,page,index,kStride,vStride,heads,dim,row,reuseExact);
           if (head==0) WriteTag(page*tagStride+index,inPage);
         }
       }
@@ -220,12 +236,19 @@ class AlignedStore {
     DataCopyPad(tags_[index],local,copy); Fence<HardEvent::MTE3_S>();
   }
   __aicore__ inline void WriteRaw(int64_t token,int64_t head,int64_t page,
-      int64_t index,int64_t kStride,int64_t vStride,int64_t heads,int32_t dim) {
-    // The source K/V are read again only for the bounded exact window, never
-    // for history. No rotation or quantizer rounding can touch these bytes.
+      int64_t index,int64_t kStride,int64_t vStride,int64_t heads,int32_t dim,
+      int32_t row,bool reuseExact) {
+    // Retained BF16 rows precede clipping; only floatBuf was quantized.
+    // Both raw publications finish before the next tile's MTE2 overwrite.
+    // Distinct originals keep the original bounded exact-window reload.
     auto converted=rawBuf_.Get<bfloat16_t>();
     for (int32_t side=0;side<2;++side) {
-      DataCopy(converted,(side==0?originalK_:originalV_)[(token*heads+head)*dim],dim);
+      if (reuseExact) {
+        converted=(side==0 ? rawBuf_.Get<bfloat16_t>()
+                           : inputBuf_.Get<bfloat16_t>())[row*dim];
+      } else {
+        DataCopy(converted,(side==0?originalK_:originalV_)[(token*heads+head)*dim],dim);
+      }
       Fence<HardEvent::MTE2_V>();Fence<HardEvent::V_MTE3>();
       DataCopy((side==0 ? rawK_ : rawV_)[page*(side==0 ? kStride : vStride)
           +(index*heads+head)*dim],converted,dim);

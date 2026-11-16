@@ -7,11 +7,13 @@
     "tools/cluster_score_ring_transform.py": "0878140fd61b427adb16bf5f7e337f16d5b7e45543990e3d5cfa17cf661aaeee",
     "tools/cluster_state_transform.py": "44cae5155ada4f01c33d1783ff72d83b17a93b2b20e89bb33dd3bc1d077ce44e",
     "tools/cluster_visibility_transform.py": "bd5f36d2a3291eed6f262c678dc5b96bde7e3693a08dabf7a2ba9be005f9bb6c",
-    "tools/generate_active_kernels.py": "7e1f4c3736cec5d5a264cd0298c2a3d65a9d42a31376a8a5b15c21aa725bed92",
+    "tools/generate_active_kernels.py": "951711451b80456346828fbf99c05064435dc19ba37b7d640847cd98628acdb8",
     "tools/official_active_decode_transform.py": "dd48fcdc03ae0c2f20901b73f2d748fbc47970c7beac1de4a977eb25f94f294d",
+    "tools/official_active_store_transform.py": "f89d12f74e50f8f93797820e6f37f9a23aeb85a9b493bc19cb4066e1cf34b3e9",
     "tools/physical_page_cache_transform.py": "d391232bed716173e1a2e15a6feb086bd36a7b0dd5435a3e11f03872ee024b22",
     "tools/precise_finite_transform.py": "161855ea20e4e7968e3b296cb05ebe5d7e4839617a5d994d4e97d152de0c0eb2",
     "tools/precise_zero_fill_transform.py": "36e084848796e26e36bbcab0164d1a3e736c0d998c6318e5b71a082f2c08ae0b",
+    "tools/store_raw_reuse_transform.py": "1b61f6265c8a6730bba89ef457ae226cec35eeca2772417d9722fc5867abb9f6",
     "tools/window_finite_transform.py": "5b97bd8ab051db8908e49bddfaf2baf6e0e06aa01d1e9eecd5e9011f3a26e92c"
   },
   "kernels": [
@@ -25,11 +27,11 @@
     },
     {
       "active": "csrc/kernels/store_aligned_int2_active.cpp",
-      "active_sha256": "fd35153511b9eacb2e63980d6aed712c8d4d1f8f2fe33f82ecb044eb4be53842",
+      "active_sha256": "fb8233fa227585d3bdcd33bff3374cf2500ffa7b5de1a09ad71402696dedd071",
       "mother": "csrc/kernels/store_aligned_int2.cpp",
       "mother_sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
       "public_abi": "unchanged",
-      "transform": "tools.active_store_transform"
+      "transform": "tools.official_active_store_transform"
     },
     {
       "active": "csrc/kernels/attention_cv_official_cluster4_active.cpp",

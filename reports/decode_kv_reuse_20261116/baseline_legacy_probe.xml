@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.720" timestamp="2026-11-16T10:51:02.996313+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_probe_aligned_attention" name="test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device" time="0.021"><failure message="AssertionError: assert 'striped_rotated_fp32_v3' == 'striped_fp32_v2'&#10;  &#10;  - striped_fp32_v2&#10;  + striped_rotated_fp32_v3">tests/test_probe_aligned_attention.py:193: in test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device
+    assert state.cache_format=='striped_fp32_v2'
+E   AssertionError: assert 'striped_rotated_fp32_v3' == 'striped_fp32_v2'
+E     
+E     - striped_fp32_v2
+E     + striped_rotated_fp32_v3</failure></testcase><testcase classname="tests.test_probe_aligned_attention" name="test_aligned_prefix_layout_and_reader_use_new_metadata_width" time="0.001"><failure message="AssertionError: assert 'attention_cv...al_decode_out' == 'attention_cv...ed_decode_out'&#10;  &#10;  - attention_cv_aligned_decode_out&#10;  ?                -----&#10;  + attention_cv_official_decode_out&#10;  ?              ++++++">tests/test_probe_aligned_attention.py:208: in test_aligned_prefix_layout_and_reader_use_new_metadata_width
+    assert prefix.selected_reader(cfg)==probe.OPERATORS['q4']
+E   AssertionError: assert 'attention_cv...al_decode_out' == 'attention_cv...ed_decode_out'
+E     
+E     - attention_cv_aligned_decode_out
+E     ?                -----
+E     + attention_cv_official_decode_out
+E     ?              ++++++</failure></testcase><testcase classname="tests.test_probe_aligned_attention" name="test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing" time="0.030"><failure message="AssertionError: assert '_aligned_attention_gate' in ['_official_attention_gate', '_mixed_prepare_reuse_gate', '_current_only_gate', '_first_mtp_current_gate', '_mixed_decode_split_gate']">tests/test_probe_aligned_attention.py:253: in test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing
+    assert '_aligned_attention_gate' in seen
+E   AssertionError: assert '_aligned_attention_gate' in ['_official_attention_gate', '_mixed_prepare_reuse_gate', '_current_only_gate', '_first_mtp_current_gate', '_mixed_decode_split_gate']</failure></testcase></testsuite></testsuites>

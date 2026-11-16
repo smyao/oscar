@@ -25,6 +25,7 @@ SOURCE_PATHS = (
  'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
  'tools/official_active_decode_transform.py',
+ 'tools/official_active_store_transform.py', 'tools/store_raw_reuse_transform.py',
  'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
  'tools/precise_zero_fill_transform.py', 'tools/cluster_state_transform.py',
  'tools/cluster4_l1_transform.py', 'tools/cluster_score_ring_transform.py',
@@ -432,12 +433,15 @@ def run_case(torch, ops, case, device, cores):
             'check': check, 'graph': graph_report, 'timing': None}
 
 
-def writer_padding_gate(torch, ops, device):
+def writer_padding_gate(torch, ops, device, *, reuse_inputs=False):
     """Exercise changing native padding at fixed addresses; no timings.
 
     #157: only a negative slot is padding. Poisoned inactive rows must not
     publish anything, including after a graph replay changes row ownership.
     The independent codec is evaluated only for the finite source rows.
+    #145/#164: exercise both the real pointer-alias writer path and separate
+    original windows. Inputs are updated once per unique allocation; an
+    aliased argument list must never negate the same tensor twice.
     """
     from .official_reference import pack_kv
     from .probe_striped_cache import _store_bits_equal
@@ -453,7 +457,15 @@ def writer_padding_gate(torch, ops, device):
     raw_initial = torch.full((prefix+blocks*stride+64,), 0xA5, dtype=torch.uint8)
     window_initial = torch.full((blocks, sink+recent, h, d), float('nan'), dtype=torch.bfloat16)
     tag_initial = torch.full((blocks, sink+recent), -1, dtype=torch.int64)
-    inputs = [x.to(device).clone() for x in (k, v, k, v, positions, positions)]
+    inputs = [x.to(device).clone() for x in (k, v)]
+    inputs += (inputs[:2] if reuse_inputs else
+               [x.to(device).clone() for x in (k + .25, v - .5)])
+    inputs += [x.to(device).clone() for x in (positions, positions)]
+    alias_pairs = [[first, original] for first, original in ((0, 2), (1, 3))
+                   if inputs[first] is inputs[original]
+                   and inputs[first].data_ptr() == inputs[original].data_ptr()]
+    if alias_pairs != ([[0, 2], [1, 3]] if reuse_inputs else []):
+        raise RuntimeError('official writer input reuse fixture has incorrect aliases')
     outputs = [x.to(device).clone() for x in (raw_initial, window_initial, window_initial, tag_initial)]
     status = torch.empty(n, h, dtype=torch.int32, device=device)
     addresses = [x.data_ptr() for x in (*inputs, *outputs, status)]
@@ -462,7 +474,6 @@ def writer_padding_gate(torch, ops, device):
         getattr(ops, WRITER)(*inputs, *outputs, status,
             block, blocks, prefix, stride, sink, recent, .96, .92)
 
-    encoded = pack_kv(k, v, .96, .92)
     # Warm up before recording; graph and eager below consume identical data.
     execute(); torch.npu.synchronize()
     graph = torch.npu.NPUGraph()
@@ -475,12 +486,26 @@ def writer_padding_gate(torch, ops, device):
         ('changed_active_rows', torch.arange(n) % 2 != 0),
         ('all_live', torch.ones(n, dtype=torch.bool)),
     )
-    for name, active in masks:
+    for state_index, (name, active) in enumerate(masks):
         slots = positions.clone(); slots[~active] = -1
-        current_k, current_v = k.clone(), v.clone()
+        # Change finite data as well as the live rows after capture. Preserve
+        # the initial signed-zero case, then require replay to read new bytes.
+        finite_k, finite_v = k.clone(), v.clone()
+        if state_index:
+            finite_k = (finite_k + state_index * .125).neg()
+            finite_v = (finite_v - state_index * .25).neg()
+        original_k = finite_k if reuse_inputs else finite_k + .25
+        original_v = finite_v if reuse_inputs else finite_v - .5
+        encoded = pack_kv(finite_k, finite_v, .96, .92)
+        current_k, current_v = finite_k.clone(), finite_v.clone()
+        current_ok, current_ov = original_k.clone(), original_v.clone()
         current_k[~active] = float('nan'); current_v[~active] = float('inf')
-        for dst, src in zip(inputs, (current_k, current_v, current_k, current_v, slots, positions)):
-            dst.copy_(src.to(device))
+        current_ok[~active] = float('nan'); current_ov[~active] = float('inf')
+        updates = ((0, current_k), (1, current_v), (4, slots), (5, positions))
+        if not reuse_inputs:
+            updates += ((2, current_ok), (3, current_ov))
+        for index, src in updates:
+            inputs[index].copy_(src.to(device))
         want = [raw_initial.clone(), window_initial.clone(), window_initial.clone(), tag_initial.clone()]
         for token in range(n):
             if not bool(active[token]):
@@ -488,7 +513,8 @@ def writer_padding_gate(torch, ops, device):
             within = int(positions[token]); row = within if within < sink else sink+within % recent
             begin = prefix+within*h*144
             want[0][begin:begin+h*144] = encoded[token].reshape(-1)
-            want[1][0, row] = k[token]; want[2][0, row] = v[token]; want[3][0, row] = within
+            want[1][0, row] = original_k[token]; want[2][0, row] = original_v[token]; want[3][0, row] = within
+        eager = None
         for run in (execute, graph.replay):
             for dst, src in zip(outputs, (raw_initial, window_initial, window_initial, tag_initial)):
                 dst.copy_(src.to(device))
@@ -497,11 +523,19 @@ def writer_padding_gate(torch, ops, device):
             if bool(status.ne(0).any()) or not all(
                     _store_bits_equal(torch, actual.cpu(), expected) for actual, expected in zip(outputs, want)):
                 raise RuntimeError('official writer active/padding bytes or status differ: '+name)
+            if eager is None:
+                eager = [x.clone() for x in (*outputs, status)]
+            elif not all(_store_bits_equal(torch, actual, expected)
+                         for actual, expected in zip((*outputs, status), eager)):
+                raise RuntimeError('official writer active/padding eager/replay bytes differ: '+name)
         if addresses != [x.data_ptr() for x in (*inputs, *outputs, status)]:
             raise RuntimeError('official writer active/padding graph changed addresses')
         states.append(name)
     return {'status': 'passed', 'codec_window_status': 'exact', 'same_addresses': True,
-            'eager_and_graph': 'passed', 'states': states, 'timing': None}
+            'input_mode': 'exact_input_reuse' if reuse_inputs else 'distinct_originals',
+            'alias_pairs': alias_pairs, 'changed_finite_inputs': True,
+            'eager_and_graph': 'passed', 'eager_replay_bitwise': 'passed',
+            'states': states, 'timing': None}
 
 
 def writer_rotation_gate(torch, ops, device, cores):
@@ -587,11 +621,12 @@ def writer_rotation_gate(torch, ops, device, cores):
     if not torch.equal(qstatus, want_status) or bool(qr[-1].ne(0).any()):
         raise RuntimeError('Q nonfinite/padding error domain differs')
     padding_report = writer_padding_gate(torch, ops, device)
+    reuse_report = writer_padding_gate(torch, ops, device, reuse_inputs=True)
     return {'status': 'passed', 'writer': WRITER, 'query_copy': QUERY_COPY,
             'codec_bytes': 'exact', 'rotated_windows': 'exact', 'canaries': 'exact',
             'query_status': 'exact', 'writer_status': 'exact', 'rotation': 'BF16_operands_FP32acc_BF16_output',
             'graph_capture': 'passed', 'graph_replay': 'passed', 'graph_same_addresses': True,
-            'active_rows': padding_report}
+            'active_rows': padding_report, 'exact_input_reuse': reuse_report}
 
 
 def runtime_precision(config):
@@ -631,12 +666,15 @@ def validate_evidence(report, config=None):
                        'query_status': 'exact', 'writer_status': 'exact', 'graph_capture': 'passed', 'graph_replay': 'passed',
                        'graph_same_addresses': True}.items():
         if writer.get(key) != value: bad.append('writer_rotation.' + key)
-    padding = writer.get('active_rows', {})
-    for key, value in {'status': 'passed', 'codec_window_status': 'exact', 'same_addresses': True,
-                       'eager_and_graph': 'passed', 'timing': None,
-                       'states': ['interleaved', 'all_padding', 'changed_active_rows', 'all_live']}.items():
-        if key not in padding or padding[key] != value:
-            bad.append('writer_rotation.active_rows.'+key)
+    for field, mode, aliases in (('active_rows', 'distinct_originals', []),
+                                  ('exact_input_reuse', 'exact_input_reuse', [[0, 2], [1, 3]])):
+        padding = writer.get(field, {})
+        for key, value in {'status': 'passed', 'codec_window_status': 'exact', 'same_addresses': True,
+                           'input_mode': mode, 'alias_pairs': aliases, 'changed_finite_inputs': True,
+                           'eager_and_graph': 'passed', 'eager_replay_bitwise': 'passed', 'timing': None,
+                           'states': ['interleaved', 'all_padding', 'changed_active_rows', 'all_live']}.items():
+            if key not in padding or padding[key] != value:
+                bad.append('writer_rotation.'+field+'.'+key)
     rows, plan = report.get('cases', []), case_plan()
     if len(rows) != len(plan): return bad + ['complete_case_plan']
     for row, case in zip(rows, plan):

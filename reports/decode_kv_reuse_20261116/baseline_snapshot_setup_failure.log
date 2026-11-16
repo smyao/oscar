@@ -1,0 +1,43 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+__ test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device __
+tests/test_probe_aligned_attention.py:193: in test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device
+    assert state.cache_format=='striped_fp32_v2'
+E   AssertionError: assert 'striped_rotated_fp32_v3' == 'striped_fp32_v2'
+E     
+E     - striped_fp32_v2
+E     + striped_rotated_fp32_v3
+_________ test_aligned_prefix_layout_and_reader_use_new_metadata_width _________
+tests/test_probe_aligned_attention.py:208: in test_aligned_prefix_layout_and_reader_use_new_metadata_width
+    assert prefix.selected_reader(cfg)==probe.OPERATORS['q4']
+E   AssertionError: assert 'attention_cv...al_decode_out' == 'attention_cv...ed_decode_out'
+E     
+E     - attention_cv_aligned_decode_out
+E     ?                -----
+E     + attention_cv_official_decode_out
+E     ?              ++++++
+_ test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing _
+tests/test_probe_aligned_attention.py:252: in test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing
+    assert observe.run(probe.ROOT/'configs/target.json',log,'candidate',probe_only=True)==0
+E   AssertionError: assert 128 == 0
+E    +  where 128 = <function run at 0x121da8e00>((PosixPath('/private/tmp/oscar-reuse-baseline-h30jq9wv') / 'configs/target.json'), PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-727/test_aligned_default_probe_onl0/run'), 'candidate', probe_only=True)
+E    +    where <function run at 0x121da8e00> = <module 'tools.observe_serve' from '/private/tmp/oscar-reuse-baseline-h30jq9wv/tools/observe_serve.py'>.run
+E    +    and   PosixPath('/private/tmp/oscar-reuse-baseline-h30jq9wv') = probe.ROOT
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "/private/tmp/oscar-reuse-baseline-h30jq9wv/tools/observe_serve.py", line 1217, in run
+    identity = _source_identity(variant, config)
+  File "/private/tmp/oscar-reuse-baseline-h30jq9wv/tools/observe_serve.py", line 96, in _source_identity
+    revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
+               ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              capture_output=True, check=True).stdout.strip()
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', 'rev-parse', 'HEAD']' returned non-zero exit status 128.
+=========================== short test summary info ============================
+FAILED tests/test_probe_aligned_attention.py::test_lifecycle_state_allocates_new_rotations_and_codec_without_real_device
+FAILED tests/test_probe_aligned_attention.py::test_aligned_prefix_layout_and_reader_use_new_metadata_width
+FAILED tests/test_probe_aligned_attention.py::test_aligned_default_probe_only_uses_new_gate_and_no_legacy_writer_or_timing
+3 failed, 38 deselected in 0.72s

@@ -21,7 +21,19 @@ from oscar_ascend.runtime import WorkspaceGeometry
     (8,False,'attention_cv_aligned_decode_out'),(8,True,'attention_cv_aligned_decode_q1_out'),
     (256,False,'attention_cv_aligned_cluster4_out'),(8192,False,'attention_cv_aligned_cluster16_out'),
     (10,False,'attention_cv_aligned_cluster4_out')])
-def test_shared_candidate_actual_forward_selects_versioned_reader_and_bf16_rotations(n,later,name):
+def test_legacy_aligned_forward_selects_versioned_reader_and_bf16_rotations(n,later,name,monkeypatch):
+    # This test explicitly selects legacy v3 (official_math=False). The
+    # current candidate's fp32_metadata policy requires official v4 and
+    # correctly rejects that combination before this legacy ABI is called.
+    # Select the historical policy in this fixture only; production keeps
+    # fp32_metadata and its independent official-runtime coverage.
+    from tools import serving_variants
+    variant_config = serving_variants.variant_config
+    def legacy_aligned_config(*args, **kwargs):
+        config = variant_config(*args, **kwargs)
+        config['oscar_dequant_policy'] = 'native_phase'
+        return config
+    monkeypatch.setattr(serving_variants, 'variant_config', legacy_aligned_config)
     from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
     test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
         n,1,1,n,16,later,True,True,True,_member_pipeline=True,_c16_l1=True,

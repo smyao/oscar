@@ -49,6 +49,7 @@ TOOL_PATHS = (
     "tools/generate_active_kernels.py",
     "tools/active_decode_transform.py",
     "tools/official_active_decode_transform.py",
+    "tools/decode_codebook_transform.py",
     "tools/active_store_transform.py",
     "tools/official_active_store_transform.py",
     "tools/store_raw_reuse_transform.py",

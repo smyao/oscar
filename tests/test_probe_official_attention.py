@@ -279,6 +279,14 @@ def complete_receipt():
         'performance':'not_run_user_requested','acceptance_sha256':probe.digest(probe.ROOT/'configs/acceptance_official_bf16.json'),
         'oracle_sha256':probe.digest(probe.ROOT/'tools/official_reference.py'),'probe_sha256':probe.digest(probe.__file__),
         'source_binding':probe.source_binding(),'operator_families':probe.OPERATORS,'cases':rows,
+        'history_publication':[{'status':'passed','family':family,'operator':probe.OPERATORS[family],
+            'dequant_mode':mode,'cores':1,'isolated_source0_tasks':1,'same_addresses':True,
+            'graph_capture':'passed','graph_replay':'passed',
+            'rounding_and_unused_level_boundaries':'exact',
+            'publication':'bitwise_bf16_including_positive_zero_padding','timing':None,
+            'states':[{'state':name,'history_rows':count,'buffers':[0] if count<=256 else [0,1],
+                'bf16_bits':'exact','eager_and_graph':'passed'} for name,count in probe.publication_states()]}
+            for family in ('q4','q1') for mode in (0,1)],
         'writer_rotation':{'status':'passed','writer':probe.WRITER,'query_copy':probe.QUERY_COPY,
             'codec_bytes':'exact','rotated_windows':'exact','canaries':'exact','query_status':'exact','writer_status':'exact',
             'graph_capture':'passed','graph_replay':'passed','graph_same_addresses':True,
@@ -314,8 +322,158 @@ def test_v3_or_incomplete_success_receipts_cannot_certify_v4(failure):
     assert probe.validate_evidence(report)
 
 
+@pytest.mark.parametrize('failure', ('missing', 'one_mode', 'tolerance', 'missing_tail',
+                                    'wrong_parity', 'no_graph', 'no_changed_codes'))
+def test_publication_receipt_requires_both_modes_exact_bits_parity_and_replay(failure):
+    report = complete_receipt()
+    if failure == 'missing': report.pop('history_publication')
+    elif failure == 'one_mode': report['history_publication'].pop()
+    elif failure == 'tolerance': report['history_publication'][0]['publication'] = 'allclose'
+    elif failure == 'missing_tail': report['history_publication'][0]['states'].pop(6)
+    elif failure == 'wrong_parity': report['history_publication'][0]['states'][-1]['buffers'] = [0]
+    elif failure == 'no_graph': report['history_publication'][0]['graph_replay'] = 'not_run'
+    elif failure == 'no_changed_codes': report['history_publication'][0]['states'].pop(-2)
+    assert probe.validate_evidence(report)
+
+
+@pytest.mark.parametrize('family', ('q4', 'q1'))
+@pytest.mark.parametrize('mode', (0, 1))
+def test_decode_tail_cases_keep_full_attention_and_fixed_graph_geometry(family, mode):
+    from dataclasses import replace
+    case = next(row for row in probe.case_plan()
+                if row['shape'].name == f'official_{family}_history_tail_mode{mode}')
+    assert case['graph'] and not case['timed'] and not case['shape'].speed_gate
+    assert case['shape'].slot_context == (family == 'q1')
+    assert case['shape'].contexts[0] - 64 == 257
+    original = make_fixture(torch, case['shape'])
+    changed = make_fixture(torch, replace(case['shape'], contexts=(353,)))
+    for key, value in original['cpu'].items():
+        assert value.shape == changed['cpu'][key].shape
+
+
 def tensor_bits(tensor):
     return tensor.contiguous().view(torch.uint8)
+
+
+def publication_spy(broken=None):
+    """CPU ABI/graph spy; its scalar publication is not a kernel certificate."""
+    from tools.official_reference import unpack_kv
+    class Ops:
+        capturing = None
+        records = None
+        original_raw = None
+        original_table = None
+        def __init__(self): self.records = []
+        def prepare_official_attention_tasks_out(self, starts, lens, slots, tasks, positions,
+                                                 hq, hk, sink, recent, splits, *extra):
+            length = int(starts[1]); context = int(lens[0]) - length
+            positions.fill_(-1); positions[:length] = torch.arange(context, context + length)
+            tasks.zero_()
+            for token in range(slots.numel()):
+                count = length if token == 0 else (-1 if token >= length else 0)
+                for kind, (begin, end) in enumerate(((sink, context), (0, sink), (context, context + length))):
+                    tasks[token * 3 + kind, :11] = torch.tensor([
+                        token, count, 0, begin if count > 0 else 0, end if count > 0 else 0,
+                        0, kind, kind, context, 0, 0])
+        def __getattr__(self, name):
+            if name not in (probe.OPERATORS['q4'], probe.OPERATORS['q1']): raise AttributeError(name)
+            def execute(*args):
+                if self.capturing is not None: self.capturing.call = (execute, args)
+                raw, table = args[5], args[6]
+                tasks, status, workspace = args[10], args[13], args[14]
+                block, blocks, prefix, stride = args[15:19]
+                mode, cores = args[-2:]
+                leaders = (tasks[:, 1] > 0).nonzero().flatten()
+                assert leaders.numel() == 1 and cores == 1
+                task = tasks[int(leaders[0])]
+                assert int(task[7]) == 0
+                if self.original_raw is None:
+                    self.original_raw = raw.clone(); self.original_table = table.clone()
+                if broken == 'stale_codes': raw = self.original_raw
+                if broken == 'stale_table': table = self.original_table
+                memory = workspace.view(torch.bfloat16)
+                status.zero_()
+                self.records.append((name, int(task[4] - task[3]), int(task[1]),
+                                     args[5].data_ptr(), args[6].data_ptr(), workspace.data_ptr()))
+                for tile, begin in enumerate(range(int(task[3]), int(task[4]), 256)):
+                    count = min(256, int(task[4]) - begin)
+                    pair = [torch.zeros((256, 256), dtype=torch.bfloat16) for _ in range(2)]
+                    for j in range(count):
+                        position = begin + j
+                        virtual = int(table[int(task[5]), position // 128])
+                        page, quarter = divmod(virtual, block // 128)
+                        offset = prefix + page * stride + (quarter * 128 + position % 128) * 144
+                        try:
+                            values = unpack_kv(raw[offset:offset + 144], 256, mode)
+                        except ValueError:
+                            if broken != 'stale_table': raise
+                            status[int(leaders[0]), 0] = 3
+                            return
+                        for side in (0, 1): pair[side][j].copy_(values[side])
+                    if broken == 'padding_negative_zero' and count < 256:
+                        pair[0][count, 0] = -0.0
+                    buffer = (tile + (1 if broken == 'parity' else 0)) % 2
+                    for side in (0, 1):
+                        base = 2 * ((32 + side * 256) * 256 + buffer * (2 * 256 * 256))
+                        target = memory[base:base + 65536].view(256, 256)
+                        if broken == 'skip_lane1':
+                            target[:64].copy_(pair[side][:64]); target[128:192].copy_(pair[side][128:192])
+                        else: target.copy_(pair[side])
+                status.zero_()
+            return execute
+    ops = Ops()
+    class Graph:
+        def replay(self): self.call[0](*self.call[1])
+    @contextmanager
+    def capture(graph, **kwargs):
+        ops.capturing = graph
+        try: yield
+        finally: ops.capturing = None
+    class TorchProxy:
+        npu = SimpleNamespace(synchronize=lambda: None, NPUGraph=Graph, graph=capture)
+        def __getattr__(self, name): return getattr(torch, name)
+    return TorchProxy(), ops
+
+
+def test_publication_boundaries_retain_selected_finite_values_and_rounding_bits():
+    from tools.official_reference import unpack_kv
+    from tools import probe_history_reuse as reuse
+    fixture = make_fixture(torch, Shape('publication_boundaries', (4,), (641,), 256, 1, 1,
+                                      False, recent_tokens=1, padded_tokens=8))
+    probe.publication_boundary_rows(torch, fixture)
+    page = fixture['page_assignments'][0][0]
+    base = reuse.PREFIX + page * fixture['stride'] + 64 * 144
+    slots = fixture['cpu']['raw'][base:base + 3 * 144].view(3, 144)
+    for mode in (0, 1):
+        key, value = unpack_kv(slots, 256, mode)
+        assert bool(torch.isfinite(key).all()) and torch.equal(key, value)
+        assert bool(key[0].eq(0).all())
+    mode0 = unpack_kv(slots, 256, 0)[0].to(torch.bfloat16).view(torch.int16)
+    mode1 = unpack_kv(slots, 256, 1)[0].to(torch.bfloat16).view(torch.int16)
+    assert int(mode0[1, 0]) & 0xFFFF == 0xB2FF
+    assert int(mode1[2, 0]) & 0xFFFF == 0x448D
+
+
+@pytest.mark.parametrize('family', ('q4', 'q1'))
+@pytest.mark.parametrize('mode', (0, 1))
+def test_history_publication_gate_reads_both_real_abi_slots_and_replays_changed_bytes(family, mode):
+    proxy, ops = publication_spy()
+    result = probe.history_publication_gate(proxy, ops, torch.device('cpu'), family, mode)
+    assert result['publication'] == 'bitwise_bf16_including_positive_zero_padding'
+    assert result['same_addresses'] and result['cores'] == 1
+    assert len(ops.records) == 2 + 2 * len(probe.publication_states())
+    assert {row[0] for row in ops.records} == {probe.OPERATORS[family]}
+    assert {row[2] for row in ops.records} == {4 if family == 'q4' else 1}
+    assert len({row[3:] for row in ops.records}) == 1
+    assert [row['history_rows'] for row in result['states'][:13]] == list(probe.PUBLICATION_TAILS)
+    assert result['states'][-1]['buffers'] == [0, 1]
+
+
+@pytest.mark.parametrize('failure', ('parity', 'skip_lane1', 'padding_negative_zero', 'stale_codes', 'stale_table'))
+def test_history_publication_rejects_wrong_slot_lane_padding_and_stale_inputs(failure):
+    proxy, ops = publication_spy(failure)
+    with pytest.raises(RuntimeError, match='history.*publication'):
+        probe.history_publication_gate(proxy, ops, torch.device('cpu'), 'q4', 0)
 
 
 def test_page_permutation_preserves_all_logical_cache_bytes_padding_and_pointers():

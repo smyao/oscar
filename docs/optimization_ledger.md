@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-11-16 decode四级查表：以1f44be7为基底，q4/q1 source0的首块及K/V预取均在既有UB内计算每行4个BF16等级，按raw uint16查表发布。保留144B codec、mode0/1舍入和metadata错误域、全部DMA/跨核所有权；无新增UB/GM分配或持久缓存。每H64单侧最终CastRne调用256→4，但新增全元素索引构造/Gather，不能换算成64倍或端到端收益。原GM交接仍在；A2公开片上通道及持久码本均有明确兼容限制，未凭猜测启用。生产生成、构建身份与功能probe同步，验证及未验收边界见[实现](decode_codebook_20261116.md)和[报告](../reports/decode_codebook_20261116/validation.json)。
+
 2026-11-16 decode复用：以f3d618d为基底，确认仅本次有效KV行量化，q4/GQA已共享历史解包；跨step完整BF16镜像在32K/BS28/17层/Hkv1额外需14.875GiB/卡，小缓存需完整页代际且覆盖有限，本轮不加入。writer仅在两组原输入完全同址时保留本tile的BF16 K/V用于sink/recent发布，省每实际发布D256 KV行2次DMA/1024B逻辑GM读取，新增UB3584B/核、无新增HBM；quantizer、错误域与全部fence保持。原输入不同时保留既有路径。candidate构建身份与真实同址graph功能probe接线同步；主机结果与未验收CANN/NPU/性能分栏，详见[实现与取舍](decode_kv_reuse_20261116.md)及[验证](../reports/decode_kv_reuse_20261116/validation.json)。这不减少跨step历史解包次数，不宣称吞吐收益。
 
 2026-11-13 BS扩展续修：以de0c85b为基底，q4/q1/C4/C16按launch内(request,virtual128列)复用一个页表标量，保持每次bounds/值校验和MTE2_S；代表decode只减少约27–28%的该类4B DMA提交，对齐区间可能零命中，不换算吞吐。C4/C16仅连续有效tag run复用既有finite证书，保持坏tag/finite最后错误顺序及原值/Cast/DMA；多私有抢占复用lazy counter读取，逐条PUT/ACK/forget及保存屏障保持。固定地址graph功能probe新增真实页映射迁移，候选生成/构建/路由已接线。源码/主机工作量与CANN/NPU/性能分栏，未连接真机、未测速；见[当前原因与改进](bs_scaling_20261113.md)及[验证](../reports/bs_scaling_20261113/validation.json)。不以Running峰值、PC命中率或纯decode次数占比代替有效输出/步和step时间；保留masked末tile等不等价删除的反例。

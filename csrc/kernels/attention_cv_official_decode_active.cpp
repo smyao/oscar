@@ -1,3 +1,13 @@
+// HISTORY_CODEBOOK_DECODE_V1
+// Archive #126/#145/#154/#155/#164/#172; startup D.4 fully reviewed.
+// D.4(1): bounded source0 INT2 reconstruction inside fused q4/q1 FIA.
+// D.4(2): never materialize full-history BF16 (old dequant6499.8-6655.1ms).
+// D.4(3): compute four levels per row with the original Sub/Mul/RNE order,
+// select raw BF16 bits into existing natural UB, retain every DMA fence.
+// Only history pipeline publication skips the now-redundant final Cast.
+// Current/window/softmax/Cube, masks, error commitment and codec stay fixed.
+// D.4(4): same UB/GM allocation; fewer level conversions but added byte-index
+// construction and Gather. Neither API counts nor CPU tests prove speed.
 // PHYSICAL_PAGE_SCALAR_CACHE_V1
 // Archive #126/#145/#150/#151/#154/#164/#172; full startup D.4 reviewed.
 // D.4(1): bounded FIA physical-page metadata lookup, not attention math.
@@ -33,6 +43,7 @@
 // upstream 8-token allocator flush lifecycle. Current chunk remains causal.
 #include "oscar_common.h"
 #include "attention_aligned_unpack.h"
+#include "attention_codebook_unpack.h"
 #include "attention_bf16_cast.h"
 #include "attention_range_mask.h"
 #include "../include/oscar_official_decode_launch.h"
@@ -694,7 +705,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
   // source0 only: cache one next packed tile, split K/V dequant across the
   // current QK/PV windows. Each array is bounded by two HalfKv64 subtiles.
   __aicore__ void PipelineUnpack(TBuf<TPosition::VECCALC>& packedInput,bool value) {
-    oscar_ascend_aligned::Unpack<D,kHalfKv>(value,liveKvRows,error,packedInput,wordBuf,
+    oscar_ascend_codebook::Unpack<D,kHalfKv>(value,liveKvRows,error,packedInput,wordBuf,
         planeBuf,naturalBuf,maskBuf,wordIndexBuf,laneIndexBuf,metadataIndexBuf,
         metadataHalfBuf,dequantBuf,scratchBuf,g.dequantMode);
   }
@@ -702,7 +713,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
     Fence<HardEvent::V_MTE3>();
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    oscar_bf16::CastRne(rounded,dequantBuf.Get<float>(),kElements);
+    // PipelineUnpack already produced exact BF16 bits in naturalBuf.
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*((value?vOffset:kOffset)+buffer*(2*kKvRows*D))+slot*D],
         rounded,kElements);
@@ -781,8 +792,8 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     LoadQueries();
     for(int32_t sub=0;sub<kKvSubtiles;++sub) {
       LoadPacked(kvbegin+sub*(2*kHalfKv));
-      Unpack(false);PipelinePublishKv(false,sub,0);
-      Unpack(true);PipelinePublishKv(true,sub,0);
+      PipelineUnpack(packedBuf,false);PipelinePublishKv(false,sub,0);
+      PipelineUnpack(packedBuf,true);PipelinePublishKv(true,sub,0);
     }
     CrossCoreSetFlag<2,PIPE_MTE3>(kKvReady);
     int32_t buffer=0;

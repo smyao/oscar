@@ -24,7 +24,7 @@ SOURCE_PATHS = (
  'csrc/kernels/attention_cv_official_decode_active.cpp', 'csrc/kernels/store_aligned_int2_active.cpp',
  'csrc/active_kernels_manifest.json', 'tools/generate_active_kernels.py',
  'tools/active_decode_transform.py', 'tools/active_store_transform.py',
- 'tools/official_active_decode_transform.py',
+ 'tools/official_active_decode_transform.py', 'tools/decode_codebook_transform.py',
  'tools/official_active_store_transform.py', 'tools/store_raw_reuse_transform.py',
  'tools/cluster_prefill_transform.py', 'tools/cluster_visibility_transform.py', 'tools/precise_finite_transform.py',
  'tools/precise_zero_fill_transform.py', 'tools/cluster_state_transform.py',
@@ -34,6 +34,7 @@ SOURCE_PATHS = (
  'csrc/kernels/attention_official_finite.h', 'csrc/kernels/attention_c16_softmax_helpers.h',
  'csrc/kernels/attention_cv_official_decode.cpp', 'csrc/kernels/attention_cv_official_cluster4.cpp',
  'csrc/kernels/attention_cv_official_cluster16.cpp', 'csrc/kernels/attention_aligned_unpack.h',
+ 'csrc/kernels/attention_codebook_unpack.h',
  'csrc/kernels/store_aligned_int2.cpp', 'csrc/include/oscar_official_decode_launch.h',
  'csrc/include/oscar_official_cluster_launch.h', 'csrc/include/oscar_aligned_store_launch.h',
  'csrc/kernels/attention_bf16_cast.h', 'csrc/kernels/attention_official_tasks.cpp', 'csrc/kernels/merge_lse.cpp',
@@ -103,6 +104,15 @@ def case_plan():
                       recent_tokens=320, padded_tokens=64)
         rows.append({'family': 'c4', 'shape': shape, 'graph': True,
                      'timed': False, 'dequant_mode': mode})
+    # One full history tile and one live row exercise both history buffers;
+    # changed_context replay expands that tail without changing allocations.
+    for family, queries in (('q4', 4), ('q1', 1)):
+        for mode in (0, 1):
+            shape = Shape(f'official_{family}_history_tail_mode{mode}', (queries,),
+                          (321,), 256, 1, 1, False, speed_gate=False,
+                          recent_tokens=1, padded_tokens=8, slot_context=family == 'q1')
+            rows.append({'family': family, 'shape': shape, 'graph': True,
+                         'timed': False, 'dequant_mode': mode})
     return tuple(rows)
 
 
@@ -433,6 +443,164 @@ def run_case(torch, ops, case, device, cores):
             'check': check, 'graph': graph_report, 'timing': None}
 
 
+PUBLICATION_TAILS = (1, 63, 64, 65, 127, 128, 129, 255, 256, 257, 511, 512, 513)
+
+
+def publication_states():
+    return [(f'history_rows_{count}', count) for count in PUBLICATION_TAILS] + [
+        ('changed_codes', 513), ('changed_page_map', 513)]
+
+
+def publication_boundary_rows(torch, fixture):
+    """Accepted reader payloads exposing reassociation/rounding mistakes.
+
+    The first row selects only level0. Its unused level3 overflows, which
+    must not introduce a new failure. The other two are fixed FP32 bit
+    patterns from independent mode0/mode1 rounding counterexamples.
+    """
+    from . import probe_history_reuse as reuse
+    for position, code, scale, zero in ((64, 0, 0x7EFFFFFF, 0),
+                                      (65, 1, 0x397A1F78, 0x3F800412),
+                                      (66, 2, 0x430D1717, 0xC0C149FC)):
+        virtual = int(fixture['cpu']['table'][0, position // 128])
+        page, quarter = divmod(virtual, reuse.BLOCK_TOKENS // 128)
+        offset = reuse.PREFIX + page * fixture['stride'] + (quarter * 128 + position % 128) * 144
+        slot = fixture['cpu']['raw'][offset:offset + 144]
+        slot[:128].fill_(code * 0x55)
+        # Write exact little-endian metadata bytes independently of Python
+        # float conversion; the persisted format remains unchanged.
+        slot[128:].copy_(torch.tensor([scale, zero, scale, zero], dtype=torch.uint32).view(torch.uint8))
+
+
+def history_publication_expected(torch, fixture, task, mode):
+    """Independent raw-byte decode of the last tile retained in each GM slot.
+
+    The single isolated source0 task runs on core0. Its bounded pipeline has
+    two KV256 slots; later empty tasks publish only status. This is a probe
+    of the existing ABI, not a new exported kernel or a production readback.
+    """
+    from . import probe_history_reuse as reuse
+    from .official_reference import unpack_kv
+    row = task.tolist()
+    begin, end, request, head = row[3], row[4], row[5], row[2]
+    if row[1] <= 0 or row[7] != 0 or end <= begin or fixture['spec'].dim != 256:
+        raise ValueError('publication gate requires one nonempty D256 history task')
+    data, result = fixture['cpu'], {}
+    for tile, start in enumerate(range(begin, end, 256)):
+        live = min(256, end - start)
+        slots = []
+        for position in range(start, start + live):
+            virtual = int(data['table'][request, position // 128])
+            if not 0 <= virtual < fixture['blocks'] * (reuse.BLOCK_TOKENS // 128):
+                raise ValueError('publication reference encountered an invalid physical page')
+            page, quarter = divmod(virtual, reuse.BLOCK_TOKENS // 128)
+            within = quarter * 128 + position % 128
+            offset = reuse.PREFIX + page * fixture['stride'] + (within * fixture['spec'].kv_heads + head) * 144
+            slots.append(data['raw'][offset:offset + 144])
+        decoded = unpack_kv(torch.stack(slots), 256, mode)
+        values = []
+        for value in decoded:
+            expected = torch.zeros((256, 256), dtype=torch.bfloat16)
+            expected[:live].copy_(value)
+            values.append(expected)
+        result[tile % 2] = tuple(values)
+    return result
+
+
+def check_history_publication(torch, fixture, task, workspace, mode):
+    expected = history_publication_expected(torch, fixture, task, mode)
+    # FP32 arena bases are unchanged by BF16 publication. Each physical
+    # K/V tile is densely BF16, while slot bases retain their original bytes.
+    memory = workspace.cpu().view(torch.bfloat16)
+    for buffer, pair in expected.items():
+        for side, want in enumerate(pair):
+            offset = 2 * ((32 + side * 256) * 256 + buffer * (2 * 256 * 256))
+            actual = memory[offset:offset + 256 * 256].view(256, 256)
+            if not torch.equal(actual.view(torch.int16), want.view(torch.int16)):
+                raise RuntimeError(f'history BF16 publication differs: buffer={buffer}, side={side}')
+    return sorted(expected)
+
+
+def history_publication_gate(torch, ops, device, family, mode):
+    """Bitwise eager/replay proof for both source0 pipeline slots; no timing."""
+    from . import probe_history_reuse as reuse
+    from .official_fixture import make_fixture
+    if family not in ('q4', 'q1') or mode not in (0, 1):
+        raise ValueError('publication gate requires q4/q1 and explicit mode0/1')
+    query_count = 4 if family == 'q4' else 1
+    shape = reuse.Shape(f'official_{family}_publication_mode{mode}', (query_count,),
+                        (641,), 256, 1, 1, False, speed_gate=False,
+                        recent_tokens=1, padded_tokens=8, slot_context=family == 'q1')
+    fixture = make_fixture(torch, shape)
+    publication_boundary_rows(torch, fixture)
+    tensors = {name: value.to(device) for name, value in fixture['cpu'].items()}
+    buffers = allocate(torch, fixture, device, 1, family)
+    prepare(torch, ops, tensors, fixture, buffers)
+    prepared = buffers['tasks'].cpu().clone()
+    leaders = ((prepared[:, 1] > 0) & (prepared[:, 7] == 0)).nonzero().flatten()
+    if leaders.numel() != 1:
+        raise RuntimeError('publication gate requires exactly one prepared history leader')
+    selected = int(leaders[0]); task = prepared[selected].clone()
+    if (int(task[0]), int(task[1]), int(task[2]), int(task[3])) != (0, query_count, 0, reuse.SINK):
+        raise RuntimeError('publication gate source0 ownership differs from its declared single task')
+    isolated = prepared.clone(); isolated[:, 1] = 0
+    addresses = {name: value.data_ptr() for name, value in tensors.items()}
+    addresses.update({'buffer_' + name: value.data_ptr() for name, value in buffers.items() if value is not None})
+
+    def set_rows(count):
+        task[4] = task[3] + count
+        if int(task[4]) > int(task[8]):
+            raise RuntimeError('publication tail exceeded the original prepared history')
+        isolated[selected].copy_(task)
+        buffers['tasks'].copy_(isolated)
+
+    def execute():
+        launch(ops, family, tensors, fixture, buffers, 1, dequant_mode=mode, merge=False)
+
+    set_rows(PUBLICATION_TAILS[0])
+    poison(torch, buffers); execute(); torch.npu.synchronize()
+    graph = torch.npu.NPUGraph()
+    with torch.npu.graph(graph, capture_error_mode='thread_local', auto_dispatch_capture=True):
+        execute()
+    rows = []
+    for state, count in publication_states():
+        if state == 'changed_codes':
+            raw = fixture['cpu']['raw'][reuse.PREFIX:].view(fixture['blocks'], reuse.BLOCK_TOKENS, 1, 144)
+            # Change every 2-bit code without changing metadata/shape. This
+            # is test data only and must be observed on the captured pointers.
+            raw[..., :128].bitwise_xor_(0x55)
+            publication_boundary_rows(torch, fixture)
+            tensors['raw'].copy_(fixture['cpu']['raw'])
+        elif state == 'changed_page_map':
+            permute_physical_pages(torch, fixture)
+            for name, value in fixture['cpu'].items():
+                tensors[name].copy_(value)
+        set_rows(count)
+        eager_workspace = None
+        for run in (execute, graph.replay):
+            poison(torch, buffers); run(); torch.npu.synchronize()
+            if bool(buffers['status'].ne(0).any()) or not torch.equal(buffers['tasks'].cpu(), isolated):
+                raise RuntimeError('history publication status or isolated tasks changed')
+            slots = check_history_publication(torch, fixture, task, buffers['workspace'], mode)
+            if eager_workspace is None:
+                eager_workspace = buffers['workspace'].clone()
+            else:
+                # Only published K/V slots are protocol outputs here. Other
+                # scratch can legally retain nondeterministic intermediate bytes.
+                check_history_publication(torch, fixture, task, eager_workspace, mode)
+        rows.append({'state': state, 'history_rows': count, 'buffers': slots,
+                     'bf16_bits': 'exact', 'eager_and_graph': 'passed'})
+    current = {name: value.data_ptr() for name, value in tensors.items()}
+    current.update({'buffer_' + name: value.data_ptr() for name, value in buffers.items() if value is not None})
+    if current != addresses:
+        raise RuntimeError('history publication graph changed an input/workspace allocation')
+    return {'status': 'passed', 'family': family, 'operator': OPERATORS[family],
+            'dequant_mode': mode, 'cores': 1, 'isolated_source0_tasks': 1,
+            'same_addresses': True, 'graph_capture': 'passed', 'graph_replay': 'passed',
+            'rounding_and_unused_level_boundaries': 'exact',
+            'publication': 'bitwise_bf16_including_positive_zero_padding', 'states': rows, 'timing': None}
+
+
 def writer_padding_gate(torch, ops, device, *, reuse_inputs=False):
     """Exercise changing native padding at fixed addresses; no timings.
 
@@ -675,6 +843,23 @@ def validate_evidence(report, config=None):
                            'states': ['interleaved', 'all_padding', 'changed_active_rows', 'all_live']}.items():
             if key not in padding or padding[key] != value:
                 bad.append('writer_rotation.'+field+'.'+key)
+    publications = report.get('history_publication', [])
+    publication_plan = [(family, mode) for family in ('q4', 'q1') for mode in (0, 1)]
+    if len(publications) != len(publication_plan):
+        bad.append('history_publication.complete_plan')
+    for row, (family, mode) in zip(publications, publication_plan):
+        required_publication = {'status': 'passed', 'family': family, 'operator': OPERATORS[family],
+            'dequant_mode': mode, 'cores': 1, 'isolated_source0_tasks': 1,
+            'same_addresses': True, 'graph_capture': 'passed', 'graph_replay': 'passed',
+            'rounding_and_unused_level_boundaries': 'exact',
+            'publication': 'bitwise_bf16_including_positive_zero_padding', 'timing': None}
+        if any(key not in row or row[key] != value for key, value in required_publication.items()):
+            bad.append(f'history_publication.{family}.{mode}.identity')
+        expected_states = [{'state': name, 'history_rows': count,
+            'buffers': [0] if count <= 256 else [0, 1], 'bf16_bits': 'exact',
+            'eager_and_graph': 'passed'} for name, count in publication_states()]
+        if row.get('states') != expected_states:
+            bad.append(f'history_publication.{family}.{mode}.states')
     rows, plan = report.get('cases', []), case_plan()
     if len(rows) != len(plan): return bad + ['complete_case_plan']
     for row, case in zip(rows, plan):
@@ -715,6 +900,14 @@ def run_npu(config_path=ROOT / 'configs/target.json'):
     bindings, config_hash = source_binding(), digest(config_path)
     cores = reuse._core_count(torch, config); device = torch.device('npu:0')
     writer = writer_rotation_gate(torch, torch.ops.oscar_ascend_ops, device, cores)
+    publications = []
+    for family in ('q4', 'q1'):
+        for mode in (0, 1):
+            result = history_publication_gate(torch, torch.ops.oscar_ascend_ops, device, family, mode)
+            publications.append(result)
+            print('OFFICIAL_PUBLICATION ' + json.dumps({'family': family, 'mode': mode,
+                  'status': result['status'], 'publication': result['publication']}), flush=True)
+            gc.collect(); torch.npu.empty_cache()
     rows = []
     for case in case_plan():
         row = run_case(torch, torch.ops.oscar_ascend_ops, case, device, cores); rows.append(row)
@@ -727,7 +920,8 @@ def run_npu(config_path=ROOT / 'configs/target.json'):
         'source_binding': bindings, 'effective_config_sha256': config_hash, 'operator_families': OPERATORS,
         'acceptance_sha256': digest(ACCEPTANCE), 'oracle_sha256': digest(ROOT / 'tools/official_reference.py'),
         'probe_sha256': digest(__file__), 'artifact_signature': manifest['signature'], 'artifact_sha256': manifest['sha256'],
-        'writer_rotation': writer, 'cases': rows, 'device_completion': 'passed', 'precision': 'passed',
+        'writer_rotation': writer, 'history_publication': publications,
+        'cases': rows, 'device_completion': 'passed', 'precision': 'passed',
         'error_domain': 'passed', 'graph_capture': 'passed', 'graph_replay': 'passed',
         'performance': 'not_run_user_requested', 'model_quality': 'not_established'}
     bad = validate_evidence(report, config)

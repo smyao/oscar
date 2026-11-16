@@ -7,8 +7,9 @@
     "tools/cluster_score_ring_transform.py": "0878140fd61b427adb16bf5f7e337f16d5b7e45543990e3d5cfa17cf661aaeee",
     "tools/cluster_state_transform.py": "44cae5155ada4f01c33d1783ff72d83b17a93b2b20e89bb33dd3bc1d077ce44e",
     "tools/cluster_visibility_transform.py": "bd5f36d2a3291eed6f262c678dc5b96bde7e3693a08dabf7a2ba9be005f9bb6c",
-    "tools/generate_active_kernels.py": "951711451b80456346828fbf99c05064435dc19ba37b7d640847cd98628acdb8",
-    "tools/official_active_decode_transform.py": "dd48fcdc03ae0c2f20901b73f2d748fbc47970c7beac1de4a977eb25f94f294d",
+    "tools/decode_codebook_transform.py": "8360e346080f7b937dd791efb930a326bdd34269bdc7122a0df55ddd7274a027",
+    "tools/generate_active_kernels.py": "bc3b86bf39a7252e1aa18e6d62655dbd14919559b2af6fc1ad39f36f573bb970",
+    "tools/official_active_decode_transform.py": "f2c72dbb75f067c13235c153485ddaf7e16791bf235b02bf8649741ba2fe874a",
     "tools/official_active_store_transform.py": "f89d12f74e50f8f93797820e6f37f9a23aeb85a9b493bc19cb4066e1cf34b3e9",
     "tools/physical_page_cache_transform.py": "d391232bed716173e1a2e15a6feb086bd36a7b0dd5435a3e11f03872ee024b22",
     "tools/precise_finite_transform.py": "161855ea20e4e7968e3b296cb05ebe5d7e4839617a5d994d4e97d152de0c0eb2",
@@ -19,7 +20,7 @@
   "kernels": [
     {
       "active": "csrc/kernels/attention_cv_official_decode_active.cpp",
-      "active_sha256": "c286404e59a9242541dfa047b50ac698a808f53d45bdc2e0419f3c37b6efe7ba",
+      "active_sha256": "741f00b9bcf60dca5d8253b3e9914285065e80fbae49a64f70116c8e8ddb8128",
       "mother": "csrc/kernels/attention_cv_official_decode.cpp",
       "mother_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
       "public_abi": "unchanged",

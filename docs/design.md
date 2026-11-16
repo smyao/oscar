@@ -257,3 +257,9 @@ CANN ascend910b4编译通过，生产AscendC/ABI源码指纹与已编译版本�
 依据档案 #34/#36/#126/#129/#145/#148/#151/#154–160 与 D.4，设计及资源明细见 [本轮设计](stable_optimization_20261015.md)。新增q4 hybrid仅按地址重排不可变Rv；C16 B1只在原16成员同请求/同历史域内复用一个固定256KiB B1，保持FP32/K128次序、错误域和INT2/精确窗口边界。元数据、GDN及原生源码不改。C16增加47.5MiB/rank（20核），Rv约4.25MiB/rank，均在原生KV profiling前分配。
 
 D.4四问：①对应融合history dequant/FIA内部的浮点数据装载和同步；②规避旧全历史恢复约6.5秒、非融合store约215ms及异常host prepare约725ms，旧数值不作本轮分母；③固定KV256、单B1及16个固定score槽，没有历史长度大小的恢复张量，没有BF16精度替代或静默原生回退；④新增GM/L1、固定任务扫描、所有源及merge/copy均计入相应完整门，源码省字节不能宣称省时。CPU-debug、CANN编译、CAModel、真实NPU、图、模型质量和两场景整轮性能各自记录，不相互替代。
+
+## 2026-11-16 同格式 decode 四级码本
+
+完整数值、缓冲生命周期、操作账及入口见[专项设计](decode_codebook_20261116.md)。依据档案#126/#145/#154/#155/#164/#172：q4/q1只在source0历史流水将每行D256的逐元素等级计算改为四级BF16表+raw uint16 Gather。mode0/1全部原舍入、live metadata错误域和原发布/消费所有权保持；复用现有natural/dequant/scratch，显式UB仍158656B，不增加HBM或持久历史状态。144B格式、MemCache身份、PC/GDN/MTP、PT/clip、argv、timer均不变。
+
+D.4四问：①对应融合FIA内历史解包/BF16发布；②旧失败是全历史物化6499.8–6655.1ms，不作为当前耗时分母；③只在固定H64/KV256流水内复用四个等级，原GQA/q4复用及所有DMA/跨核fence保持；④最终每侧CastRne调用256→4，但新增索引乘加/转换/Gather，GM交接仍在，不能以API减少推导净速度。候选通过同ABI派生源接入正式构建及两固定入口；源码/主机模型/CANN/NPU/graph/模型质量/性能证据分列。

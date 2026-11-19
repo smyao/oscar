@@ -7,6 +7,27 @@ Historical generated whole32K/64K files are normalized without retaining an
 OSCAR scheduling override. No native default is guessed here.
 """
 
+def add_pd_arguments(parser):
+    """#148/#163: direct/probe launch share the same explicit PD policy."""
+    parser.add_argument("--pd-role", choices=("prefill", "decode"),
+                        help="enable OSCAR PD over the configured shared MemCache")
+    parser.add_argument("--port", type=int, help="explicit HTTP port for this instance")
+
+
+def apply_pd_arguments(config, args):
+    result = dict(config)
+    if args.pd_role is not None:
+        if getattr(args, "kv_offload", None) is False:
+            raise ValueError("--pd-role conflicts with --no-kv-offload")
+        result["kv_offload"] = dict(result.get("kv_offload", {}), enabled=True,
+                                    load_async=True, pd_role=args.pd_role)
+    if args.port is not None:
+        if not 1 <= args.port <= 65535:
+            raise ValueError("HTTP port must be in [1, 65535]")
+        result["port"] = args.port
+    return result
+
+
 FEATURE_FLAGS = {
     "official_math": "experimental_official_math",
     "c16_tuned": "experimental_c16_tuned",
@@ -87,6 +108,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
     # changes the token budget, or substitutes the native scheduler.
     from oscar_ascend.offload.config import offload_options
     if variant in {"baseline", "native"}:
+        if (selected.get("kv_offload") or {}).get("pd_role") is not None:
+            raise ValueError("OSCAR PD requires the candidate variant")
         selected.pop("kv_offload", None)
     offload_options(selected)
     # User withdrew the unsuccessful exact-current delivery. A reused
@@ -231,6 +254,7 @@ def variant_features(config: dict) -> dict:
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
+            "pd_role":(config.get("kv_offload") or {}).get("pd_role"),
             **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"
                                         if config.get("experimental_c16_tuned", False)
                                         else "attention_cv_aligned_cluster16_control_out")}

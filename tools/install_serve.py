@@ -40,6 +40,8 @@ def main(argv=None) -> int:
     parser.add_argument("--diagnose-trap", action="store_true",
                         help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
     add_model_arguments(parser)
+    from .serving_variants import add_pd_arguments, apply_pd_arguments
+    add_pd_arguments(parser)
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -59,6 +61,7 @@ def main(argv=None) -> int:
             config["use_native_token_budget"] = True
         if args.diagnose_trap:
             config["diagnose_guard"] = True
+        config = apply_pd_arguments(config, args)
         config = variant_config(config, args.variant)
         if args.rear_cards:
             # Explicit user-selected placement, never inherited from a prior
@@ -66,6 +69,8 @@ def main(argv=None) -> int:
             target_env(config, base={})
             config.update(devices=[4, 5, 6, 7], port=7878,
                           device_policy="Explicit install_serve --rear-cards: physical NPU 4-7, port 7878")
+            if args.port is not None:
+                config["port"] = args.port
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")

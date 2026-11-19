@@ -17,7 +17,7 @@ def offload_options(config: dict) -> dict | None:
         return None
     if not isinstance(value, dict):
         raise ValueError("kv_offload must be an object")
-    allowed = {"enabled", "backend", "load_async", "max_batch_objects", "timeout_seconds"}
+    allowed = {"enabled", "backend", "load_async", "max_batch_objects", "timeout_seconds", "pd_role"}
     unknown = set(value) - allowed
     if unknown:
         raise ValueError(f"unknown kv_offload options: {sorted(unknown)}")
@@ -26,6 +26,11 @@ def offload_options(config: dict) -> dict | None:
     load_async = value.get("load_async", True)
     if type(load_async) is not bool:
         raise ValueError("kv_offload.load_async must be a boolean")
+    pd_role = value.get("pd_role")
+    if pd_role is not None and pd_role not in ("prefill", "decode"):
+        raise ValueError("kv_offload.pd_role must be prefill or decode")
+    if pd_role is not None and (not value.get("enabled", False) or not load_async):
+        raise ValueError("PD separation requires enabled offload and asynchronous loads")
     if not value.get("enabled", False):
         return None
     if value.get("backend", "memcache") != "memcache":
@@ -38,8 +43,11 @@ def offload_options(config: dict) -> dict | None:
         raise ValueError("kv_offload.timeout_seconds must be in (0, 600]")
     if config.get("experimental_request_windows", False):
         raise ValueError("offload requires the production physical-page windows")
-    return {"enabled": True, "backend": "memcache", "use_layerwise": False,
-            "load_async": load_async, "max_batch_objects": batch, "timeout_seconds": timeout}
+    options = {"enabled": True, "backend": "memcache", "use_layerwise": False,
+               "load_async": load_async, "max_batch_objects": batch, "timeout_seconds": timeout}
+    if pd_role is not None:
+        options["pd_role"] = pd_role
+    return options
 
 
 def transfer_config(config: dict) -> dict | None:
@@ -47,15 +55,18 @@ def transfer_config(config: dict) -> dict | None:
     if options is None:
         return None
     return {"kv_connector": CONNECTOR, "kv_connector_module_path": MODULE,
-            "kv_role": "kv_both", "kv_load_failure_policy": "fail",
+            "kv_role": {"prefill": "kv_producer", "decode": "kv_consumer"}.get(options.get("pd_role"), "kv_both"), "kv_load_failure_policy": "fail",
             "kv_connector_extra_config": options}
 
 
 def validate_transfer_config(transfer) -> None:
     """Only this byte-complete adapter can enter the hybrid raw allocation."""
+    extra = getattr(transfer, "kv_connector_extra_config", {})
+    role = {"prefill": "kv_producer", "decode": "kv_consumer"}.get(
+        extra.get("pd_role") if isinstance(extra, dict) else None, "kv_both")
     if (getattr(transfer, "kv_connector", None) != CONNECTOR
             or getattr(transfer, "kv_connector_module_path", None) != MODULE
-            or getattr(transfer, "kv_role", None) != "kv_both"):
+            or getattr(transfer, "kv_role", None) != role):
         raise ValueError("OSCAR requires its external AscendStore byte-layout connector")
     extra = getattr(transfer, "kv_connector_extra_config", {})
     if not isinstance(extra, dict) or extra.get("enabled") is not True:

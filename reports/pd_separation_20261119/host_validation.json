@@ -1,0 +1,213 @@
+{
+  "date": "2026-11-19",
+  "base_branch": "oscar-new-7-offload",
+  "base_commit": "b18f7e0f62a15857df8cb3da53eb8ccef2592a08",
+  "tests": {
+    "passed": 663,
+    "failed": 0,
+    "skipped": 0,
+    "command": ".venv/bin/python -m pytest -q tests/test_pd_*.py tests/test_offload_*.py tests/test_prefix_checkpoint_*.py tests/test_prefix_cache_request_logging.py tests/test_stable_launch_frozen.py tests/test_memcache_launch.py tests/test_align_prefill_state_contract.py tests/test_prefill_state_contract_hooks.py tests/test_plugin.py --tb=short",
+    "evidence": "pytest.txt",
+    "scope": "CPU tensor bytes, pinned native lifecycle, simulated SDK, real localhost HTTP and IPC"
+  },
+  "launch_plans": {
+    "prefill": {
+      "devices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "port": 7878,
+      "transfer": {
+        "kv_connector": "OscarAscendStoreConnector",
+        "kv_connector_module_path": "oscar_ascend.offload.connector",
+        "kv_role": "kv_producer",
+        "kv_load_failure_policy": "fail",
+        "kv_connector_extra_config": {
+          "enabled": true,
+          "backend": "memcache",
+          "use_layerwise": false,
+          "load_async": true,
+          "max_batch_objects": 256,
+          "timeout_seconds": 60,
+          "pd_role": "prefill"
+        }
+      },
+      "runtime_selection": {
+        "variant": "candidate",
+        "optimizations": {
+          "official_math": true,
+          "c16_tuned": true,
+          "aligned_math": true,
+          "bf16_attention": true,
+          "history_cluster4": true,
+          "later_mtp_q1": true,
+          "fast_unpack": true,
+          "mixed_cv": true,
+          "striped_cache": true,
+          "quantization_bundle": true,
+          "current_only": true,
+          "first_mtp_current_fia": true,
+          "compact_later_mtp": true,
+          "mixed_decode_split": true,
+          "prepare_reuse": true,
+          "decode_bundle": true,
+          "mdl_decode": true,
+          "hybrid_l1_decode": true,
+          "c4_member_pipeline": true,
+          "c16_l1_reuse": true,
+          "whole_prefill": false
+        },
+        "pd_role": "prefill",
+        "aligned_c16_operator": "attention_cv_official_cluster16_out",
+        "attention_compute": {
+          "operands": "bfloat16",
+          "accumulator": "float32",
+          "softmax_lse_merge": "float32"
+        },
+        "oscar_math_profile": "oscar_bf16_attention_v4",
+        "attention_coordinate_frame": "all_sources_rotated",
+        "inverse_rotation": "once_after_fp32_merge",
+        "cached_precision_policy": "native_fixed_per_forward",
+        "rotation_method": "qqt_sst",
+        "rotation_variant": "perhead_center",
+        "rotation_grouping": "layer_kv_head",
+        "key_centering": true,
+        "clip_policy": "scalar",
+        "head_clip_experiment_enabled": false,
+        "calibration_recipe_version": 3,
+        "metadata_dtype": "float32",
+        "dequant_policy": "fp32_metadata",
+        "runtime_precision_contract": "oscar_bf16_runtime_fp32_dequant_v1",
+        "dequant_arithmetic": "float32_then_bfloat16",
+        "prefix_caching": false,
+        "token_budget_source": "explicit",
+        "max_num_batched_tokens": 16384,
+        "scheduler_cls": null,
+        "devices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "port": 7878
+      }
+    },
+    "decode": {
+      "devices": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "port": 7880,
+      "transfer": {
+        "kv_connector": "OscarAscendStoreConnector",
+        "kv_connector_module_path": "oscar_ascend.offload.connector",
+        "kv_role": "kv_consumer",
+        "kv_load_failure_policy": "fail",
+        "kv_connector_extra_config": {
+          "enabled": true,
+          "backend": "memcache",
+          "use_layerwise": false,
+          "load_async": true,
+          "max_batch_objects": 256,
+          "timeout_seconds": 60,
+          "pd_role": "decode"
+        }
+      },
+      "runtime_selection": {
+        "variant": "candidate",
+        "optimizations": {
+          "official_math": true,
+          "c16_tuned": true,
+          "aligned_math": true,
+          "bf16_attention": true,
+          "history_cluster4": true,
+          "later_mtp_q1": true,
+          "fast_unpack": true,
+          "mixed_cv": true,
+          "striped_cache": true,
+          "quantization_bundle": true,
+          "current_only": true,
+          "first_mtp_current_fia": true,
+          "compact_later_mtp": true,
+          "mixed_decode_split": true,
+          "prepare_reuse": true,
+          "decode_bundle": true,
+          "mdl_decode": true,
+          "hybrid_l1_decode": true,
+          "c4_member_pipeline": true,
+          "c16_l1_reuse": true,
+          "whole_prefill": false
+        },
+        "pd_role": "decode",
+        "aligned_c16_operator": "attention_cv_official_cluster16_out",
+        "attention_compute": {
+          "operands": "bfloat16",
+          "accumulator": "float32",
+          "softmax_lse_merge": "float32"
+        },
+        "oscar_math_profile": "oscar_bf16_attention_v4",
+        "attention_coordinate_frame": "all_sources_rotated",
+        "inverse_rotation": "once_after_fp32_merge",
+        "cached_precision_policy": "native_fixed_per_forward",
+        "rotation_method": "qqt_sst",
+        "rotation_variant": "perhead_center",
+        "rotation_grouping": "layer_kv_head",
+        "key_centering": true,
+        "clip_policy": "scalar",
+        "head_clip_experiment_enabled": false,
+        "calibration_recipe_version": 3,
+        "metadata_dtype": "float32",
+        "dequant_policy": "fp32_metadata",
+        "runtime_precision_contract": "oscar_bf16_runtime_fp32_dequant_v1",
+        "dequant_arithmetic": "float32_then_bfloat16",
+        "prefix_caching": false,
+        "token_budget_source": "explicit",
+        "max_num_batched_tokens": 16384,
+        "scheduler_cls": null,
+        "devices": [
+          4,
+          5,
+          6,
+          7
+        ],
+        "port": 7880
+      }
+    }
+  },
+  "unchanged_against_HEAD": [
+    "csrc",
+    "ops",
+    "configs/target.json",
+    "oscar_ascend/runtime.py",
+    "oscar_ascend/rotations.py",
+    "tools/target_cli.py"
+  ],
+  "unchanged_timer_file_count": 16,
+  "source_sha256": {
+    "docs/checklist.md": "e259a77a68eb5c6a0c64e3eeae6d4b89959255fa3a5b73f90466e6c789f55ea3",
+    "docs/pd_separation_20261119.md": "9c3024777a8e6e6defad372efde435fd1ecbf33085e2d9c7782714096a4eda67",
+    "oscar_ascend/offload/config.py": "71dd5df58802fe79b92843bf29d95d0199bfcb52c0bf6aa3a67ccabda0e7a2ec",
+    "oscar_ascend/offload/connector.py": "cb351bbc6a3f07ed0719de1e54c0bae588c6163b8acfbd73b7cfaf1ea87a59e7",
+    "oscar_ascend/offload/hooks.py": "adc39c990a48f838437f125d1670e60cb7f16a9208033cd58c4afd1bd0abe234",
+    "oscar_ascend/offload/pd.py": "ed8b7dae54493416e275c4ef05247eb72c612ae86c365aeb379df265a9b3bf98",
+    "oscar_ascend/plugin.py": "32ea385bc051ef56529370b23e7548981568684137e37993214aadec844a3c29",
+    "tests/test_pd_handoff.py": "1e82b04145897c213373caa9e91c799e5d8db938812b804ece32226f035acd3a",
+    "tests/test_pd_launch.py": "a1ab2640dda68fbeff94f138c80382e86ffc565ef603cf2d85d64147fa2ec4d9",
+    "tests/test_pd_proxy.py": "4ce9d8b67a553fd75331483eeb5c6fe414d75866cad83a3b5439db672ec89a0e",
+    "tools/deploy.py": "5ea29d3104cc737c2def7c6ed66bb2ed2657ee07ec6dd2b44727258c524f94d5",
+    "tools/install_serve.py": "7dbe2b82f06e2206ea0bb97423118e4583c978350992675b49f1b36b9eec312e",
+    "tools/pd_proxy.py": "0c1c01c043a60bbd7a6f4a3c3534785bc0f6f258b5db590e961890a9d5c21cac",
+    "tools/serving_variants.py": "c9ac5f776a846f3c0c67bfa5c27f492ae0a586cc54accd6950f0d2db7a88515b"
+  },
+  "acceptance": {
+    "real_sdk_npu_pd": "not_run_no_target_access",
+    "model_generation": "not_run_no_target_access",
+    "graph_replay": "not_run_no_target_access",
+    "model_quality": "not_run_no_target_access",
+    "performance": "not_run_no_target_access"
+  }
+}

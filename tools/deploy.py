@@ -231,6 +231,8 @@ def main(argv=None) -> int:
     parser.add_argument("--variant", choices=("baseline", "candidate"),
                         help="full deployment defaults to candidate; baseline retains the legacy FP32 protocol")
     add_model_arguments(parser)
+    from .serving_variants import add_pd_arguments, apply_pd_arguments
+    add_pd_arguments(parser)
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -245,6 +247,7 @@ def main(argv=None) -> int:
         original_config = dict(config)
         require_model = not args.plan and args.only in {None, "prepare-rotations", "native-synthetic", "service-probe"}
         config = apply_model_options(config, args, require_model=require_model)
+        config = apply_pd_arguments(config, args)
         config = variant_config(config, args.variant or (None if args.only else "candidate"))
     except (OSError, ValueError) as exc:
         if not args.plan:

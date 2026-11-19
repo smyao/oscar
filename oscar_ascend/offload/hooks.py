@@ -21,6 +21,13 @@ def scheduler_initialized(scheduler) -> None:
         connector.bind_scheduler(scheduler)
 
 
+def request_added(scheduler, request) -> None:
+    """#163: establish h(N-1) before native local prefix matching."""
+    connector = _scheduler_connector(scheduler)
+    if connector is not None and getattr(connector, "pd", None) is not None:
+        connector.pd.prepare(request)
+
+
 def before_preempt(scheduler, request):
     connector = _scheduler_connector(scheduler)
     if connector is not None:

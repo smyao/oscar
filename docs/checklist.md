@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-19 PD分离：在卸载分支新增显式P/D角色、N−1原生GDN边界、全TP完整状态交接、原生源页延迟释放和D异步准入，以及文本OpenAI HTTP/SSE代理。固定candidate直启与probe入口共用角色配置。新增双实例/异址/TP1与TP4/none与align/错误和取消/本机HTTP回归；最终结果见[PD设计及部署](pd_separation_20261119.md)和对应host_validation.json。原生树、CANN/PT/数值/MTP/图模式/16384预算/timer不改；未连接真机或测速，不将主机通过写成SDK/NPU/模型/图/质量/性能验收。
+
 2026-11-10 请求级PC与PD step日志：外部插件在首次成功调度后读取原生PrefillStats，为每条实际获调度请求打印一次 `PREFIX_CACHE_REQUEST`，列出本地/外部/合计命中token数和以完整prompt为分母的百分比。排队重试、后续chunk、decode及私有swap恢复不重复计数。另在调度推进前保存prefill/decode阶段，主模型输出和卸载状态处理成功后累计纯decode/纯prefill/混合step，每100步及请求表清空时打印 `PD_STEP_STATS`；MTP宽度不用于阶段判断，空步/异常不进有效分母，无法确认的非空步显式excluded。新增38项及相关插件/原生生命周期79项联合117项主机回归通过。只读主机计数，不增加SDK查询或设备同步，不改原生统计、调度/缓存策略、timer与启动参数。详见[日志口径](kv_offload_20261109.md)。尚未部署到真机，不将调度匹配日志当作DMA完成、step比例当作耗时比例。
 
 2026-11-10 卸载控制路径优化：参照原生批量查询与写前存在性过滤，加入短候选批量预查、线程独占的持久IPC连接、轻量prefix身份构造、全TP完整checkpoint写前去重及注册地址二分校验。卸载与prefix checkpoint专项主机回归440项通过；513个冷候选由513次RPC降到3次，最长暖命中保持1次RPC/1次终点hash。原有错误处理、驱逐、共享页、chunked prefill、MTP/GDN、私有swap与图地址合同保持；CANN/PT/数值/timer/启动参数未修改。详见[实现与验证范围](kv_offload_20261109.md)。未连接真机或测速，不据主机调用量认定端到端加速、模型质量或现场命中率。

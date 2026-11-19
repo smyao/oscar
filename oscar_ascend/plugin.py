@@ -410,6 +410,13 @@ def _offload_configured():
 
 def _patch_offload_scheduler(module):
     """#37-49/#127/#128/#157/#163/#171: preserve native bodies and ordering."""
+    def added(original):
+        def wrapped(scheduler, request, *args, **kwargs):
+            from .offload.hooks import request_added
+            request_added(scheduler, request)
+            return original(scheduler, request, *args, **kwargs)
+        return wrapped
+
     def preempt(original):
         def wrapped(scheduler, request, *args, **kwargs):
             from .offload.hooks import before_preempt
@@ -436,6 +443,8 @@ def _patch_offload_scheduler(module):
         return wrapped
 
     _patch(module.Scheduler, "_preempt_request", preempt)
+    if hasattr(module.Scheduler, "add_request"):
+        _patch(module.Scheduler, "add_request", added)
     _patch_scheduler_output(module)
     _patch(module.Scheduler, "reset_prefix_cache", reset)
     if hasattr(module.Scheduler, "_update_request_as_session"):

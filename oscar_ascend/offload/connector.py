@@ -45,6 +45,7 @@ class OscarOffloadMetadata(KVConnectorMetadata):
     branches: tuple = ()
     prefix_view: str = "shared"
     retired_loads: tuple = ()
+    handoffs: tuple = ()  # #37-49/#163: native delayed-free P checkpoints.
 
 
 @dataclass
@@ -52,13 +53,15 @@ class OscarOffloadWorkerMetadata(KVConnectorWorkerMetadata):
     acknowledgements: tuple[SnapshotAck, ...] = ()
     prefixes: tuple = ()
     loads: tuple = ()
+    handoffs: tuple = ()
 
     def aggregate(self, other):
         if not isinstance(other, OscarOffloadWorkerMetadata):
             raise OffloadLifecycleError("incompatible offload worker metadata")
         return OscarOffloadWorkerMetadata(self.acknowledgements + other.acknowledgements,
                                          self.prefixes + other.prefixes,
-                                         self.loads + other.loads)
+                                         self.loads + other.loads,
+                                         self.handoffs + other.handoffs)
 
 
 @dataclass(frozen=True)
@@ -150,6 +153,8 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                     raise OffloadLifecycleError("cache layer appears in multiple physical groups")
                 self._group_for_layer[name] = gid
         extra = vllm_config.kv_transfer_config.kv_connector_extra_config
+        from .pd import PDState
+        self.pd = PDState(self, extra["pd_role"], extra["timeout_seconds"]) if extra.get("pd_role") else None
         self._init_load_state(extra["load_async"])
         self.transport = StrictMemcacheTransport.from_vllm_config(
             vllm_config, scheduler=role == KVConnectorRole.SCHEDULER,
@@ -369,6 +374,10 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         if resume is not None:
             count, _ = resume
             return count, self.load_async and count is not None and count > 0
+        if getattr(self, "pd", None) is not None:
+            match = self.pd.lookup(request, num_computed_tokens)
+            if match is not None:
+                return match
         self._prefix_matches.pop(request.request_id, None)
         policy = self._prefix_policy()
         if policy is None:
@@ -414,8 +423,11 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
     def update_state_after_alloc(self, request, blocks, num_external_tokens):
         if not num_external_tokens:
             return
-        restore = self.scheduler_state.allocated(request, blocks)
-        if restore is not None:
+        pd_plan = self.pd.allocate(request, blocks) if getattr(self, "pd", None) is not None else None
+        restore = None if pd_plan is not None else self.scheduler_state.allocated(request, blocks)
+        if pd_plan is not None:
+            self._restores.append(pd_plan)
+        elif restore is not None:
             if len(set(restore.payload_keys)) != 1:
                 raise OffloadLifecycleError("TP snapshot payload identities disagree")
             snap = restore.snapshot
@@ -485,7 +497,8 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         result = OscarOffloadMetadata(self.session, step_id, generations,
                                      preemptions, tuple(self._restores),
                                      tuple(prefixes), state.drain_branches(), self._prefix_view,
-                                     tuple(sorted(self._retired_loads)))
+                                     tuple(sorted(self._retired_loads)),
+                                     self.pd.drain() if getattr(self, "pd", None) is not None else ())
         self._restores.clear()
         self._retired_loads.clear()
         return result
@@ -499,6 +512,10 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         if metadata is not None:
             if not isinstance(metadata, OscarOffloadWorkerMetadata):
                 raise OffloadLifecycleError("unexpected offload completion metadata")
+            for receipt in metadata.handoffs:
+                if getattr(self, "pd", None) is None:
+                    raise OffloadLifecycleError("PD completion reached a non-PD connector")
+                self.pd.acknowledge(receipt)
             for ack in metadata.acknowledgements:
                 self._record_save(ack)
             for receipt in metadata.loads:
@@ -547,11 +564,13 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         return self.request_finished_all_groups(request, (block_ids,))
 
     def request_finished_all_groups(self, request, block_ids):
+        result = (self.pd.finish(request, block_ids) if getattr(self, "pd", None) is not None
+                  else (False, None))
         self.scheduler_state.finish(request.request_id)
         self._prefix_matches.pop(request.request_id, None)
         # Saves are complete here. Native WAITING_FOR_REMOTE_KVS cancellation
         # independently delays destination free until all receive receipts.
-        return False, None
+        return result
 
     def _objects(self, plan, *, loading=False, canonical=()):
         state = {(entry.layer_name, entry.state_index): entry.values for entry in canonical}
@@ -620,6 +639,12 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
     def handle_preemptions(self, metadata):
         if not isinstance(metadata, OscarOffloadMetadata):
             raise OffloadLifecycleError("invalid offload execution metadata")
+        if metadata.handoffs:
+            if getattr(self, "pd", None) is None:
+                raise OffloadLifecycleError("PD save reached a non-PD worker")
+            # Native delayed-free keeps these pages alive, including in the
+            # final empty step. Save before _update_states removes the request.
+            self.pd.save(metadata.handoffs)
         if self._transfer_session is not None and self._transfer_session != metadata.session:
             raise OffloadLifecycleError("private swap worker session cannot be rebound")
         if self._transfer_session is None:
@@ -692,9 +717,10 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
         if plan.version:
             self._load_acks.append(LoadReceipt(plan.request_id, plan.generation,
                 plan.version, plan.epoch, plan.committed_tokens, self.rank, plan.base_key))
+        kind = "swap" if plan.version else "pd" if plan.base_key.startswith("prefix/data/pd/") else "prefix"
         print(f"[oscar] KV_OFFLOAD_RESTORE request={plan.request_id} "
               f"tokens={plan.committed_tokens} rank={self.rank} "
-              f"kind={'swap' if plan.version else 'prefix'} generation={plan.generation} "
+              f"kind={kind} generation={plan.generation} "
               f"version={plan.version} load_async={str(self.load_async).lower()}", flush=True)
 
     def start_load_kv(self, forward_context, **kwargs):
@@ -798,11 +824,17 @@ class OscarAscendStoreConnector(KVConnectorBase_V1, SupportsHMA):
                 # Native frees cancelled destinations only after all TP ranks
                 # finish; sending a second finished_sending would double free.
                 received.add(plan.request_id)
-        return set(), received
+        sent = set()
+        if getattr(self, "pd", None) is not None:
+            sent, self.pd.sent = self.pd.sent, set()
+        return sent, received
 
     def build_connector_worker_meta(self):
         result = OscarOffloadWorkerMetadata(tuple(self._acks), tuple(self._prefix_acks),
-                                           tuple(self._load_acks))
+                                           tuple(self._load_acks),
+                                           tuple(self.pd.receipts) if getattr(self, "pd", None) is not None else ())
+        if getattr(self, "pd", None) is not None:
+            self.pd.receipts.clear()
         self._acks.clear()
         self._prefix_acks.clear()
         self._load_acks.clear()
